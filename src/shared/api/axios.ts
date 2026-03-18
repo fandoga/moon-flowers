@@ -3,7 +3,7 @@ import axios from "axios";
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   params: {
-    token: "24dd99d07c9db46b72b00aab20d2e864b072097fa730bdf38f378c224c5feb32",
+    token: "d0a91f097d80c5435254523852f8267fbf9560b4bedca02424e5b6066b6ff914",
   },
 });
 

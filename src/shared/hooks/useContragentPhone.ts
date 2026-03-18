@@ -1,3 +1,3 @@
 export const useContragentPhone = () => {
-  return '+79995079869';
+  return '79998887766';
 };
