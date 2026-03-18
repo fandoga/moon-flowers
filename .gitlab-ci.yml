@@ -28,7 +28,7 @@ build:
       - public/
       - package.json
       - package-lock.json
-      - next.config.js
+      - next.config.ts
       - .env.production
     expire_in: 1 week
 
