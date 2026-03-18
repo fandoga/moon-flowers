@@ -39,7 +39,7 @@ export async function generateMetadata(
     ? `${process.env.NEXT_PUBLIC_API_URL}/${firstPhoto.url.startsWith('pictures/') ? '' : 'photos/'}${firstPhoto.url}`
     : '/og-product-fallback.jpg';
 
-  const productUrl = `https://klever plants.ru/product?category=${category}&name=${encodeURIComponent(decodedName)}${variantId ? `&variantId=${variantId}` : ''}`;
+  const productUrl = `https://cle-ver.ru/product?category=${category}&name=${encodeURIComponent(decodedName)}${variantId ? `&variantId=${variantId}` : ''}`;
 
   return {
     title: `${product.name} — купить в питомнике Клевер Казань`,
