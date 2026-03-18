@@ -40,7 +40,7 @@ deploy:
     - main
   script:
     - mkdir -p /var/www/cle-ver.ru
-    - cp -rv .next/ public/ package.json package-lock.json next.config.js .env.production /var/www/cle-ver.ru/
+    - cp -rv .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/cle-ver.ru/
     - cd /var/www/cle-ver.ru
     - npm ci --production
     - pm2 restart cle-ver || pm2 start npm --name cle-ver -- start
