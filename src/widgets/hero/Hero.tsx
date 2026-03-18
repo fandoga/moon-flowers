@@ -19,7 +19,7 @@ const Hero = () => {
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-[43px] sm:text-6xl text-center sm:text-left md:text-6xl lg:text-7xl font-bold text-[#394426] leading-tight mb-4 md:mb-6">
-              Наши — <span className="italic font-[400] text-[80px]">зимуют!</span>
+              Наши — <span className="italic font-[400] sm:text-[80px]">зимуют!</span>
             </h1>
             <p className="text-base text-sm sm:text-lg w-[95%] sm:w-full mx-auto md:text-xl text-center sm:text-left lg:text-2xl text-[#394426] font-medium">
               Крупномеры, саженцы, посадочный материал — всё из собственного

@@ -1,4 +1,3 @@
-// widgets/product-card/ProductCardGroup.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -14,12 +13,14 @@ import { useCartItemQuantity } from "@/entities/cart/hooks/hooks";
 
 interface ProductCardGroupProps {
   products: NomenclatureItem[];
+  onClick?: () => void;
+  isLoading?: boolean;
 }
 
-const ProductCardGroup: React.FC<ProductCardGroupProps> = ({ products }) => {
+const ProductCardGroup: React.FC<ProductCardGroupProps> = ({ products, onClick, isLoading: externalLoading }) => {
   const router = useRouter();
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [internalNavigating, setInternalNavigating] = useState(false);
   const selectedProduct = products[selectedIndex];
   const displayName = normalizeProductName(selectedProduct.name);
   const quantityInCart = useCartItemQuantity(selectedProduct.id);
@@ -42,30 +43,49 @@ const ProductCardGroup: React.FC<ProductCardGroupProps> = ({ products }) => {
   const visibleProducts = products.slice(0, 3);
 
   const handleCardClick = () => {
-    const params = new URLSearchParams({
-      category: selectedProduct.category.toString(),
-      name: displayName,
-      variantId: selectedProduct.id.toString(),
-    });
-    router.push(`/product?${params.toString()}`);
+    if (onClick) {
+      setInternalNavigating(true);
+      onClick();
+    } else {
+      setInternalNavigating(true);
+      const params = new URLSearchParams({
+        category: selectedProduct.category.toString(),
+        name: displayName,
+        variantId: selectedProduct.id.toString(),
+      });
+      router.push(`/product?${params.toString()}`);
+    }
   };
 
   const handleDetailsClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsNavigating(true);
-    const params = new URLSearchParams({
-      category: selectedProduct.category.toString(),
-      name: displayName,
-      variantId: selectedProduct.id.toString(),
-    });
-    router.push(`/product?${params.toString()}`);
+    if (onClick) {
+      setInternalNavigating(true);
+      onClick();
+    } else {
+      setInternalNavigating(true);
+      const params = new URLSearchParams({
+        category: selectedProduct.category.toString(),
+        name: displayName,
+        variantId: selectedProduct.id.toString(),
+      });
+      router.push(`/product?${params.toString()}`);
+    }
   };
+
+  const showLoader = externalLoading || internalNavigating;
 
   return (
     <div
       onClick={handleCardClick}
       className="bg-white rounded-xl overflow-hidden shadow-md relative flex flex-col h-full cursor-pointer hover:scale-[1.02] transition-transform duration-200"
     >
+      {showLoader && (
+        <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
+          <Loader2 className="animate-spin h-10 w-10 text-[#394426]" />
+        </div>
+      )}
+
       <div className="relative aspect-[5/6]">
         <Image
           src={imageUrl}
@@ -127,10 +147,10 @@ const ProductCardGroup: React.FC<ProductCardGroupProps> = ({ products }) => {
             </div>
             <button
               onClick={handleDetailsClick}
-              disabled={isNavigating}
+              disabled={showLoader}
               className="flex-1 border-2 w-[125px] w-full text-xs border-[#394426] text-[#394426] px-3 py-2 sm:px-4 sm:py-2.5 rounded-md text-[15px] sm:text-[17px] hover:bg-[#102902] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
             >
-              {isNavigating ? (
+              {showLoader ? (
                 <Loader2 className="animate-spin mr-2" size={18} />
               ) : null}
               Подробнее

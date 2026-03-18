@@ -89,7 +89,7 @@ export default async function ProductPage({ searchParams }: PageProps) {
   }
 
   return (
-    <main className="py-6 mb-8 md:py-10 bg-white min-h-screen">
+    <main className="py-6 mb-8 md:py-10 bg-[#F8F9FB] min-h-screen">
       <div className="container mx-auto max-w-[1440px]">
         <Breadcrumb
           paths={[

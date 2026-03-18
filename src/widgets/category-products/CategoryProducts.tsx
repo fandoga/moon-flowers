@@ -1,7 +1,7 @@
-// widgets/category-products/CategoryProducts.tsx
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useProductsByCategory } from '@/entities/product/hooks/hooks';
 import ProductCard from '@/widgets/product-card/ProductCard';
 import ProductCardGroup from '@/widgets/product-card-group/ProductCardGroup';
@@ -30,7 +30,9 @@ interface CategoryProductsProps {
 }
 
 const CategoryProducts: React.FC<CategoryProductsProps> = ({ categoryId, limit = 20 }) => {
+  const router = useRouter();
   const { data, isLoading, error } = useProductsByCategory(categoryId, limit);
+  const [loadingProductId, setLoadingProductId] = useState<number | null>(null);
 
   const groupedProducts = useMemo(() => {
     if (!data?.result) return [];
@@ -44,6 +46,11 @@ const CategoryProducts: React.FC<CategoryProductsProps> = ({ categoryId, limit =
     });
     return Object.values(groups);
   }, [data]);
+
+  const handleProductClick = (productId: number) => {
+    setLoadingProductId(productId);
+    router.push(`/product/${productId}`);
+  };
 
   if (isLoading) {
     return (
@@ -70,15 +77,28 @@ const CategoryProducts: React.FC<CategoryProductsProps> = ({ categoryId, limit =
     >
       {groupedProducts.map((group) => {
         if (group.length === 1) {
+          const product = group[0];
+          const isLoadingThis = loadingProductId === product.id;
           return (
-            <motion.div key={group[0].id} variants={itemVariants}>
-              <ProductCard product={group[0]} />
+            <motion.div key={product.id} variants={itemVariants}>
+              <ProductCard
+                product={product}
+                onClick={() => handleProductClick(product.id)}
+                isLoading={isLoadingThis}
+              />
             </motion.div>
           );
         }
+        // Для группы товаров (например, разные размеры) передаём id первого товара для отслеживания загрузки
+        const firstProduct = group[0];
+        const isLoadingThis = loadingProductId === firstProduct.id;
         return (
-          <motion.div key={group[0].id} variants={itemVariants}>
-            <ProductCardGroup products={group} />
+          <motion.div key={firstProduct.id} variants={itemVariants}>
+            <ProductCardGroup
+              products={group}
+              onClick={() => handleProductClick(firstProduct.id)}
+              isLoading={isLoadingThis}
+            />
           </motion.div>
         );
       })}

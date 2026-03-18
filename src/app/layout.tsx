@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Manrope, Source_Serif_4 } from "next/font/google";
 import Header from "@/widgets/header/Header";
@@ -72,6 +72,12 @@ export const metadata: Metadata = {
     "http-equiv": "Content-Security-Policy",
     content: "script-src 'self' ...",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

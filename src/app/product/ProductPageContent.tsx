@@ -165,7 +165,7 @@ const ProductPageContent: React.FC<Props> = ({
               )}
             </div>
           </div>
-          <div className="relative w-full h-[60vh] rounded-2xl overflow-hidden shadow-xl order-1 lg:order-2">
+          <div className="relative w-full h-[60dvh] rounded-2xl overflow-hidden shadow-xl order-1 lg:order-2">
             <Image
               src={mainImageUrl}
               alt={selectedProduct.name}

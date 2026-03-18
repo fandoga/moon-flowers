@@ -74,7 +74,7 @@ export default function FavoritesPageClient() {
 
         <motion.div
           variants={itemVariants}
-          className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6 lg:gap-8"
+          className="pt-6 grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 lg:gap-8"
         >
           {products
             .filter(

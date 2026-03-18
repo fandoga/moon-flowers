@@ -5,40 +5,22 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import Breadcrumb from "@/widgets/breadcrumb/Breadcrumb";
-import { useCartProducts, useCart } from "@/entities/cart/hooks/hooks";
-import { useCreateOrder } from "@/entities/order/hooks/hooks";
-import { YookassaPaymentRequest } from "@/shared/types/api/types";
+import { useCartProducts } from "@/entities/cart/hooks/hooks";
+import { useCreateFullOrder } from "@/entities/order/hooks/hooks";
 import { formatPrice } from "@/lib/utils/formatPrice";
-import { payments } from "@/shared/api/api";
-import { NomenclatureItem } from "@/entities/product/types/types";
-
-type CartItemWithProduct = {
-  nomenclature_id: number;
-  quantity: number;
-  product?: NomenclatureItem;
-  addedAt?: number;
-};
-
-interface YookassaPaymentResponse {
-  confirmation?: {
-    confirmation_url: string;
-    type: string;
-  };
-  id?: string;
-  status?: string;
-}
+import { LoaderCircle } from "lucide-react";
+import { CartItemsList } from "@/components/CartListItem";
 
 const STORAGE_KEY = "order_form_data";
 
 export default function OrderPage() {
   const router = useRouter();
-  const { data: cartItems = [], isLoading, error } = useCartProducts();
-  const { data: cartData } = useCart();
-  const createOrder = useCreateOrder();
+  const { data: cartItemsRaw = [] } = useCartProducts();
+  const createFullOrder = useCreateFullOrder();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState(cartData?.contragent_phone || "");
+  const [phone, setPhone] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">(
     "delivery",
   );
@@ -52,12 +34,15 @@ export default function OrderPage() {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  
   const [addressQuery, setAddressQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
-  
+  const cartItems = cartItemsRaw.filter(
+    (item): item is NonNullable<typeof item> => item !== null,
+  );
+
+  // Загрузка сохранённых данных из localStorage
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -65,6 +50,7 @@ export default function OrderPage() {
         const data = JSON.parse(stored);
         setFirstName(data.firstName || "");
         setLastName(data.lastName || "");
+        setPhone(data.phone || "");
         setDeliveryMethod(data.deliveryMethod || "delivery");
         setPaymentMethod(data.paymentMethod || "cash");
         setAddress(
@@ -77,27 +63,29 @@ export default function OrderPage() {
     }
   }, []);
 
-  
+  // Сохранение данных при изменении
   useEffect(() => {
     const data = {
       firstName,
       lastName,
+      phone,
       deliveryMethod,
       paymentMethod,
       address,
       comment,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [firstName, lastName, deliveryMethod, paymentMethod, address, comment]);
+  }, [
+    firstName,
+    lastName,
+    phone,
+    deliveryMethod,
+    paymentMethod,
+    address,
+    comment,
+  ]);
 
-  
-  useEffect(() => {
-    if (cartData?.contragent_phone) {
-      setPhone(cartData.contragent_phone);
-    }
-  }, [cartData]);
-
-  
+  // Поиск адреса через Nominatim
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (!addressQuery.trim() || addressQuery.length < 3) {
@@ -106,16 +94,16 @@ export default function OrderPage() {
       }
       setLoadingSuggestions(true);
       try {
-        
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressQuery)}&format=json&addressdetails=1&limit=5`;
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          addressQuery,
+        )}&format=json&addressdetails=1&limit=5`;
         const res = await fetch(url, {
           headers: {
             Accept: "application/json",
-            "User-Agent": "YourAppName/1.0 (your@email.com)", 
+            "User-Agent": "YourAppName/1.0",
           },
         });
         const data = await res.json();
-        
         const suggestions = data.map((item: any) => ({
           value: item.display_name,
           data: {
@@ -154,55 +142,47 @@ export default function OrderPage() {
   }, []);
 
   const total = cartItems.reduce(
-    (sum: number, item: CartItemWithProduct) =>
+    (sum, item) =>
       sum + (item.product?.prices?.[0]?.price || 0) * item.quantity,
     0,
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cartData?.contragent_phone) {
-      toast.error("Не удалось определить телефон получателя");
+
+    if (!phone) {
+      toast.error("Введите номер телефона");
       return;
     }
 
     setIsSubmitting(true);
+
     try {
-      const goods = cartItems.map((item: CartItemWithProduct) => ({
+      const goods = cartItems.map((item) => ({
         nomenclature_id: item.nomenclature_id,
         quantity: item.quantity,
+        price: item.product?.prices?.[0]?.price || 0,
       }));
 
-      const deliveryInfo = {
-        address: `${address.index}, ${address.city}, ${address.street}, ${address.house}`,
-        delivery_date: Math.floor(Date.now() / 1000) + 86400 * 2,
-        delivery_price: 0,
-        recipient: {
-          name: firstName,
-          surname: lastName,
-          phone,
-        },
-        note: comment,
-      };
+      let deliveryAddress = "";
+      if (deliveryMethod === "delivery") {
+        deliveryAddress = `${address.index}, ${address.city}, ${address.street}, ${address.house}`;
+      }
 
-      const orderData = {
+      const result = await createFullOrder.mutateAsync({
         goods,
-        delivery: deliveryInfo,
-        contragent_phone: cartData.contragent_phone,
-      };
+        customer: { firstName, lastName, phone },
+        delivery: { method: deliveryMethod, address: deliveryAddress },
+        paymentMethod,
+        comment,
+        total,
+      });
 
-      const orderResponse = (await createOrder.mutateAsync(orderData)) as {
-        id?: number;
-        message?: string;
-      };
-      console.log("Ответ от создания заказа:", orderResponse);
-
-      
-      
-      
-
-      toast.success("Заказ успешно оформлен");
-      router.push("/order/success");
+      if (result.type === "payment") {
+        window.location.href = (result as { url: string }).url;
+      } else {
+        router.push("/order/success");
+      }
     } catch (err: unknown) {
       console.error("Ошибка создания заказа:", err);
       let errorMessage = "Произошла ошибка";
@@ -239,14 +219,14 @@ export default function OrderPage() {
           onSubmit={handleSubmit}
           className="flex flex-col lg:flex-row gap-8 sm:gap-6"
         >
-          
+          {/* Левая колонка – форма */}
           <div className="w-full lg:w-3/5 space-y-5 lg:order-none order-2">
-            
+            {/* Блок данных пользователя */}
             <div className="bg-gray-200 p-6 rounded-xl">
               <h2 className="text-xl md:text-2xl font-bold text-[#394426] mb-6">
                 Данные пользователя
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4">
                 <input
                   type="text"
                   placeholder="Имя"
@@ -274,7 +254,7 @@ export default function OrderPage() {
               </div>
             </div>
 
-            
+            {/* Способ получения */}
             <div className="bg-gray-200 p-6 rounded-xl">
               <h2 className="text-xl md:text-2xl font-bold text-[#394426] mb-4">
                 Способ получения
@@ -323,14 +303,12 @@ export default function OrderPage() {
               </div>
             </div>
 
-            
+            {/* Адрес доставки (если выбрана доставка) */}
             {deliveryMethod === "delivery" && (
               <div className="bg-gray-200 p-6 rounded-xl">
                 <h2 className="text-xl md:text-2xl font-bold text-[#394426] mb-4">
                   Адрес доставки
                 </h2>
-
-                
                 <div className="mb-4 relative">
                   <input
                     type="text"
@@ -358,7 +336,6 @@ export default function OrderPage() {
                     </ul>
                   )}
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <input
                     type="text"
@@ -404,7 +381,7 @@ export default function OrderPage() {
               </div>
             )}
 
-            
+            {/* Способ оплаты */}
             <div className="bg-gray-200 p-6 rounded-xl">
               <h2 className="text-xl md:text-2xl font-bold text-[#394426] mb-4">
                 Способ оплаты
@@ -453,7 +430,7 @@ export default function OrderPage() {
               </div>
             </div>
 
-            
+            {/* Комментарий */}
             <div className="bg-gray-200 p-6 rounded-xl">
               <textarea
                 placeholder="Комментарий к заказу"
@@ -464,14 +441,21 @@ export default function OrderPage() {
               />
             </div>
 
-            
+            {/* Кнопка отправки */}
             <div className="mt-6 border-t border-gray-300 pt-6">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#394426] text-white px-6 py-4 rounded-sm font-medium text-lg hover:bg-[#102902] transition-colors disabled:opacity-50 cursor-pointer"
+                className="w-full bg-[#394426] text-white px-6 py-4 rounded-sm font-medium text-lg hover:bg-[#102902] transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
               >
-                {isSubmitting ? "Оформление..." : "Оформить заказ"}
+                {isSubmitting ? (
+                  <>
+                    <LoaderCircle className="animate-spin h-5 w-5" />
+                    Оформление...
+                  </>
+                ) : (
+                  "Оформить заказ"
+                )}
               </button>
               <p className="mt-3 text-sm text-gray-500 text-center">
                 Нажимая на кнопку, вы даёте согласие на{" "}
@@ -480,58 +464,16 @@ export default function OrderPage() {
             </div>
           </div>
 
-          
-          <div className="w-full lg:w-2/5 bg-white rounded-xl p-8 shadow-lg lg:sticky lg:top-24 h-fit lg:order-none order-1">
-            <h2 className="text-2xl font-bold text-[#394426] mb-6">Ваш заказ</h2>
-
-            <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2">
-              {cartItems.map((item: CartItemWithProduct) => {
-                const photo = item.product?.photos?.[0];
-                let imageSrc = "/placeholder.jpg";
-                if (
-                  photo &&
-                  typeof photo === "object" &&
-                  "url" in photo &&
-                  typeof photo.url === "string"
-                ) {
-                  imageSrc = photo.url.includes("pictures/")
-                    ? `${process.env.NEXT_PUBLIC_API_URL}/${photo.url}`
-                    : `${process.env.NEXT_PUBLIC_API_URL}/photos/${photo.url}`;
-                }
-
-                return (
-                  <div
-                    key={item.nomenclature_id}
-                    className="flex items-start gap-4"
-                  >
-                    <div className="relative w-15 h-15 sm:w-20 sm:h-20 rounded-sm overflow-hidden flex-shrink-0">
-                      <Image
-                        src={imageSrc}
-                        alt={item.product?.name || ""}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm sm:text-md font-bold text-[#394426]">
-                        {item.product?.name}
-                      </h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {formatPrice(item.product?.prices?.[0]?.price || 0)} x{" "}
-                        {item.quantity}
-                      </p>
-                    </div>
-                    <div className="text-sm sm:text-md font-bold text-[#394426]">
-                      {formatPrice(
-                        (item.product?.prices?.[0]?.price || 0) * item.quantity,
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-gray-300 flex justify-between items-center text-lg">
+          {/* Правая колонка – интерактивная корзина */}
+          <div className="w-full lg:w-2/5 bg-white rounded-xl p-4 sm:p-8 shadow-lg lg:sticky lg:top-24 h-fit lg:order-none order-1">
+            <h2 className="text-2xl font-bold text-[#394426] mb-6">
+              Ваш заказ
+            </h2>
+            <CartItemsList
+              showTotal={false}
+              className="max-h-[500px] overflow-y-auto"
+            />
+            <div className="mt-6  flex justify-between items-center text-lg">
               <span className="font-medium">Итого:</span>
               <span className="font-bold text-[#394426] text-xl sm:text-2xl">
                 {formatPrice(total)}
