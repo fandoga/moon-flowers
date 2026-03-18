@@ -6,51 +6,44 @@ variables:
   NODE_OPTIONS: "--max-old-space-size=1800"
 
 cache:
-  key: yarn
+  key: npm
   paths:
     - node_modules/
-    - .yarn-cache/
+    - ~/.npm/
 
 build:
   stage: build
   image: node:22
+  tags:
+    - clever-runner
   only:
     - main
   script:
-    - yarn install --frozen-lockfile
+    - npm ci 
     - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
-    - yarn build
+    - npm run build
   artifacts:
     paths:
       - .next/
       - public/
       - package.json
-      - yarn.lock
+      - package-lock.json
       - next.config.js
       - .env.production
     expire_in: 1 week
 
 deploy:
   stage: deploy
-  image: alpine:latest
+  tags:
+    - clever-runner
   only:
     - main
-  before_script:
-    - apk add --no-cache rsync openssh-client
-    - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - eval $(ssh-agent -s)
-    - ssh-add ~/.ssh/id_rsa
-    - ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
   script:
-    - ssh $SSH_USER@$SSH_HOST "mkdir -p /var/www/cle-ver.ru"
-    - rsync -avz --delete .next/ package.json yarn.lock next.config.js .env.production public/ $SSH_USER@$SSH_HOST:/var/www/cle-ver.ru/
-    - ssh $SSH_USER@$SSH_HOST "
-        cd /var/www/cle-ver.ru &&
-        yarn install --production --frozen-lockfile &&
-        pm2 restart cle-ver || pm2 start npm --name cle-ver -- start
-      "
+    - mkdir -p /var/www/cle-ver.ru
+    - cp -rv .next/ public/ package.json package-lock.json next.config.js .env.production /var/www/cle-ver.ru/
+    - cd /var/www/cle-ver.ru
+    - npm ci --production
+    - pm2 restart cle-ver || pm2 start npm --name cle-ver -- start
   environment:
     name: production
     url: http://cle-ver.ru
