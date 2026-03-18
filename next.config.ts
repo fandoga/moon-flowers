@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'dev.tablecrm.com',
+        hostname: 'app.tablecrm.com',
         port: '',
         pathname: '/api/v1/**',
       },
