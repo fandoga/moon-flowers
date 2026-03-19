@@ -100,3 +100,20 @@ export interface NomenclatureQueryParams {
 
 export type Product = NomenclatureItem;
 export type ProductFilters = NomenclatureQueryParams;
+
+export interface Picture {
+  id: number;
+  entity: string;
+  entity_id: number;
+  is_main: boolean;
+  url: string;
+  public_url: string;
+  size: number;
+  updated_at: number;
+  created_at: number;
+}
+
+export interface PicturesResponse {
+  result: Picture[];
+  count: number;
+}

@@ -35,23 +35,13 @@ const LoadingCategoryCard = () => {
       <div className="sm:hidden p-4 flex flex-col flex-1">
         <div className="h-5 mb-4" />
         <div className="flex flex-col gap-2.5 mt-auto">
-          <div className="bg-[#394426] text-white text-sm font-manrope font-medium py-2.5 rounded-md w-full text-center opacity-70 pointer-events-none">
-            Подобрать растение
-          </div>
-          <div className="bg-white text-[#394426] text-sm font-manrope font-medium py-2 rounded-md border border-[#394426]/40 w-full text-center opacity-70 pointer-events-none">
-            Заказать консультацию
-          </div>
+          
         </div>
       </div>
 
       <div className="hidden sm:block absolute inset-x-0 top-4 px-3 sm:px-4 text-left mt-7" />
       <div className="hidden sm:block absolute w-60 left-1/2 -translate-x-1/2 bottom-4 px-3 sm:px-4 flex flex-col gap-2.5">
-        <div className="bg-[#394426] text-white text-xs sm:text-sm md:text-base font-manrope font-medium py-2.5 sm:py-3 rounded-md w-full text-center opacity-70 pointer-events-none">
-          Подобрать растение
-        </div>
-        <div className="bg-white/90 backdrop-blur-sm text-[#394426] text-xs sm:text-sm md:text-base font-manrope font-medium py-2 sm:py-2.5 rounded-md border border-[#394426]/40 w-full text-center opacity-70 pointer-events-none">
-          Заказать консультацию
-        </div>
+        
       </div>
     </div>
   );
