@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/rea
 import { getFavorites, addFavorite, removeFavorite } from '../api/api';
 import { getProductById } from '@/entities/product/api/api';
 import { useContragentPhone } from '@/shared/hooks/useContragentPhone';
+import { NomenclatureItem } from '@/entities/product/types/types';
 
 export const useFavorites = (page = 1, size = 20) => {
   return useQuery({
@@ -53,7 +54,7 @@ export const useFavoriteProducts = (page = 1, size = 20) => {
 
   const isLoading = favLoading || productQueries.some(q => q.isLoading);
   const error = favError || productQueries.find(q => q.error)?.error;
-  const products = productQueries.map(q => q.data).filter(Boolean);
+  const products = productQueries.map(q => q.data).filter(Boolean) as NomenclatureItem[];
 
   return {
     data: products,

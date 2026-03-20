@@ -1,4 +1,3 @@
-// app/favorites/FavoritesPageClient.tsx
 "use client";
 
 import React from "react";
@@ -76,15 +75,11 @@ export default function FavoritesPageClient() {
           variants={itemVariants}
           className="pt-6 grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 lg:gap-8"
         >
-          {products
-            .filter(
-              (product): product is NomenclatureItem => product !== undefined,
-            )
-            .map((product) => (
-              <motion.div key={product.id} variants={itemVariants}>
-                <ProductCardItem product={product} />
-              </motion.div>
-            ))}
+          {products.map((product) => (
+            <motion.div key={product.id} variants={itemVariants}>
+              <ProductCardItem product={product} />
+            </motion.div>
+          ))}
         </motion.div>
 
         {products.length > 8 && (

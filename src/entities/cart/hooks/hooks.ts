@@ -53,7 +53,7 @@ export const useCartProducts = () => {
   const isLoading = cartLoading || productQueries.some((q) => q.isLoading);
   const error = cartError || productQueries.find((q) => q.error)?.error;
 
-  const products = productQueries.map((q) => q.data).filter(Boolean);
+  const products = productQueries.map((q) => q.data).filter(Boolean) as NomenclatureItem[];
 
   const cartMeta = getCartMeta();
 
@@ -69,7 +69,7 @@ export const useCartProducts = () => {
   });
 
   const itemsWithProducts = itemsWithNullable.filter(
-    (item): item is CartItemWithProduct => item !== null,
+    (item): item is CartItemWithProduct => item !== null && item.product !== undefined
   );
 
   itemsWithProducts.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
