@@ -46,4 +46,4 @@ deploy:
     - pm2 restart cle-ver || pm2 start npm --name cle-ver -- start
   environment:
     name: production
-    url: http://cle-ver.ru
+    url: https://cle-ver.ru

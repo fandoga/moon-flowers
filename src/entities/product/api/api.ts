@@ -32,7 +32,7 @@ export const getProductPictures = async (entity_id: number) => {
 
 export const getProductById = async (id: number) => {
   // Получаем основные данные товара
-  const productResponse = await api.get<NomenclatureItem>(`/nomenclature/${id}`, {
+  const productResponse = await api.get<NomenclatureItem>(`/nomenclature/${id}/`, {
     params: {
       with_prices: true,
       with_attributes: true,
