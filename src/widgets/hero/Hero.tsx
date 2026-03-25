@@ -18,10 +18,10 @@ const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-[43px] sm:text-6xl text-center sm:text-left md:text-6xl lg:text-7xl font-bold text-[#394426] leading-tight mb-4 md:mb-6">
+            <h1 className="text-[43px] font-[600] sm:text-6xl text-center sm:text-left md:text-6xl lg:text-7xl text-[#394426] leading-tight mb-4 md:mb-6">
               Наши — <span className="italic font-[400] sm:text-[80px]">зимуют!</span>
             </h1>
-            <p className="text-base text-sm sm:text-lg w-[95%] sm:w-full mx-auto md:text-xl text-center sm:text-left lg:text-2xl text-[#394426] font-medium">
+            <p className="text-base text-sm sm:text-lg w-[95%] sm:w-full mx-auto md:text-xl text-center sm:text-left lg:text-2xl text-[#394426] font-[400]">
               Крупномеры, саженцы, посадочный материал — всё из собственного
               питомника в Казани.
               <br className="hidden sm:block" />
@@ -99,13 +99,13 @@ const Hero = () => {
 
         
         <div className="absolute top-0 left-0 pointer-events-none hidden sm:block">
-          <div className="absolute top-0 left-0 h-[100px] w-[550px] py-4 pointer-events-auto">
-            <div className="flex flex-col sm:flex-row gap-5">
+          <div className="absolute top-0 left-0 h-25 w-140 py-4 pointer-events-auto">
+            <div className="flex flex-col sm:flex-row gap-[21px]">
               <Link href="/catalog">
                 <motion.button
                   whileHover={{ scale: 1 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-[#394426]/90 text-white font-medium text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg border border-[#394426] hover:bg-[#102902] transition-all duration-300 cursor-pointer w-full sm:w-auto"
+                  className="bg-[#394426]/90 text-white font-[500] text-base sm:text-lg px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg border border-[#394426] hover:bg-[#102902] transition-all duration-300 cursor-pointer w-full sm:w-auto"
                 >
                   Перейти в каталог
                 </motion.button>
@@ -114,7 +114,7 @@ const Hero = () => {
                 whileHover={{ scale: 1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsContactsOpen(true)}
-                className="bg-white/20 text-[#394426] font-medium text-base sm:text-lg border-2 border-[#394426]/70 px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg hover:bg-[#102902] hover:text-white hover:border-[#394426] transition-all duration-300 cursor-pointer w-full sm:w-auto"
+                className="bg-white/20 text-[#394426] font-[500] text-base sm:text-lg border-2 border-[#394426]/70 px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg hover:bg-[#102902] hover:text-white hover:border-[#394426] transition-all duration-300 cursor-pointer w-full sm:w-auto"
               >
                 Заказать консультацию
               </motion.button>

@@ -51,23 +51,23 @@ export default function FavoritesPageClient() {
 
         <motion.h1
           variants={itemVariants}
-          className="mt-4 pb-10 text-4xl md:text-5xl font-bold text-[#394426] mb-2"
+          className="mt-4 pb-4 sm:pb-10 text-3xl md:text-5xl font-bold text-[#394426] mb-2"
         >
           Избранное
         </motion.h1>
 
         <motion.div
           variants={itemVariants}
-          className="flex items-center justify-between mb-6 md:mb-8"
+          className="flex px-4 py-4 sm:py-0 rounded-md items-center justify-between mb-2 md:mb-8 bg-[#E3E4E7] sm:bg-[#F8F8F8]"
         >
-          <p className="text-sm md:text-base text-[#394426] font-manrope">
+          <p className="text-md sm:text-lg md:text-base text-[#394426] font-[600]">
             Растения в избранном: {products.length}
           </p>
           <button
             onClick={handleClearAll}
             className="flex gap-1 text-gray-500 text-sm md:text-base font-manrope no-underline hover:underline cursor-pointer"
           >
-            <TrashIcon /> Очистить избранное
+            <TrashIcon /> <span className="hidden sm:inline">Очистить избранное</span>
           </button>
         </motion.div>
 

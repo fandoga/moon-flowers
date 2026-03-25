@@ -111,14 +111,6 @@ const Footer = () => {
                 ))}
               </motion.div>
             )}
-
-            
-            <motion.div
-              variants={fadeInUp}
-              className="mt-12 pt-6 border-t border-white/20 text-sm text-center md:text-left"
-            >
-              <p>питомник растений и деревьев в Казани</p>
-            </motion.div>
           </div>
         </div>
 

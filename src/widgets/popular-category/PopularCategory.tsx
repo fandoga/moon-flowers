@@ -79,10 +79,10 @@ const PopularCategories = () => {
           transition={{ duration: 0.6 }}
           className="text-left mb-10 md:mb-18"
         >
-          <span className="font-semibold text-[clamp(24px,5vw,60px)] leading-[1] tracking-normal text-[#394426]">
-            Подберите растение для своего сада: <br className="hidden sm:block"/> более 5000 <b/>
+          <span className="font-[600] text-[clamp(24px,5vw,60px)] leading-[1] tracking-normal text-[#394426]">
+            Подберите растение <br className="block sm:hidden"/> для своего сада: <br className="hidden sm:block"/> более 5000 <b/>
           </span>
-          <span className="italic font-normal text-[clamp(28px,6vw,70px)] leading-[1] tracking-[-0.02em] text-[#394426]">
+          <span className="italic font-[400] text-[clamp(28px,6vw,70px)] leading-[1] tracking-[-0.02em] text-[#394426]">
             акклиматизированных сортов
           </span>
         </motion.h2>

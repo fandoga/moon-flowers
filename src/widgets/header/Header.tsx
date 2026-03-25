@@ -336,7 +336,7 @@ const Header = () => {
                   </div>
                 </div>
 
-                <nav className="flex-1 space-y-4 text-lg font-medium overflow-y-auto px-2.5">
+                <nav className="flex-1 space-y-4 font-[400] text-md overflow-y-auto px-2.5">
                   <AnimatePresence mode="wait">
                     {!showCatalogSubmenu ? (
                       <motion.div
@@ -356,7 +356,7 @@ const Header = () => {
                           </Link>
                         </div>
                         <div
-                          className="flex items-center justify-between py-2 border-b border-white/80 mx-2 cursor-pointer"
+                          className="flex items-center justify-between py-2  border-b border-white/80 mx-2 cursor-pointer"
                           onClick={() => setShowCatalogSubmenu(true)}
                         >
                           <span>Каталог</span>
@@ -383,7 +383,7 @@ const Header = () => {
                         <div className="border-b border-white/80 mx-2">
                           <button
                             onClick={() => setIsContactsOpen(true)}
-                            className="hover:text-green-800 cursor-pointer"
+                            className="hover:text-green-800 cursor-pointer mb-2"
                           >
                             Контакты
                           </button>
@@ -402,7 +402,7 @@ const Header = () => {
                         exit="exit"
                       >
                         <div
-                          className="flex items-center py-2 mb-4 mx-2 cursor-pointer"
+                          className="flex items-center py-2 mb-4 cursor-pointer "
                           onClick={() => setShowCatalogSubmenu(false)}
                         >
                           <ChevronLeft size={20} className="mr-2" />
@@ -419,11 +419,11 @@ const Header = () => {
                         {categories?.result.map((category) => (
                           <div
                             key={category.id}
-                            className="border-b border-white/80 mx-4"
+                            className="border-b border-white/80 mx-2 "
                           >
                             <Link
                               href={`/catalog/${category.id}`}
-                              className="block py-2"
+                              className="block py-2 font-[300] text-md"
                               onClick={handleLinkClick}
                             >
                               {category.name}
@@ -435,7 +435,7 @@ const Header = () => {
                   </AnimatePresence>
                 </nav>
 
-                <div className="border-t border-white/80 mx-7" />
+                <div className="border-t border-white/80 mx-4" />
                 <div className="p-4 mx-3.5 text-sm space-y-3">
                   <div className="flex items-center gap-2">
                     <svg
