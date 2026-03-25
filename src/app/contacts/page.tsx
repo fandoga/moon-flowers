@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   
   openGraph: {
     title: 'Контакты питомника Клевер Казань',
-    description: 'г. Казань, Мамадышский тракт, 56 / пос. Залесный, ул. Залесная, 58. Звоните: +7 (966) 240-90-53',
+    description: 'г. Казань, Мамадышский тракт, 58 / пос. Залесный, ул. Залесная, 58. Звоните: +7 (966) 240-90-53',
     url: 'https://ваш-домен.ru/contacts',
     images: [
       {
@@ -40,10 +40,10 @@ export default function ContactsPage() {
         <div className="grid md:grid-cols-2 gap-12 mb-12">
           <div>
             <h2 className="text-2xl font-bold text-[#394426] mb-4">Адрес</h2>
-            <p className="text-lg text-gray-700">г. Казань, Мамадышский тракт, 56<br />пос. Залесный, ул. Залесная, 58</p>
+            <p className="text-lg text-gray-700">г. Казань, Мамадышский тракт, 58<br />пос. Залесный, ул. Залесная, 58</p>
 
             <h2 className="text-2xl font-bold text-[#394426] mt-8 mb-4">Телефоны</h2>
-            <p className="text-lg text-gray-700">+7 (843) 240-90-53<br />+7 (966) 240-90-53</p>
+            <p className="text-lg text-gray-700">+7 (966) 240-90-53<br />+7 (966) 240-90-55</p>
 
             <h2 className="text-2xl font-bold text-[#394426] mt-8 mb-4">Email</h2>
             <p className="text-lg text-gray-700">sadkzn@mail.ru</p>

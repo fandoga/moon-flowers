@@ -69,12 +69,12 @@ const Footer = () => {
               </div>
               <div className="text-base space-y-2 text-right">
                 <p>
-                  г. Казань, Мамадышский тракт, 56
+                  г. Казань, Мамадышский тракт, 58
                   <br />
                   пос. Залесный, ул. Залесная, 58
                 </p>
-                <p className="font-medium text-lg">+7 843 240-90-53</p>
                 <p className="font-medium text-lg">+7 966 240-90-53</p>
+                <p className="font-medium text-lg">+7 966 240-90-55</p>
                 <p className="text-lg">sadkzn@mail.ru</p>
               </div>
             </motion.div>
@@ -141,12 +141,12 @@ const Footer = () => {
 
             <motion.div variants={fadeInUp} className="space-y-3 text-base">
               <p>
-                г. Казань, Мамадышский тракт, 56
+                г. Казань, Мамадышский тракт, 58
                 <br />
                 пос. Залесный, ул. Залесная, 58
               </p>
-              <p className="font-medium">+7 843 240-90-53</p>
               <p className="font-medium">+7 966 240-90-53</p>
+              <p className="font-medium">+7 966 240-90-55</p>
               <p>sadkzn@mail.ru</p>
             </motion.div>
           </div>
