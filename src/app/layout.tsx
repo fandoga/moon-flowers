@@ -88,11 +88,18 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body
-        className={`${manrope.variable} ${sourceSerif.variable} font-manrope antialiased text-gray-800 max-w-[1440px] m-auto px-4 sm:px-[40px] bg-[#F8F9FB] overflow-x-hidden`}
+        className={`
+          ${manrope.variable} ${sourceSerif.variable}
+          font-manrope antialiased text-gray-800 bg-[#F8F9FB]
+          flex flex-col min-h-screen
+          overflow-x-hidden
+        `}
       >
         <Providers>
           <Header />
-          {children}
+          <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-[40px]">
+            {children}
+          </main>
           <Footer />
           <CartModal />
         </Providers>
