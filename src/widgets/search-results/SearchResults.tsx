@@ -30,7 +30,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query }) => {
   const { data, isLoading, error } = useProducts({ 
     name: query, 
     limit: 100, 
-    with_photos: true, 
+    has_photos: true, 
     with_prices: true 
   });
 

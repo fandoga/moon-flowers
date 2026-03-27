@@ -29,7 +29,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     setIsLoading(true);
     try {
       console.log("отправка запроса")
-      const params: any = { limit: 5, with_photos: true, with_prices: true };
+      const params: any = { limit: 5, has_photos: true, with_prices: true };
       if (searchQuery.trim()) {
         params.name = searchQuery;
       }

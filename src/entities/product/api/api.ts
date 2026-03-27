@@ -13,7 +13,7 @@ export const getProductsByCategoryAndName = async (categoryId: number, name: str
       name: name,
       limit,
       with_attributes: true,
-      with_photos: true,
+      has_photos: true,
       with_prices: true,
     },
   });

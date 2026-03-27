@@ -44,7 +44,7 @@ export const useCategoryWithPicture = (id: number) => {
   };
 };
 
-export const useCategoriesWithPictures = (limit = 100, offset = 0) => {
+export const useCategoriesWithPictures = (limit = 100, offset = 0, onlyWithPhotos = false) => {
   const categoriesQuery = useCategories(limit, offset);
 
   const pictureQueries = useQueries({
@@ -64,11 +64,16 @@ export const useCategoriesWithPictures = (limit = 100, offset = 0) => {
     const imageUrl = mainPicture
       ? `${process.env.NEXT_PUBLIC_API_URL}/${mainPicture.url}`
       : '/placeholder-category.jpg';
-    return { ...category, imageUrl };
+    return { ...category, imageUrl, hasPhoto: !!mainPicture };
   });
 
+  // Фильтруем, если требуется только с фото
+  const filtered = onlyWithPhotos
+    ? categoriesWithPictures?.filter(cat => cat.hasPhoto)
+    : categoriesWithPictures;
+
   return {
-    data: categoriesWithPictures,
+    data: filtered,
     count: categoriesQuery.data?.count || 0,
     isLoading,
     error,
