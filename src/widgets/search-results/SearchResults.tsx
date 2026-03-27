@@ -32,6 +32,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query }) => {
     limit: 100, 
     has_photos: true, 
     with_prices: true 
+    with_photos: true,
   });
 
   if (isLoading) {

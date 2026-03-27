@@ -87,6 +87,7 @@ export interface NomenclatureQueryParams {
   with_balance?: boolean;
   with_attributes?: boolean;
   with_hash?: boolean;
+  with_photos?: boolean,
   only_main_from_group?: boolean;
   min_price?: number;
   max_price?: number;

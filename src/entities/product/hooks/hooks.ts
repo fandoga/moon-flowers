@@ -5,7 +5,7 @@ import { NomenclatureQueryParams } from '../types/types';
 export const useProducts = (params?: NomenclatureQueryParams) => {
   return useQuery({
     queryKey: ['products', params],
-    queryFn: () => getProducts({ ...params, has_photos: true }), // добавлено
+    queryFn: () => getProducts(params),
   });
 };
 
@@ -18,6 +18,7 @@ export const useProductsByCategory = (categoryId: number, limit = 20, offset = 0
       offset, 
       has_photos: true,
       with_prices: true,
+      with_photos: true,
       with_attributes: true,
     }),
   });

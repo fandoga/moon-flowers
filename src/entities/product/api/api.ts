@@ -15,6 +15,7 @@ export const getProductsByCategoryAndName = async (categoryId: number, name: str
       with_attributes: true,
       has_photos: true,
       with_prices: true,
+      with_photos: true,
     },
   });
   return response.data;

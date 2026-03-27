@@ -44,7 +44,7 @@ export const useCategoryWithPicture = (id: number) => {
   };
 };
 
-export const useCategoriesWithPictures = (limit = 100, offset = 0, onlyWithPhotos = false) => {
+export const useCategoriesWithPictures = (limit = 100, offset = 0, onlyWithPhotos = true) => {
   const categoriesQuery = useCategories(limit, offset);
 
   const pictureQueries = useQueries({
