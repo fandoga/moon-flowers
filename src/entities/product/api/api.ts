@@ -37,7 +37,7 @@ export const getProductById = async (id: number) => {
     params: {
       with_prices: true,
       with_attributes: true,
-      // with_photos можно не включать, так как мы загрузим их отдельно
+      with_photos: true
     },
   });
   
