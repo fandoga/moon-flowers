@@ -67,7 +67,6 @@ export const useCategoriesWithPictures = (limit = 100, offset = 0, onlyWithPhoto
     return { ...category, imageUrl, hasPhoto: !!mainPicture };
   });
 
-  // Фильтруем, если требуется только с фото
   const filtered = onlyWithPhotos
     ? categoriesWithPictures?.filter(cat => cat.hasPhoto)
     : categoriesWithPictures;
