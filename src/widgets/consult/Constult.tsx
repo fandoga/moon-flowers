@@ -1,11 +1,13 @@
 // widgets/consult/Constult.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { ContactsModal } from "../contacts-modal/ContactsModal";
 
 const Constult = () => {
+  const [isContactsOpen, setIsContactsOpen] = useState(false);
   const fadeInUp = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
@@ -38,6 +40,10 @@ const Constult = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsContactsOpen(true);
+                }}
                 className="bg-[#394426] max-w-[318px] text-white font-manrope font-medium text-base text-[12px] sm:text-xl px-8 sm:px-7 py-3.5 sm:py-4.5 rounded-lg hover:bg-[#102902] transition-colors duration-300 whitespace-nowrap cursor-pointer"
               >
                 Заказать обратный звонок
@@ -112,6 +118,10 @@ const Constult = () => {
           </motion.div>
         </motion.div>
       </motion.div>
+      <ContactsModal
+        isOpen={isContactsOpen}
+        onClose={() => setIsContactsOpen(false)}
+      />
     </section>
   );
 };

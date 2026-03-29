@@ -98,7 +98,7 @@ const PopularCategories = () => {
                       <div className="absolute hidden sm:block inset-0 bg-black/30 group-hover:bg-black/20 transition-colors pointer-events-none" />
 
                       {/* Кнопки для десктопа */}
-                      <div className="hidden mx-auto mt-[94%] sm:block w-70 flex flex-col gap-2.5 z-50 relative">
+                      <div className="hidden mx-auto mt-[94%] sm:block w-70 flex flex-col gap-2.5 z-30 relative">
                         <Link href={`/catalog/${category.id}`}>
                           <button
                             className="bg-[#394426] mb-5 text-white text-xs sm:text-xl font-manrope font-medium py-2.5 sm:py-4.5 rounded-md hover:bg-[#102902] transition-colors w-full cursor-pointer"
