@@ -3,7 +3,7 @@ import { IOrder, IDeliveryInfo, PaymentRequest, IContragent } from '../types/typ
 
 // ----- Контрагенты -----
 export const findContragentByPhone = async (phone: string) => {
-  const response = await api.get('/contragents', {
+  const response = await api.get('/contragents/', {
     params: { phone },
   });
 
