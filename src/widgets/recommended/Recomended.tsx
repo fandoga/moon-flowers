@@ -73,8 +73,10 @@ const Recomended = () => {
                 key={category.id}
                 className="flex-shrink-0 w-[250px] lg:w-[285px] snap-start"
               >
-                <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 border border-[#394426]">
-                  <div className="relative aspect-square w-[235px] h-[235px] mx-6 mt-6 rounded-lg">
+                {/* Карточка с гибкой высотой */}
+                <div className="relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 border border-[#394426] h-full flex flex-col">
+                  {/* Блок с картинкой — фиксированный размер */}
+                  <div className="relative aspect-square w-[235px] h-[235px] mx-6 mt-6 rounded-lg flex-shrink-0">
                     <Image
                       src={category.imageUrl}
                       alt={category.name}
@@ -83,11 +85,13 @@ const Recomended = () => {
                       unoptimized
                     />
                   </div>
-                  <div className="p-4 md:p-5 text-center">
-                    <h3 className="text-lg md:text-xl font-manrope font-bold text-[#394426] mb-3 md:mb-4">
+
+                  {/* Блок с текстом и кнопками — занимает всё оставшееся место */}
+                  <div className="p-4 md:p-5 flex flex-col flex-grow">
+                    <h3 className="text-lg md:text-xl font-manrope font-bold text-[#394426] mb-3 md:mb-4 text-center break-words">
                       {category.name}
                     </h3>
-                    <div className="flex flex-col gap-2.5 items-center">
+                    <div className="flex flex-col gap-2.5 items-center mt-auto">
                       <Link href={`/catalog/${category.id}`} className="w-[200px]">
                         <button className="bg-[#394426] text-white py-3 px-4 text-[12px] md:text-base rounded-lg w-full max-w-[200px] mx-auto hover:bg-[#102902] transition-colors cursor-pointer">
                           Подобрать растение

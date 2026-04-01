@@ -1,66 +1,51 @@
 // entities/category/hooks/hooks.ts
-import { useQuery, useQueries } from '@tanstack/react-query';
-import { getCategories, getCategoryPictures, getCategoryTree, getCategoryById } from '../api/api';
+
+import { useQuery } from '@tanstack/react-query';
+import { getCategories, getCategoryTree, getCategoryById, getCategoriesPicturesBatch } from '../api/api';
 import { CategoryTreeParams } from '../types/types';
 
-export const useCategories = (limit = 100, offset = 0) => {
+// Новые хуки (с возможностью включения фото)
+export const useCategories = (limit = 100, offset = 0, includePhoto = true) => {
   return useQuery({
-    queryKey: ['categories', limit, offset],
-    queryFn: () => getCategories({ limit, offset }),
+    queryKey: ['categories', limit, offset, includePhoto],
+    queryFn: () => getCategories({ limit, offset, include_photo: includePhoto }),
   });
 };
 
-export const useCategory = (id: number) => {
+export const useCategory = (id: number, includePhoto = true) => {
   return useQuery({
-    queryKey: ['category', id],
+    queryKey: ['category', id, includePhoto],
     queryFn: () => getCategoryById(id),
     enabled: !!id,
   });
 };
 
-export const useCategoryWithPicture = (id: number) => {
-  const categoryQuery = useCategory(id);
-  const picturesQuery = useQuery({
-    queryKey: ['category-picture', id],
-    queryFn: () => getCategoryPictures(id),
-    enabled: !!id && !!categoryQuery.data,
+export const useCategoryTree = (params?: CategoryTreeParams) => {
+  const includePhoto = params?.include_photo ?? true;
+  return useQuery({
+    queryKey: ['categoryTree', params],
+    queryFn: () => getCategoryTree({ ...params, include_photo: includePhoto }),
   });
-
-  const isLoading = categoryQuery.isLoading || picturesQuery.isLoading;
-  const error = categoryQuery.error || picturesQuery.error;
-
-  const category = categoryQuery.data;
-  const imageUrl = (() => {
-    if (!category || !picturesQuery.data) return '/placeholder-category.jpg';
-    const pictures = picturesQuery.data.result;
-    const mainPicture = pictures.find(p => p.is_main) || pictures[0];
-    return mainPicture ? `${process.env.NEXT_PUBLIC_API_URL}/${mainPicture.url}` : '/placeholder-category.jpg';
-  })();
-
-  return {
-    data: category ? { ...category, imageUrl } : undefined,
-    isLoading,
-    error,
-  };
 };
 
 export const useCategoriesWithPictures = (limit = 100, offset = 0, onlyWithPhotos = true) => {
   const categoriesQuery = useCategories(limit, offset);
-
-  const pictureQueries = useQueries({
-    queries: (categoriesQuery.data?.result || []).map((category) => ({
-      queryKey: ['category-picture', category.id],
-      queryFn: () => getCategoryPictures(category.id),
-      enabled: !!categoriesQuery.data,
-    })),
+  
+  // Получаем список id категорий
+  const categoryIds = categoriesQuery.data?.result.map(c => c.id) || [];
+  
+  const picturesQuery = useQuery({
+    queryKey: ['categories-pictures-batch', categoryIds],
+    queryFn: () => getCategoriesPicturesBatch(categoryIds),
+    enabled: categoriesQuery.isSuccess && categoryIds.length > 0,
   });
 
-  const isLoading = categoriesQuery.isLoading || pictureQueries.some((q) => q.isLoading);
-  const error = categoriesQuery.error || pictureQueries.find((q) => q.error)?.error;
+  const isLoading = categoriesQuery.isLoading || picturesQuery.isLoading;
+  const error = categoriesQuery.error || picturesQuery.error;
 
-  const categoriesWithPictures = categoriesQuery.data?.result.map((category, index) => {
-    const pictures = pictureQueries[index]?.data?.result || [];
-    const mainPicture = pictures.find((p) => p.is_main) || pictures[0];
+  const categoriesWithPictures = categoriesQuery.data?.result.map(category => {
+    const pictures = picturesQuery.data?.result[category.id] || [];
+    const mainPicture = pictures.find(p => p.is_main) || pictures[0];
     const imageUrl = mainPicture
       ? `${process.env.NEXT_PUBLIC_API_URL}/${mainPicture.url}`
       : '/placeholder-category.jpg';
@@ -79,9 +64,29 @@ export const useCategoriesWithPictures = (limit = 100, offset = 0, onlyWithPhoto
   };
 };
 
-export const useCategoryTree = (params?: CategoryTreeParams) => {
-  return useQuery({
-    queryKey: ['categoryTree', params],
-    queryFn: () => getCategoryTree(params),
+export const useCategoryWithPicture = (id: number) => {
+  const categoryQuery = useCategory(id);
+  
+  const picturesQuery = useQuery({
+    queryKey: ['category-picture', id],
+    queryFn: () => getCategoriesPicturesBatch([id]),
+    enabled: !!id && !!categoryQuery.data,
   });
+
+  const isLoading = categoryQuery.isLoading || picturesQuery.isLoading;
+  const error = categoryQuery.error || picturesQuery.error;
+
+  const category = categoryQuery.data;
+  const imageUrl = (() => {
+    if (!category || !picturesQuery.data) return '/placeholder-category.jpg';
+    const pictures = picturesQuery.data.result[id] || [];
+    const mainPicture = pictures.find(p => p.is_main) || pictures[0];
+    return mainPicture ? `${process.env.NEXT_PUBLIC_API_URL}/${mainPicture.url}` : '/placeholder-category.jpg';
+  })();
+
+  return {
+    data: category ? { ...category, imageUrl } : undefined,
+    isLoading,
+    error,
+  };
 };

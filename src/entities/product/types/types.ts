@@ -26,6 +26,12 @@ export interface NomenclaturePhoto {
   public_url?: string;
 }
 
+export interface BatchPicturesResponse {
+  result: Record<number, Picture[]>;
+  count: number;
+  processing_time_ms: number;
+}
+
 export interface NomenclatureItem {
   name: string;
   type: string;

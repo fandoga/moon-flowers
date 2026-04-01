@@ -1,6 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { getProducts, getProductsByCategoryAndName } from '../api/api';
 import { NomenclatureQueryParams } from '../types/types';
+import { getProductsPicturesBatch } from '../api/api';
+
+export const useProductsPicturesBatch = (entityIds: number[]) => {
+  return useQuery({
+    queryKey: ['products', 'pictures', 'batch', entityIds],
+    queryFn: () => getProductsPicturesBatch(entityIds),
+    enabled: entityIds.length > 0,   // запрос выполняется только если есть ID
+    staleTime: 5 * 60 * 1000,        // данные считаются свежими 5 минут (по желанию)
+  });
+};
 
 export const useProducts = (params?: NomenclatureQueryParams) => {
   return useQuery({

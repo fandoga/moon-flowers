@@ -24,6 +24,12 @@ export interface CategoryQueryParams {
   include_photo?: boolean;
 }
 
+export interface BatchPicturesResponse {
+  result: Record<number, Picture[]>;
+  count: number;
+  processing_time_ms: number;
+}
+
 export interface CategoryTreeItem {
   key: number;
   name: string;
