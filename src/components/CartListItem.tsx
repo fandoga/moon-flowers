@@ -43,7 +43,7 @@ export const CartItemsList: React.FC<CartItemsListProps> = ({
   }
 
   if (items.length === 0) {
-    return <div className="text-center py-12 text-gray-500">Ваша корзина пуста</div>;
+    return <div className="text-center py-12 text-gray-500">Ваша заявки пусты</div>;
   }
 
   return (
@@ -81,7 +81,7 @@ export const CartItemsList: React.FC<CartItemsListProps> = ({
                   />
                   <div className="text-right">
                     <p className="font-bold text-[#394426]">
-                      {formatPrice(price * item.quantity)}
+                      от {formatPrice(price * item.quantity)}
                     </p>
                   </div>
                 </div>

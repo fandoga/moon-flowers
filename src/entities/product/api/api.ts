@@ -8,6 +8,8 @@ import {
   BatchPicturesResponse,
 } from "../types/types";
 
+const MAX_VISIBLE_PRICE = 10000;
+
 export const getProducts = async (params?: NomenclatureQueryParams) => {
   const needPhotos = params?.with_photos === true;
   const queryParams = needPhotos ? { ...params, with_photos: false } : params;
@@ -52,6 +54,7 @@ export const getProductsByCategoryAndName = async (
       has_photos: true,
       with_prices: true,
       with_photos: false,
+      max_price: MAX_VISIBLE_PRICE,
     },
   });
 

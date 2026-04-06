@@ -207,7 +207,7 @@ export default function OrderPage() {
         <Breadcrumb
           paths={[
             { url: "/", name: "Главная" },
-            { url: "/cart", name: "Корзина" },
+            { url: "/cart", name: "Заявки" },
             { url: "/order", name: "Оформление заказа" },
           ]}
         />

@@ -195,7 +195,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           <div>
             <div className="font-medium text-[#394426]">{product.name}</div>
             <div className="text-sm text-gray-600">
-              {product.prices?.[0]?.price
+              от {product.prices?.[0]?.price
                 ? formatPrice(product.prices[0].price)
                 : ""}
             </div>

@@ -260,7 +260,7 @@ const Header = () => {
                   <div
                     className={`text-sm font-medium text-black leading-tight ${cartCount > 0 ? "pt-4" : ""}`}
                   >
-                    <span>Корзина</span>
+                    <span>Заявка</span>
                     {cartCount > 0 && (
                       <p className="text-xs text-[#8B8C95]">
                         на сумму {formatPrice(cartTotal)}
@@ -631,7 +631,7 @@ const Header = () => {
                 </span>
               )}
             </div>
-            <span className="text-xs">Корзина</span>
+            <span className="text-xs">Заявка</span>
           </button>
         </div>
       </div>

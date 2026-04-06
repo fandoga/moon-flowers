@@ -227,7 +227,7 @@ const ProductPageContent: React.FC<Props> = ({
                       </span>
                     </div>
                     <span className="pl-8 text-sm md:text-md text-gray-400">
-                      {formatPrice(p.prices?.[0]?.price || 0)}
+                      От {formatPrice(p.prices?.[0]?.price || 0)}
                     </span>
                   </label>
                 ))}
@@ -236,7 +236,7 @@ const ProductPageContent: React.FC<Props> = ({
           )}
           <div className="">
             <p className="text-2xl lg:text-4xl font-bold text-[#394426] mb-4">
-              {formatPrice(price)} / шт.
+              От {formatPrice(price)} / шт.
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end gap-6 md:gap-8">
               <div className="flex items-center gap-4">
