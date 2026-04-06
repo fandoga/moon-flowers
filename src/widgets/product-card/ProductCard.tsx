@@ -17,7 +17,11 @@ interface ProductCardProps {
   isLoading?: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, isLoading: externalLoading }) => {
+const ProductCard: React.FC<ProductCardProps> = ({
+  product,
+  onClick,
+  isLoading: externalLoading,
+}) => {
   const router = useRouter();
   const [internalNavigating, setInternalNavigating] = useState(false);
   const quantityInCart = useCartItemQuantity(product.id);
@@ -28,6 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, isLoading: 
         ? `${process.env.NEXT_PUBLIC_API_URL}/${product.photos[0].url}`
         : `${process.env.NEXT_PUBLIC_API_URL}/photos/${product.photos[0].url}`
       : "/placeholder.jpg";
+
   const price = product.prices?.[0]?.price || 0;
   const normalizedName = normalizeProductName(product.name);
 
@@ -38,7 +43,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, isLoading: 
     } else {
       setInternalNavigating(true);
       const params = new URLSearchParams({
-        category: product.category.toString(),
+        category: product.category != null ? product.category.toString() : "0",
         name: normalizedName,
         variantId: product.id.toString(),
       });
@@ -54,7 +59,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, isLoading: 
     } else {
       setInternalNavigating(true);
       const params = new URLSearchParams({
-        category: product.category.toString(),
+        category: product.category != null ? product.category.toString() : "0",
         name: normalizedName,
         variantId: product.id.toString(),
       });
@@ -67,7 +72,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, isLoading: 
   return (
     <div
       onClick={handleCardClick}
-      className="bg-white rounded-xl overflow-hidden shadow-md relative flex flex-col h-full cursor-pointer hover:scale-[1.02] transition-transform duration-200"
+      className="bg-white rounded-xl overflow-hidden relative flex flex-col h-full cursor-pointer hover:scale-[1.02] transition-transform duration-200"
     >
       {showLoader && (
         <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
@@ -94,8 +99,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, isLoading: 
         </h3>
 
         <div className="mt-auto">
+          {/* ✅ "от" price prefix */}
           <p className="text-xl md:text-2xl font-bold text-[#394426] mb-3">
-            {formatPrice(price)}
+            от {formatPrice(price)}
           </p>
 
           <div className="flex w-full gap-2 sm:gap-4">
@@ -118,9 +124,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, isLoading: 
               className="flex-1 border-2 w-[125px] w-full text-xs border-[#394426] text-[#394426] px-3 py-2 sm:px-4 sm:py-2.5 rounded-md text-[15px] sm:text-[17px] hover:bg-[#102902] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
             >
               {showLoader ? (
-                <Loader2 className="animate-spin mr-2" size={18} />
-              ) : null}
-              Подробнее
+                <Loader2 className="animate-spin mr-2 " size={18} />
+              ) : <span className="">Подробнее</span>}
             </button>
           </div>
         </div>

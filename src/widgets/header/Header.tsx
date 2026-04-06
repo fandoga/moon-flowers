@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X, ChevronRight, ChevronLeft } from "lucide-react";
+import { Menu, X, ChevronRight, ChevronLeft, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import CartModal from "../cart-modal/CartModal";
 import { useCategories } from "@/entities/category/hooks/hooks";
 import { useFavorites } from "@/entities/favorites/hooks/hooks";
 import { useCart, useCartProducts } from "@/entities/cart/hooks/hooks";
@@ -13,6 +12,9 @@ import { formatPrice } from "@/lib/utils/formatPrice";
 import { SearchInput } from "@/features/search/SearchInput";
 import { useCartStore } from "@/entities/cart/store/cartStore";
 import { ContactsModal } from "@/widgets/contacts-modal/ContactsModal";
+
+const PHONE = "+79662409053";
+const PHONE_DISPLAY = "+7 (966) 240-90-53";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -35,31 +37,18 @@ const Header = () => {
 
   const menuVariants = {
     hidden: { x: "100%" },
-    visible: {
-      x: 0,
-      transition: {
-        type: "tween" as const,
-        duration: 0.3,
-      },
-    },
-    exit: {
-      x: "100%",
-      transition: {
-        type: "tween" as const,
-        duration: 0.3,
-      },
-    },
+    visible: { x: 0, transition: { type: "tween" as const, duration: 0.3 } },
+    exit: { x: "100%", transition: { type: "tween" as const, duration: 0.3 } },
   };
 
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
-
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [isMobileMenuOpen]);
 
@@ -76,12 +65,20 @@ const Header = () => {
 
   return (
     <>
+      {/* ── Top info bar (desktop) ── */}
       <div className="hidden md:block w-screen ml-[calc(-50vw+50%)] mr-[calc(-50vw+50%)] bg-gray-100">
         <div className="text-sm max-w-[1440px] sm:px-[40px] mx-auto">
           <div className="container mx-auto py-1.5 flex justify-between items-center text-gray-700">
+            {/* ✅ Left nav: added Акции and Партнёрам */}
             <div className="flex items-center space-x-6">
               <Link href="/company" className="hover:text-green-800">
                 О компании
+              </Link>
+              <Link href="/actions" className="hover:text-green-800">
+                Акции
+              </Link>
+              <Link href="/partners" className="hover:text-green-800">
+                Партнёрам
               </Link>
               <Link href="/blog" className="hover:text-green-800">
                 Блог
@@ -103,14 +100,13 @@ const Header = () => {
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
+                    fillRule="evenodd"
+                    clipRule="evenodd"
                     d="M10.8 0H1.19999C0.719075 0 0.301866 0.29867 0.11087 0.726737C0.175104 0.741479 0.237672 0.769379 0.294923 0.811122L6.00001 4.97106L11.7051 0.811122C11.7623 0.769379 11.8249 0.741479 11.8891 0.726737C11.6981 0.29867 11.2809 0 10.8 0ZM12 1.90392L6.29493 6.06386C6.11785 6.19297 5.88216 6.19297 5.70508 6.06386L0 1.90392V8.74997C0 9.4375 0.540001 10 1.19999 10H10.8C11.46 10 12 9.4375 12 8.74997V1.90392Z"
                     fill="#8B8C95"
                   />
                 </svg>
-
-                <span className="">sadkzn@mail.ru</span>
+                <span>sadkzn@mail.ru</span>
               </div>
               <div className="flex items-center space-x-1">
                 <svg
@@ -125,7 +121,6 @@ const Header = () => {
                     fill="#8B8C95"
                   />
                 </svg>
-
                 <span>
                   г. Казань, Мамадышский тракт, 58 пос. Залесный, ул. Залесная,
                   58
@@ -135,10 +130,12 @@ const Header = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Main header bar ── */}
       <div className="w-screen ml-[calc(-50vw+50%)] mr-[calc(-50vw+50%)] bg-[#F8F9FB] sm:shadow-xs sm:sticky top-0 z-50">
         <header className="max-w-[1440px] mx-auto sm:px-[40px] overscroll-y-contain">
           <div className="container mx-auto">
-            
+            {/* Desktop layout */}
             <div className="hidden md:flex items-center justify-around py-4">
               <Link href="/" className="flex items-center">
                 <div className="relative w-32 h-20">
@@ -177,7 +174,11 @@ const Header = () => {
               </div>
               <div className="flex items-center space-x-6">
                 <div className="text-right">
-                  <div className="flex items-center justify-end font-medium w-[215px] flex-wrap">
+                  {/* ✅ Clickable phone number */}
+                  <a
+                    href={`tel:${PHONE}`}
+                    className="flex items-center justify-end font-medium w-[215px] flex-wrap hover:text-[#394426] transition-colors"
+                  >
                     <svg
                       width="17"
                       height="16"
@@ -191,11 +192,11 @@ const Header = () => {
                         fill="#1D1D1B"
                       />
                     </svg>
-                    <span className="text-lg">+7 (966) 240-90-53</span>
-                    <p className="text-[12.5px] text-gray-500">
+                    <span className="text-lg">{PHONE_DISPLAY}</span>
+                    <p className="text-[12.5px] text-gray-500 w-full text-right">
                       ежедневно с 09:00 до 18:00
                     </p>
-                  </div>
+                  </a>
                 </div>
                 <Link
                   href="/favorites"
@@ -215,9 +216,8 @@ const Header = () => {
                       className="group-hover:fill-[#255022] transition-colors duration-200"
                     />
                   </svg>
-
                   {favoritesCount > 0 && (
-                    <span className="group-hover:scale-110 transition-transform duration-200 absolute  top-1.5 right-1.5 bg-[#394426] text-white text-[10px] font-medium rounded-full w-4 h-4 flex items-center justify-center">
+                    <span className="absolute top-1.5 right-1.5 bg-[#394426] text-white text-[10px] font-medium rounded-full w-4 h-4 flex items-center justify-center">
                       {favoritesCount}
                     </span>
                   )}
@@ -245,7 +245,7 @@ const Header = () => {
                     />
                   </svg>
                   {cartCount > 0 && (
-                    <span className="group-hover:scale-110 transition-transform duration-200 absolute top-1.5 right-1.5 bg-[#394426] text-white text-[10px] font-medium rounded-full w-4 h-4 flex items-center justify-center">
+                    <span className="absolute top-1.5 right-1.5 bg-[#394426] text-white text-[10px] font-medium rounded-full w-4 h-4 flex items-center justify-center">
                       {cartCount}
                     </span>
                   )}
@@ -256,7 +256,6 @@ const Header = () => {
                     e.preventDefault();
                     openCart();
                   }}
-                  className=""
                 >
                   <div
                     className={`text-sm font-medium text-black leading-tight ${cartCount > 0 ? "pt-4" : ""}`}
@@ -272,8 +271,8 @@ const Header = () => {
               </div>
             </div>
 
-            
-            <div className="flex md:hidden items-center justify-between py-2 px-4 relative shadow-sm overscroll-y-contain z-1">
+            {/* Mobile top bar */}
+            <div className="flex md:hidden items-center justify-between py-2 px-4 relative shadow-sm z-1">
               <Link href="/">
                 <div className="relative w-28 h-15">
                   <Image
@@ -285,7 +284,15 @@ const Header = () => {
                   />
                 </div>
               </Link>
-              <div className="flex items-center space-x-4 gap-3">
+              <div className="flex items-center gap-3">
+                {/* ✅ Phone icon for mobile */}
+                <a
+                  href={`tel:${PHONE}`}
+                  className="bg-[#394426]/10 p-2 rounded-md text-[#394426] hover:bg-[#394426]/20 transition-colors"
+                  aria-label="Позвонить"
+                >
+                  <Phone size={22} />
+                </a>
                 <button
                   onClick={() => setIsMobileMenuOpen(true)}
                   className="text-white bg-[#394426] p-2 rounded-md cursor-pointer"
@@ -297,7 +304,7 @@ const Header = () => {
           </div>
         </header>
 
-        
+        {/* Mobile slide-out menu */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
@@ -356,7 +363,7 @@ const Header = () => {
                           </Link>
                         </div>
                         <div
-                          className="flex items-center justify-between py-2  border-b border-white/80 mx-2 cursor-pointer"
+                          className="flex items-center justify-between py-2 border-b border-white/80 mx-2 cursor-pointer"
                           onClick={() => setShowCatalogSubmenu(true)}
                         >
                           <span>Каталог</span>
@@ -371,7 +378,7 @@ const Header = () => {
                             О компании
                           </Link>
                         </div>
-                        <div className="border-b border-white/80 mx-2 mb-3">
+                        <div className="border-b border-white/80 mx-2">
                           <Link
                             href="/blog"
                             className="block py-2"
@@ -380,10 +387,20 @@ const Header = () => {
                             Блог
                           </Link>
                         </div>
+                        {/* ✅ Added Partners */}
+                        <div className="border-b border-white/80 mx-2">
+                          <Link
+                            href="/partners"
+                            className="block py-2"
+                            onClick={handleLinkClick}
+                          >
+                            Партнёрам
+                          </Link>
+                        </div>
                         <div className="border-b border-white/80 mx-2">
                           <button
                             onClick={() => setIsContactsOpen(true)}
-                            className="hover:text-green-800 cursor-pointer mb-2"
+                            className="block py-2 cursor-pointer w-full text-left"
                           >
                             Контакты
                           </button>
@@ -402,7 +419,7 @@ const Header = () => {
                         exit="exit"
                       >
                         <div
-                          className="flex items-center py-2 mb-4 cursor-pointer "
+                          className="flex items-center py-2 mb-4 cursor-pointer"
                           onClick={() => setShowCatalogSubmenu(false)}
                         >
                           <ChevronLeft size={20} className="mr-2" />
@@ -419,7 +436,7 @@ const Header = () => {
                         {categories?.result.map((category) => (
                           <div
                             key={category.id}
-                            className="border-b border-white/80 mx-2 "
+                            className="border-b border-white/80 mx-2"
                           >
                             <Link
                               href={`/catalog/${category.id}`}
@@ -437,26 +454,11 @@ const Header = () => {
 
                 <div className="border-t border-white/80 mx-4" />
                 <div className="p-4 mx-3.5 text-sm space-y-3">
-                  <div className="flex items-center gap-2">
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M7.6732 8.05696L7.39488 8.34998C7.39488 8.34998 6.7333 9.04651 4.92746 7.1453C3.12163 5.24408 3.7832 4.54756 3.7832 4.54756L3.95848 4.36302C4.39027 3.90843 4.43098 3.1786 4.05426 2.64579L3.28366 1.55588C2.81739 0.896421 1.91642 0.8093 1.38199 1.37194L0.422791 2.38181C0.157805 2.6608 -0.0197686 3.02244 0.00176469 3.42363C0.0568553 4.45001 0.495431 6.65832 2.94272 9.23487C5.53798 11.9672 7.97307 12.0757 8.96883 11.9775C9.2838 11.9464 9.55774 11.7765 9.77846 11.5442L10.6466 10.6302C11.2326 10.0133 11.0673 8.95557 10.3176 8.52402L9.15006 7.852C8.65776 7.56863 8.05796 7.65188 7.6732 8.05696Z"
-                        fill="#F8F9FB"
-                      />
-                      <path
-                        d="M9.00001 6.00001C10.6569 6.00001 12 4.65687 12 3C12 1.34315 10.6569 0 9.00001 0C7.34314 0 6 1.34315 6 3C6 3.47991 6.11269 3.9335 6.31304 4.33575C6.36628 4.44265 6.38401 4.56482 6.35314 4.68019L6.17445 5.348C6.09689 5.6379 6.36211 5.90312 6.65201 5.82556L7.31982 5.64687C7.43519 5.616 7.55736 5.63372 7.66426 5.68696C8.06651 5.88732 8.5201 6.00001 9.00001 6.00001Z"
-                        fill="#F8F9FB"
-                      />
-                    </svg>
-
-                    <span>+7 (966) 240-90-53</span>
-                  </div>
+                  {/* ✅ Clickable phone in mobile menu */}
+                  <a href={`tel:${PHONE}`} className="flex items-center gap-2">
+                    <Phone size={14} className="flex-shrink-0" />
+                    <span>{PHONE_DISPLAY}</span>
+                  </a>
                   <div className="flex items-center gap-2">
                     <svg
                       width="11"
@@ -470,7 +472,6 @@ const Header = () => {
                         fill="#F8F9FB"
                       />
                     </svg>
-
                     <span>
                       г. Казань, Мамадышский тракт, 58
                       <br />
@@ -486,13 +487,12 @@ const Header = () => {
                       xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
+                        fillRule="evenodd"
+                        clipRule="evenodd"
                         d="M10.8 0H1.19999C0.719075 0 0.301866 0.29867 0.11087 0.726737C0.175104 0.741479 0.237672 0.769379 0.294923 0.811122L6.00001 4.97106L11.7051 0.811122C11.7623 0.769379 11.8249 0.741479 11.8891 0.726737C11.6981 0.29867 11.2809 0 10.8 0ZM12 1.90392L6.29493 6.06386C6.11785 6.19297 5.88216 6.19297 5.70508 6.06386L0 1.90392V8.74997C0 9.4375 0.540001 10 1.19999 10H10.8C11.46 10 12 9.4375 12 8.74997V1.90392Z"
                         fill="#F8F9FB"
                       />
                     </svg>
-
                     <span>sadkzn@mail.ru</span>
                   </div>
                 </div>
@@ -501,6 +501,8 @@ const Header = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── Mobile bottom nav bar ── */}
       <div className="fixed bottom-0 left-0 right-0 bg-[#F8F9FB] border-t border-gray-200 shadow-lg z-40 md:hidden">
         <div className="flex items-center justify-around py-2">
           <Link href="/" className="relative flex flex-col items-center p-2">
@@ -515,9 +517,9 @@ const Header = () => {
                 <path
                   d="M13.1944 6.19444V12.75C13.1944 13.8546 12.299 14.75 11.1944 14.75H4.30556C3.20099 14.75 2.30556 13.8546 2.30556 12.75V6.19444M14.75 7.75L7.75 0.75L0.75 7.75"
                   stroke="#394426"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
             </div>
@@ -540,32 +542,32 @@ const Header = () => {
                   cy="3.25"
                   r="2.5"
                   stroke="#394426"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
                 <circle
                   cx="3.25"
                   cy="12.25"
                   r="2.5"
                   stroke="#394426"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   d="M9.75 9.75H14.75V13.75C14.75 14.3023 14.3023 14.75 13.75 14.75H10.75C10.1977 14.75 9.75 14.3023 9.75 13.75V9.75Z"
                   stroke="#394426"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   d="M0.75 0.75H5.75V4.75C5.75 5.30228 5.30228 5.75 4.75 5.75H1.75C1.19772 5.75 0.75 5.30228 0.75 4.75V0.75Z"
                   stroke="#394426"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
             </div>
@@ -584,7 +586,7 @@ const Header = () => {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
-                  d="M7.93828 14.5918L7.85039 14.5129L1.69102 8.93178C0.611719 7.95414 0 6.58202 0 5.14472V5.03152C0 2.61658 1.75781 0.544676 4.19062 0.0918751C5.57578 -0.168828 6.99258 0.14333 8.12109 0.91858C8.4375 1.13812 8.73281 1.39196 9 1.68354C9.14766 1.51888 9.30586 1.36795 9.47461 1.22731C9.60469 1.11754 9.73828 1.01463 9.87891 0.91858C11.0074 0.14333 12.4242 -0.168828 13.8094 0.0884449C16.2422 0.541246 18 2.61658 18 5.03152V5.14472C18 6.58202 17.3883 7.95414 16.309 8.93178L10.1496 14.5129L10.0617 14.5918C9.77344 14.8525 9.39375 15 9 15C8.60625 15 8.22656 14.8559 7.93828 14.5918ZM8.40586 3.50503C8.3918 3.49474 8.38125 3.48102 8.3707 3.4673L7.74492 2.78124L7.74141 2.77781C6.9293 1.88936 5.70234 1.48458 4.50703 1.70755C2.86875 2.01285 1.6875 3.40555 1.6875 5.03152V5.14472C1.6875 6.12236 2.10586 7.05883 2.84063 7.72431L9 13.3054L15.1594 7.72431C15.8941 7.05883 16.3125 6.12236 16.3125 5.14472V5.03152C16.3125 3.40898 15.1312 2.01285 13.4965 1.70755C12.3012 1.48458 11.0707 1.89279 10.2621 2.77781C10.2621 2.77781 10.2621 2.77781 10.2586 2.78124C10.2551 2.78467 10.2586 2.78124 10.2551 2.78467L9.6293 3.47073C9.61875 3.48445 9.60469 3.49474 9.59414 3.50846C9.43594 3.66283 9.22148 3.74858 9 3.74858C8.77852 3.74858 8.56406 3.66283 8.40586 3.50846V3.50503Z"
+                  d="M7.93828 14.5918L7.85039 14.5129L1.69102 8.93178C0.611719 7.95414 0 6.58202 0 5.14472V5.03152C0 2.61658 1.75781 0.544676 4.19062 0.0918751C5.57578 -0.168828 6.99258 0.14333 8.12109 0.91858C8.4375 1.13812 8.73281 1.39196 9 1.68354C9.14766 1.51888 9.30586 1.36795 9.47461 1.22731C9.60469 1.11754 9.73828 1.01463 9.87891 0.91858C11.0074 0.14333 12.4242 -0.168828 13.8094 0.0884449C16.2422 0.541246 18 2.61658 18 5.03152V5.14472C18 6.58202 17.3883 7.95414 16.309 8.93178L10.1496 14.5129L10.0617 14.5918C9.77344 14.8525 9.39375 15 9 15C8.60625 15 8.22656 14.8559 7.93828 14.5918Z"
                   fill="#394426"
                 />
               </svg>
@@ -596,6 +598,16 @@ const Header = () => {
             )}
             <span className="text-xs">Избранное</span>
           </Link>
+          {/* ✅ Phone button in mobile bottom nav */}
+          <a
+            href={`tel:${PHONE}`}
+            className="relative flex flex-col items-center p-2"
+          >
+            <div className="bg-white p-3 rounded-sm mb-1">
+              <Phone size={24} className="text-[#394426]" />
+            </div>
+            <span className="text-xs">Звонок</span>
+          </a>
           <button
             onClick={openCart}
             className="relative flex flex-col items-center p-2"
@@ -609,7 +621,7 @@ const Header = () => {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
-                  d="M3.10337 9.84238H15.5168C15.6529 9.84249 15.7852 9.79829 15.8934 9.7166C16.0016 9.63492 16.0797 9.52025 16.1158 9.39025L17.9778 2.62366C18.0031 2.53232 18.0068 2.43642 17.9886 2.34343C17.9704 2.25044 17.9308 2.16287 17.8728 2.08756C17.8148 2.01224 17.7401 1.95121 17.6544 1.90923C17.5687 1.86724 17.4744 1.84544 17.3789 1.84551H3.02578L2.79303 0.507567C2.76725 0.3637 2.69063 0.233626 2.57691 0.140639C2.46318 0.0476507 2.31977 -0.00217866 2.17236 7.3108e-05H0.620674C0.456061 7.3108e-05 0.29819 0.0648828 0.181791 0.180245C0.0653922 0.295607 0 0.452071 0 0.615218C0 0.778364 0.0653922 0.934828 0.181791 1.05019C0.29819 1.16555 0.456061 1.23036 0.620674 1.23036H1.6541L2.98544 8.6121C2.70016 8.61977 2.4192 8.68306 2.1586 8.79835C1.898 8.91364 1.66287 9.07867 1.46662 9.28402C1.07028 9.69875 0.856408 10.2525 0.872046 10.8235C0.887685 11.3946 1.13156 11.936 1.55001 12.3288C1.96846 12.7216 2.52722 12.9336 3.10337 12.9181H3.62473C3.46637 13.2463 3.3945 13.6089 3.41582 13.9721C3.43715 14.3353 3.55098 14.6872 3.74669 14.9949C3.9424 15.3027 4.21361 15.5563 4.53499 15.7321C4.85637 15.9078 5.21745 16 5.58451 16C5.95157 16 6.31265 15.9078 6.63403 15.7321C6.95541 15.5563 7.22662 15.3027 7.42233 14.9949C7.61804 14.6872 7.73187 14.3353 7.7532 13.9721C7.77453 13.6089 7.70265 13.2463 7.54429 12.9181H10.7625C10.6041 13.2463 10.5322 13.6089 10.5536 13.9721C10.5749 14.3353 10.6887 14.6872 10.8844 14.9949C11.0801 15.3027 11.3514 15.5563 11.6727 15.7321C11.9941 15.9078 12.3552 16 12.7223 16C13.0893 16 13.4504 15.9078 13.7718 15.7321C14.0932 15.5563 14.3644 15.3027 14.5601 14.9949C14.7558 14.6872 14.8696 14.3353 14.8909 13.9721C14.9123 13.6089 14.8404 13.2463 14.682 12.9181H16.4479C16.6125 12.9181 16.7703 12.8533 16.8867 12.7379C17.0031 12.6226 17.0685 12.4661 17.0685 12.303C17.0685 12.1398 17.0031 11.9834 16.8867 11.868C16.7703 11.7526 16.6125 11.6878 16.4479 11.6878H3.10337C2.85645 11.6878 2.61964 11.5906 2.44504 11.4176C2.27045 11.2445 2.17236 11.0098 2.17236 10.7651C2.17236 10.5204 2.27045 10.2857 2.44504 10.1126C2.61964 9.9396 2.85645 9.84238 3.10337 9.84238ZM16.5658 3.0758L15.042 8.6121H4.2423L3.24612 3.0758H16.5658ZM6.51707 13.8408C6.51707 14.0233 6.46247 14.2017 6.36017 14.3535C6.25787 14.5052 6.11246 14.6235 5.94234 14.6933C5.77222 14.7631 5.58503 14.7814 5.40443 14.7458C5.22383 14.7102 5.05794 14.6223 4.92774 14.4933C4.79753 14.3642 4.70886 14.1998 4.67294 14.0208C4.63702 13.8418 4.65545 13.6563 4.72592 13.4877C4.79639 13.3191 4.91572 13.175 5.06882 13.0736C5.22192 12.9722 5.40193 12.9181 5.58606 12.9181C5.83298 12.9181 6.06979 13.0153 6.24439 13.1884C6.41898 13.3614 6.51707 13.5961 6.51707 13.8408ZM13.6548 13.8408C13.6548 14.0233 13.6002 14.2017 13.4979 14.3535C13.3956 14.5052 13.2502 14.6235 13.0801 14.6933C12.91 14.7631 12.7228 14.7814 12.5422 14.7458C12.3616 14.7102 12.1957 14.6223 12.0655 14.4933C11.9353 14.3642 11.8466 14.1998 11.8107 14.0208C11.7748 13.8418 11.7932 13.6563 11.8637 13.4877C11.9341 13.3191 12.0535 13.175 12.2066 13.0736C12.3597 12.9722 12.5397 12.9181 12.7238 12.9181C12.9707 12.9181 13.2075 13.0153 13.3821 13.1884C13.5567 13.3614 13.6548 13.5961 13.6548 13.8408Z"
+                  d="M3.10337 9.84238H15.5168C15.6529 9.84249 15.7852 9.79829 15.8934 9.7166C16.0016 9.63492 16.0797 9.52025 16.1158 9.39025L17.9778 2.62366C18.0031 2.53232 18.0068 2.43642 17.9886 2.34343C17.9704 2.25044 17.9308 2.16287 17.8728 2.08756C17.8148 2.01224 17.7401 1.95121 17.6544 1.90923C17.5687 1.86724 17.4744 1.84544 17.3789 1.84551H3.02578L2.79303 0.507567C2.76725 0.3637 2.69063 0.233626 2.57691 0.140639C2.46318 0.0476507 2.31977 -0.00217866 2.17236 7.3108e-05H0.620674C0.456061 7.3108e-05 0.29819 0.0648828 0.181791 0.180245C0.0653922 0.295607 0 0.452071 0 0.615218C0 0.778364 0.0653922 0.934828 0.181791 1.05019C0.29819 1.16555 0.456061 1.23036 0.620674 1.23036H1.6541L2.98544 8.6121C2.70016 8.61977 2.4192 8.68306 2.1586 8.79835C1.898 8.91364 1.66287 9.07867 1.46662 9.28402C1.07028 9.69875 0.856408 10.2525 0.872046 10.8235C0.887685 11.3946 1.13156 11.936 1.55001 12.3288C1.96846 12.7216 2.52722 12.9336 3.10337 12.9181H3.62473C3.46637 13.2463 3.3945 13.6089 3.41582 13.9721C3.43715 14.3353 3.55098 14.6872 3.74669 14.9949C3.9424 15.3027 4.21361 15.5563 4.53499 15.7321C4.85637 15.9078 5.21745 16 5.58451 16C5.95157 16 6.31265 15.9078 6.63403 15.7321C6.95541 15.5563 7.22662 15.3027 7.42233 14.9949C7.61804 14.6872 7.73187 14.3353 7.7532 13.9721C7.77453 13.6089 7.70265 13.2463 7.54429 12.9181H10.7625C10.6041 13.2463 10.5322 13.6089 10.5536 13.9721C10.5749 14.3353 10.6887 14.6872 10.8844 14.9949C11.0801 15.3027 11.3514 15.5563 11.6727 15.7321C11.9941 15.9078 12.3552 16 12.7223 16C13.0893 16 13.4504 15.9078 13.7718 15.7321C14.0932 15.5563 14.3644 15.3027 14.5601 14.9949C14.7558 14.6872 14.8696 14.3353 14.8909 13.9721C14.9123 13.6089 14.8404 13.2463 14.682 12.9181H16.4479C16.6125 12.9181 16.7703 12.8533 16.8867 12.7379C17.0031 12.6226 17.0685 12.4661 17.0685 12.303C17.0685 12.1398 17.0031 11.9834 16.8867 11.868C16.7703 11.7526 16.6125 11.6878 16.4479 11.6878H3.10337C2.85645 11.6878 2.61964 11.5906 2.44504 11.4176C2.27045 11.2445 2.17236 11.0098 2.17236 10.7651C2.17236 10.5204 2.27045 10.2857 2.44504 10.1126C2.61964 9.9396 2.85645 9.84238 3.10337 9.84238Z"
                   fill="#394426"
                 />
               </svg>

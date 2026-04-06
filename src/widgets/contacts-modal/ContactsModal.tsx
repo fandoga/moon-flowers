@@ -2,6 +2,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { X, Loader2 } from "lucide-react";
+import { applyPhoneMask } from "@/lib/utils/phoneMask";
 
 interface ContactsModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ export const ContactsModal = ({ isOpen, onClose }: ContactsModalProps) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: applyPhoneMask(value) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -195,7 +196,7 @@ export const ContactsModal = ({ isOpen, onClose }: ContactsModalProps) => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="Телефон *"
+                  placeholder="+7 (___) ___-__-__"
                   required
                   className="w-full rounded-md bg-white text-black placeholder-gray-400 p-3 border-b border-white/30 pb-3 focus:outline-none focus:border-white/60 text-base sm:text-lg"
                 />

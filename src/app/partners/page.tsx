@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 
 export default function PartnersPage() {
   return (
-    <main className="bg-[#F8F9FB] bg-[#F8F9FB]">
+    <main className="bg-[#F8F9FB] bg-[#F8F9FB] mt-10">
       <div className="container mx-auto max-w-[1440px]">
         <Breadcrumb paths={[{ url: '/', name: 'Главная' }, { url: '/partners', name: 'Партнёрам' }]} />
         <h1 className="mt-6 text-3xl md:text-4xl lg:text-5xl font-bold text-[#394426] mb-8">Партнёрам</h1>

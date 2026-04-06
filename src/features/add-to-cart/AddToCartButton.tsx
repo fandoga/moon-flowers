@@ -4,6 +4,9 @@ import React, { useCallback, useRef, useState, useEffect } from "react";
 import { Plus, Minus, LoaderCircle } from "lucide-react";
 import { useAddToCart, useRemoveFromCart } from "@/entities/cart/hooks/hooks";
 import { useCartStore } from "@/entities/cart/store/cartStore";
+import toast from "react-hot-toast";
+
+const MAX_QUANTITY = 50;
 
 interface AddToCartButtonProps {
   productId: number;
@@ -26,11 +29,10 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
   const hideTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const [optimisticQuantity, setOptimisticQuantity] = useState(
-    currentQuantity ?? 0,
+    currentQuantity ?? 0
   );
   const [showLoader, setShowLoader] = useState(false);
 
-  
   useEffect(() => {
     const newValue = currentQuantity ?? 0;
     if (optimisticQuantity !== newValue) {
@@ -38,7 +40,6 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     }
   }, [currentQuantity]);
 
-  
   useEffect(() => {
     const isLoading = addToCart.isPending || removeFromCart.isPending;
 
@@ -69,26 +70,36 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     }
   }, [addToCart.isPending, removeFromCart.isPending]);
 
-  
   const handleImmediateAdd = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
+      if ((currentQuantity ?? 0) >= MAX_QUANTITY) {
+        toast.error(`Максимальное количество: ${MAX_QUANTITY} шт.`);
+        return;
+      }
       addToCart.mutate(
         { nomenclature_id: productId, quantity: 1 },
         {
           onSuccess: () => {
-            useCartStore.getState().openCart(); 
+            useCartStore.getState().openCart();
           },
-        },
+        }
       );
     },
-    [addToCart, productId],
+    [addToCart, productId, currentQuantity]
   );
 
-  
   const scheduleUpdate = useCallback(
     (delta: number) => {
-      setOptimisticQuantity((prev) => Math.max(0, prev + delta));
+      const newQty = optimisticQuantity + delta;
+
+      // ✅ Enforce max 50 limit
+      if (newQty > MAX_QUANTITY) {
+        toast.error(`Максимальное количество товара: ${MAX_QUANTITY} шт.`);
+        return;
+      }
+
+      setOptimisticQuantity(Math.max(0, newQty));
       deltaRef.current += delta;
 
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -105,14 +116,14 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
                 onSettled: () => {
                   deltaRef.current = 0;
                 },
-              },
+              }
             );
           }
         }
         timeoutRef.current = undefined;
       }, 300);
     },
-    [addToCart, removeFromCart, productId, currentQuantity],
+    [addToCart, removeFromCart, productId, currentQuantity, optimisticQuantity]
   );
 
   const handleIncrement = useCallback(
@@ -120,7 +131,7 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
       e.stopPropagation();
       scheduleUpdate(1);
     },
-    [scheduleUpdate],
+    [scheduleUpdate]
   );
 
   const handleDecrement = useCallback(
@@ -128,10 +139,9 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
       e.stopPropagation();
       if (optimisticQuantity > 0) scheduleUpdate(-1);
     },
-    [optimisticQuantity, scheduleUpdate],
+    [optimisticQuantity, scheduleUpdate]
   );
 
-  
   if (hideControls) {
     return (
       <button
@@ -166,7 +176,6 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     );
   }
 
-  
   return (
     <div
       className={`flex items-center h-[40px] sm:h-[48px] w-[100px] sm:w-[140px] ${className}`}
@@ -177,7 +186,7 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
           disabled={optimisticQuantity <= 0 || showLoader}
           className="p-2 sm:p-4 text-xl font-bold text-[#394426] hover:bg-gray-100 disabled:opacity-50 cursor-pointer"
         >
-          <Minus className="size-[12px] sm:size-[16px]"/>
+          <Minus className="size-[12px] sm:size-[16px]" />
         </button>
         <span className="sm:px-3 py-2 text-sm sm:text-lg text-base font-medium w-10 text-center flex items-center justify-center">
           {showLoader ? (
@@ -188,8 +197,9 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
         </span>
         <button
           onClick={handleIncrement}
-          disabled={showLoader}
-          className="px-2 sm:px-4 py-2 text-xl text-[#394426] hover:bg-gray-100 cursor-pointer"
+          disabled={showLoader || optimisticQuantity >= MAX_QUANTITY}
+          className="px-2 sm:px-4 py-2 text-xl text-[#394426] hover:bg-gray-100 cursor-pointer disabled:opacity-40"
+          title={optimisticQuantity >= MAX_QUANTITY ? `Максимум ${MAX_QUANTITY} шт.` : undefined}
         >
           +
         </button>

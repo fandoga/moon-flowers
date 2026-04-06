@@ -17,7 +17,11 @@ interface ProductCardGroupProps {
   isLoading?: boolean;
 }
 
-const ProductCardGroup: React.FC<ProductCardGroupProps> = ({ products, onClick, isLoading: externalLoading }) => {
+const ProductCardGroup: React.FC<ProductCardGroupProps> = ({
+  products,
+  onClick,
+  isLoading: externalLoading,
+}) => {
   const router = useRouter();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [internalNavigating, setInternalNavigating] = useState(false);
@@ -39,7 +43,16 @@ const ProductCardGroup: React.FC<ProductCardGroupProps> = ({ products, onClick, 
     selectedProduct.photos?.length && "url" in selectedProduct.photos[0]
       ? `${process.env.NEXT_PUBLIC_API_URL}/photos/${selectedProduct.photos[0].url}`
       : "/placeholder.jpg";
-  const price = selectedProduct.prices?.[0]?.price || 0;
+
+  const selectedPrice = selectedProduct.prices?.[0]?.price || 0;
+
+  // ✅ Find the minimum price among all variants for "от" display
+  const minPrice = products.reduce((min, p) => {
+    const p_price = p.prices?.[0]?.price || 0;
+    return p_price > 0 && p_price < min ? p_price : min;
+  }, selectedPrice || Infinity);
+
+  const hasMultipleVariants = products.length > 1;
   const visibleProducts = products.slice(0, 3);
 
   const handleCardClick = () => {
@@ -78,7 +91,7 @@ const ProductCardGroup: React.FC<ProductCardGroupProps> = ({ products, onClick, 
   return (
     <div
       onClick={handleCardClick}
-      className="bg-white rounded-xl overflow-hidden shadow-md relative flex flex-col h-full cursor-pointer hover:scale-[1.02] transition-transform duration-200"
+      className="bg-white rounded-xl overflow-hidden relative flex flex-col h-full cursor-pointer hover:scale-[1.02] transition-transform duration-200"
     >
       {showLoader && (
         <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
@@ -127,8 +140,11 @@ const ProductCardGroup: React.FC<ProductCardGroupProps> = ({ products, onClick, 
         )}
 
         <div className="mt-auto">
+          {/* ✅ Show "от X ₽" when multiple variants, else just the price */}
           <p className="text-xl md:text-2xl font-bold text-[#394426] mb-3">
-            {formatPrice(price)}
+            {hasMultipleVariants
+              ? `от ${formatPrice(minPrice === Infinity ? selectedPrice : minPrice)}`
+              : `от ${formatPrice(selectedPrice)}`}
           </p>
 
           <div className="flex w-full gap-2 sm:gap-4">

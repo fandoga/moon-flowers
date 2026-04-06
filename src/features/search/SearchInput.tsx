@@ -24,12 +24,17 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   const [isNavigating, setIsNavigating] = useState(false);
   const debouncedQuery = useDebounce(query, 300);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const initialFetchDone = useRef(false); // флаг, чтобы не повторять загрузку при пустом запросе
+  const initialFetchDone = useRef(false);
 
   const fetchProducts = useCallback(async (searchQuery: string) => {
     setIsLoading(true);
     try {
-      const params: any = { limit: 5, has_photos: true, with_prices: true, with_photos: true };
+      const params: any = {
+        limit: 5,
+        has_photos: true,
+        with_prices: true,
+        with_photos: true,
+      };
       if (searchQuery.trim()) {
         params.name = searchQuery;
       }
@@ -42,22 +47,22 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     }
   }, []);
 
-  // Загрузка при изменении запроса
+  // ✅ Preload 5 products on mount (no need to wait for focus)
+  useEffect(() => {
+    if (!initialFetchDone.current) {
+      initialFetchDone.current = true;
+      fetchProducts("");
+    }
+  }, [fetchProducts]);
+
+  // Load when query changes
   useEffect(() => {
     if (debouncedQuery.trim()) {
       fetchProducts(debouncedQuery);
     }
   }, [debouncedQuery, fetchProducts]);
 
-  // Загрузка начальных товаров при фокусе (только один раз)
-  useEffect(() => {
-    if (isFocused && !query && !isLoading && suggestions.length === 0 && !initialFetchDone.current) {
-      initialFetchDone.current = true;
-      fetchProducts("");
-    }
-  }, [isFocused, query, isLoading, suggestions.length, fetchProducts]);
-
-  // Закрытие при клике вне
+  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -78,7 +83,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   };
 
   const handleBlur = () => {
-    // Задержка, чтобы клик по подсказке успел сработать
     setTimeout(() => {
       if (!isNavigating) {
         setIsFocused(false);
@@ -90,6 +94,10 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     const newQuery = e.target.value;
     setQuery(newQuery);
     setShowSuggestions(true);
+    // If user clears query, show preloaded products
+    if (!newQuery.trim() && suggestions.length === 0) {
+      fetchProducts("");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -104,21 +112,20 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   const handleClear = () => {
     setQuery("");
-    setSuggestions([]);
     setShowSuggestions(true);
-    initialFetchDone.current = false;
     fetchProducts("");
   };
 
   const handleSuggestionClick = (
     productId: number,
     name: string,
-    category: number | null,
+    category: number | null
   ) => {
     if (isNavigating) return;
     setIsNavigating(true);
 
-    const categoryStr = category !== null && category !== undefined ? category.toString() : "0";
+    const categoryStr =
+      category !== null && category !== undefined ? category.toString() : "0";
     const normalizedName = name.replace(/\s*\(.*?\)\s*/g, "").trim();
     const params = new URLSearchParams({
       category: categoryStr,
@@ -126,24 +133,19 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       variantId: productId.toString(),
     });
 
-    // Не закрываем подсказки, а показываем лоадер поверх
-    // setShowSuggestions(false); – убрали
     if (onSuggestionClick) {
       onSuggestionClick();
     }
 
     router.push(`/product?${params.toString()}`);
 
-    // Сброс флага через таймаут, если переход затянулся
     setTimeout(() => {
       setIsNavigating(false);
     }, 1000);
   };
 
-  // Функция для отображения содержимого списка
   const renderContent = () => {
     if (isNavigating) {
-      // Лоадер на весь список
       return (
         <div className="p-8 text-center text-gray-500">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-500 mb-2"></div>
@@ -178,11 +180,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         <button
           key={product.id}
           onClick={() =>
-            handleSuggestionClick(
-              product.id,
-              product.name,
-              product.category,
-            )
+            handleSuggestionClick(product.id, product.name, product.category)
           }
           className="w-full text-left p-3 hover:bg-gray-100 flex items-center gap-3 border-b last:border-b-0 cursor-pointer"
         >
@@ -197,7 +195,9 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           <div>
             <div className="font-medium text-[#394426]">{product.name}</div>
             <div className="text-sm text-gray-600">
-              {product.prices?.[0]?.price ? formatPrice(product.prices[0].price) : ""}
+              {product.prices?.[0]?.price
+                ? formatPrice(product.prices[0].price)
+                : ""}
             </div>
           </div>
         </button>
@@ -216,10 +216,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           onBlur={handleBlur}
           onChange={handleChange}
           className="w-full pl-4 sm:pl-15 pr-6 py-2 sm:py-4 bg-white border border-gray-200 rounded-xs sm:rounded-lg focus:outline-none focus:border-[#2E5B2E] text-gray-700"
-          style={{
-            WebkitAppearance: "none",
-            appearance: "none",
-          }}
+          style={{ WebkitAppearance: "none", appearance: "none" }}
         />
 
         {!query && (

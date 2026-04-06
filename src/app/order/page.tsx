@@ -10,6 +10,7 @@ import { useCreateFullOrder } from "@/entities/order/hooks/hooks";
 import { formatPrice } from "@/lib/utils/formatPrice";
 import { LoaderCircle } from "lucide-react";
 import { CartItemsList } from "@/components/CartListItem";
+import { applyPhoneMask } from "@/lib/utils/phoneMask";
 
 const STORAGE_KEY = "order_form_data";
 
@@ -181,7 +182,7 @@ export default function OrderPage() {
       if (result.type === "payment") {
         window.location.href = (result as { url: string }).url;
       } else {
-        router.push("/order/success");
+        router.push(`/order/success?order_id=${result.orderId}`);
       }
     } catch (err: unknown) {
       console.error("Ошибка создания заказа:", err);
@@ -247,7 +248,7 @@ export default function OrderPage() {
                   type="tel"
                   placeholder="Телефон"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(applyPhoneMask(e.target.value))}
                   required
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-[#394426] placeholder-gray-400 text-black"
                 />
