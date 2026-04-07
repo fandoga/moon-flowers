@@ -91,7 +91,7 @@ export const ContactsModal = ({ isOpen, onClose }: ContactsModalProps) => {
                   Телефоны
                 </h3>
                 <p className="text-gray-700">
-                  +7 (966) 240-90-53
+                  +7 (966) 240-90-55
                   <svg
                     width="40px"
                     height="40px"
@@ -148,7 +148,7 @@ export const ContactsModal = ({ isOpen, onClose }: ContactsModalProps) => {
                     </g>
                   </svg>
                   <br />
-                  +7 (966) 240-90-55
+                  +7 (843) 240-90-55
                 </p>
               </div>
 
@@ -225,7 +225,7 @@ export const ContactsModal = ({ isOpen, onClose }: ContactsModalProps) => {
               <div className="hidden mb-5 lg:flex flex-col justify-center space-y-4 text-base">
                 <p className="font-medium">Есть вопросы?</p>
                 <div>
-                  <p className="font-bold text-lg">+7 966 240-90-53</p>
+                  <p className="font-bold text-lg">+7 843 240-90-55</p>
                   <p className="text-white/80">пн–вс с 09:00 до 18:00</p>
                 </div>
                 <p>sadkzn@mail.ru</p>

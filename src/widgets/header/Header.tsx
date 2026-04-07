@@ -13,8 +13,8 @@ import { SearchInput } from "@/features/search/SearchInput";
 import { useCartStore } from "@/entities/cart/store/cartStore";
 import { ContactsModal } from "@/widgets/contacts-modal/ContactsModal";
 
-const PHONE = "+79662409053";
-const PHONE_DISPLAY = "+7 (966) 240-90-53";
+const PHONE = "+78432409055";
+const PHONE_DISPLAY = "+7 (843) 240-90-55";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

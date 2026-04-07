@@ -92,10 +92,10 @@ const Footer = () => {
                     пос. Залесный, ул. Залесная, 58
                   </p>
                   <a
-                    href="tel:+79662409053"
+                    href="tel:+78432409055"
                     className="font-medium block hover:underline"
                   >
-                    +7 966 240-90-53
+                    +7 843 240-90-55
                   </a>
                   <a
                     href="tel:+79662409055"
@@ -161,8 +161,8 @@ const Footer = () => {
                 <br />
                 пос. Залесный, ул. Залесная, 58
               </p>
-              <a href="tel:+79662409053" className="font-medium block">
-                +7 966 240-90-53
+              <a href="tel:+78432409055" className="font-medium block">
+                +7 843 240-90-55
               </a>
               <a href="tel:+79662409055" className="font-medium block">
                 +7 966 240-90-55

@@ -97,10 +97,10 @@ const FormRequest = () => {
                 если есть вопросы:
               </p>
               <p className="font-bold text-[clamp(18px,2.5vw,25px)] leading-[1]">
-                +7 966 240-90-55
+                +7 843 240-90-55
               </p>
               <p className="flex items-center font-bold text-[clamp(18px,2.5vw,25px)] leading-[1]">
-                +7 966 240-90-53{" "}
+                +7 966 240-90-55{" "}
                 <svg
                   width="70px"
                   height="70px"
@@ -236,7 +236,7 @@ const FormRequest = () => {
               href="tel:+79662409053"
               className="font-bold text-[clamp(18px,4vw,25px)] leading-[1] block"
             >
-              +7 966 240-90-53
+              +7 843 240-90-55
             </a>
             <p className="text-[clamp(18px,4vw,25px)] leading-[1]">
               sadkzn@mail.ru
