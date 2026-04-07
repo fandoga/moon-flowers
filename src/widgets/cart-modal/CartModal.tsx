@@ -46,7 +46,7 @@ const CartModal = () => {
           >
             <div className="flex items-center justify-between p-5 border-b">
               <h2 className="text-2xl font-bold text-[#394426] font-manrope">
-                Ваш заказ
+                Ваша заявка
               </h2>
               <button
                 onClick={closeCart}

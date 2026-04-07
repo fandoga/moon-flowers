@@ -185,7 +185,7 @@ export default function OrderPage() {
         router.push(`/order/success?order_id=${result.orderId}`);
       }
     } catch (err: unknown) {
-      console.error("Ошибка создания заказа:", err);
+      console.error("Ошибка создания заявки:", err);
       let errorMessage = "Произошла ошибка";
       if (err && typeof err === "object" && "response" in err) {
         const axiosError = err as {
@@ -208,12 +208,12 @@ export default function OrderPage() {
           paths={[
             { url: "/", name: "Главная" },
             { url: "/cart", name: "Заявки" },
-            { url: "/order", name: "Оформление заказа" },
+            { url: "/order", name: "Оформление заявки" },
           ]}
         />
 
         <h1 className="mt-6 text-3xl md:text-4xl font-bold text-[#394426] mb-8 md:mb-12">
-          Оформление заказа
+          Оформление заявки
         </h1>
 
         <form
@@ -434,7 +434,7 @@ export default function OrderPage() {
             {/* Комментарий */}
             <div className="bg-gray-200 p-6 rounded-xl">
               <textarea
-                placeholder="Комментарий к заказу"
+                placeholder="Комментарий к заявке"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={4}
@@ -455,7 +455,7 @@ export default function OrderPage() {
                     Оформление...
                   </>
                 ) : (
-                  "Оформить заказ"
+                  "Оформить заявку"
                 )}
               </button>
               <p className="mt-3 text-sm text-gray-500 text-center">
@@ -468,7 +468,7 @@ export default function OrderPage() {
           {/* Правая колонка – интерактивная корзина */}
           <div className="w-full lg:w-2/5 bg-white rounded-xl p-4 sm:p-8 shadow-lg lg:sticky lg:top-24 h-fit lg:order-none order-1">
             <h2 className="text-2xl font-bold text-[#394426] mb-6">
-              Ваш заказ
+              Ваша заявка
             </h2>
             <CartItemsList
               showTotal={false}

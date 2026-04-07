@@ -13,11 +13,11 @@ export default async function OrderSuccessPage({ searchParams }: PageProps) {
       <div className="container mx-auto max-w-[1440px] text-center">
         <CheckCircle size={64} className="text-[#394426] mx-auto mb-6" />
         <h1 className="text-4xl md:text-5xl font-bold text-[#394426] mb-4">
-          Заказ оформлен!
+          Заявка оформлена!
         </h1>
         {order_id && (
           <p className="text-lg text-[#394426] font-medium mb-2">
-            Номер вашего заказа:{' '}
+            Номер вашей заявки:{' '}
             <span className="font-bold bg-[#394426]/10 px-3 py-1 rounded-md">
               #{order_id}
             </span>

@@ -27,8 +27,8 @@ const CheckoutForm = () => {
         <input type="radio" name="payment" className="mr-2" />
         Банковская карта
       </label>
-      <textarea placeholder="Комментарий к заказу" className="w-full mb-4 p-2 border rounded" />
-      <button className="bg-green-700 text-white w-full p-3 rounded">Оформить заказ</button>
+      <textarea placeholder="Комментарий к заявке" className="w-full mb-4 p-2 border rounded" />
+      <button className="bg-green-700 text-white w-full p-3 rounded">Оформить заявку</button>
       <p className="text-sm text-gray-600 mt-2">Нажимая на кнопку, вы даете согласие на обработку персональных данных</p>
     </form>
   );
