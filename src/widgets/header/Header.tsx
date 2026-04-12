@@ -31,7 +31,7 @@ const Header = () => {
 
   const cartCount = cartData?.total_count || 0;
   const cartTotal =
-    cartItems?.reduce((sum: number, item: unknown) => {
+    cartItems?.reduce((sum: number, item: any) => {
       const price = item.product?.prices?.[0]?.price || 0;
       return sum + price * item.quantity;
     }, 0) || 0;
