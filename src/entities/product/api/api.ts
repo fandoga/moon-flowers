@@ -13,17 +13,20 @@ const MAX_VISIBLE_PRICE = 10000;
 export const getProducts = async (params?: NomenclatureQueryParams) => {
   const needPhotos = params?.with_photos === true;
   const queryParams = needPhotos ? { ...params, with_photos: false } : params;
-  
-  const response = await api.get<NomenclatureListResponse>('/nomenclature/', { params: queryParams });
+
+  const response = await api.get<NomenclatureListResponse>("/nomenclature/", {
+    params: queryParams,
+  });
+
   const products = response.data.result;
-  
+
   if (needPhotos && products.length > 0) {
-    const entityIds = products.map(p => p.id);
+    const entityIds = products.map((p) => p.id);
     const picturesBatch = await getProductsPicturesBatch(entityIds);
-    
-    const productsWithPhotos = products.map(product => {
+
+    const productsWithPhotos = products.map((product) => {
       const productPictures = picturesBatch.result[product.id] || [];
-      const photos: NomenclaturePhoto[] = productPictures.map(pic => ({
+      const photos: NomenclaturePhoto[] = productPictures.map((pic) => ({
         id: pic.id,
         url: pic.url,
         is_main: pic.is_main,
@@ -33,10 +36,10 @@ export const getProducts = async (params?: NomenclatureQueryParams) => {
       }));
       return { ...product, photos };
     });
-    
+
     return { ...response.data, result: productsWithPhotos };
   }
-  
+
   return response.data;
 };
 
@@ -45,7 +48,7 @@ export const getProductsByCategoryAndName = async (
   name: string,
   limit = 50,
 ) => {
-  const response = await api.get<NomenclatureListResponse>('/nomenclature/', {
+  const response = await api.get<NomenclatureListResponse>("/nomenclature/", {
     params: {
       category: categoryId,
       name: name,
@@ -61,12 +64,12 @@ export const getProductsByCategoryAndName = async (
   const products = response.data.result;
 
   if (products.length > 0) {
-    const entityIds = products.map(p => p.id);
+    const entityIds = products.map((p) => p.id);
     const picturesBatch = await getProductsPicturesBatch(entityIds);
 
-    const productsWithPhotos = products.map(product => {
+    const productsWithPhotos = products.map((product) => {
       const productPictures = picturesBatch.result[product.id] || [];
-      const photos: NomenclaturePhoto[] = productPictures.map(pic => ({
+      const photos: NomenclaturePhoto[] = productPictures.map((pic) => ({
         id: pic.id,
         url: pic.url,
         is_main: pic.is_main,
@@ -84,27 +87,30 @@ export const getProductsByCategoryAndName = async (
 };
 
 export const getProductsPicturesBatch = async (entity_ids: number[]) => {
-  const response = await api.post<BatchPicturesResponse>('/pictures/batch/', {
-    entity: 'nomenclature',
+  const response = await api.post<BatchPicturesResponse>("/pictures/batch/", {
+    entity: "nomenclature",
     entity_ids,
   });
   return response.data;
 };
 
 export const getProductById = async (id: number) => {
-  const productResponse = await api.get<NomenclatureItem>(`/nomenclature/${id}/`, {
-    params: {
-      with_prices: true,
-      with_attributes: true,
-      with_photos: false,
+  const productResponse = await api.get<NomenclatureItem>(
+    `/nomenclature/${id}/`,
+    {
+      params: {
+        with_prices: true,
+        with_attributes: true,
+        with_photos: false,
+      },
     },
-  });
+  );
 
   const product = productResponse.data;
   const picturesBatch = await getProductsPicturesBatch([id]);
   const productPictures = picturesBatch.result[id] || [];
 
-  const photos: NomenclaturePhoto[] = productPictures.map(pic => ({
+  const photos: NomenclaturePhoto[] = productPictures.map((pic) => ({
     id: pic.id,
     url: pic.url,
     is_main: pic.is_main,
