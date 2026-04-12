@@ -1,8 +1,10 @@
 // app/catalog/page.tsx
-"use client"
-import { motion } from 'framer-motion';
-import Breadcrumb from '@/widgets/breadcrumb/Breadcrumb';
-import CategoryGrid from '@/widgets/category-grid/CategoryGrid';
+"use client";
+import { motion } from "framer-motion";
+import Breadcrumb from "@/widgets/breadcrumb/Breadcrumb";
+import CategoryGrid from "@/widgets/category-grid/CategoryGrid";
+import { Suspense } from "react";
+import SearchResults from "@/widgets/search-results/SearchResults";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -31,8 +33,8 @@ export default function CatalogPage() {
         <motion.div variants={itemVariants}>
           <Breadcrumb
             paths={[
-              { url: '/', name: 'Главная' },
-              { url: '/catalog', name: 'Каталог' },
+              { url: "/", name: "Главная" },
+              { url: "/catalog", name: "Каталог" },
             ]}
           />
         </motion.div>
@@ -43,7 +45,13 @@ export default function CatalogPage() {
           Каталог растений
         </motion.h1>
         <motion.div variants={itemVariants}>
-          <CategoryGrid />
+          <Suspense
+            fallback={
+              <div className="py-12 text-center">Загрузка товаров...</div>
+            }
+          >
+            <SearchResults query="" />
+          </Suspense>
         </motion.div>
       </div>
     </motion.main>
