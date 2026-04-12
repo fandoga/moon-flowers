@@ -1,11 +1,12 @@
 // app/page.tsx
 import Hero from "@/widgets/hero/Hero";
 import Advantages from "@/widgets/advantages/Advantages";
-import PopularProducts from "@/widgets/popular-category/PopularCategory";
 import FormRequest from "@/widgets/form-request/FormRequest";
 import Stats from "@/widgets/stats/Stats";
 import Consult from "@/widgets/consult/Constult";
 import type { Metadata } from "next";
+import SearchResults from "@/widgets/search-results/SearchResults";
+import PopularProducts from "@/widgets/popular-products/PopularProducts";
 
 export const metadata: Metadata = {
   title: "Клевер — питомник растений и крупномеров в Казани",
@@ -33,12 +34,10 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <main className="bg-[#F8F9FB]">
-      
       <div className="overflow-x-hidden">
         <Hero />
       </div>
 
-      
       <div className="overflow-x-hidden">
         <Advantages />
       </div>
@@ -73,21 +72,17 @@ export default function Home() {
           </svg>
         </div>
 
-        
         <div className="overflow-x-hidden">
           <PopularProducts />
         </div>
 
-        
         <div className="overflow-x-hidden">
           <Consult />
         </div>
 
-        
         <Stats />
       </div>
 
-      
       <div className="overflow-x-hidden">
         <FormRequest />
       </div>

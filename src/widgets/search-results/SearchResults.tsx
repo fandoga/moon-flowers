@@ -1,14 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useProducts } from '@/entities/product/hooks/hooks';
-import ProductCard from '@/widgets/product-card/ProductCard';
-import { Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
-import { NomenclatureItem } from '@/entities/product/types/types';
-
-const LIMIT = 10;
+import React, { useState, useEffect, useRef } from "react";
+import { useProducts } from "@/entities/product/hooks/hooks";
+import ProductCard from "@/widgets/product-card/ProductCard";
+import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
+import { NomenclatureItem } from "@/entities/product/types/types";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -22,9 +20,15 @@ const itemVariants = {
 
 interface SearchResultsProps {
   query: string;
+  limit?: number;
+  loadMore?: boolean;
 }
 
-const SearchResults: React.FC<SearchResultsProps> = ({ query }) => {
+const SearchResults: React.FC<SearchResultsProps> = ({
+  query,
+  limit = 10,
+  loadMore = true,
+}) => {
   const [offset, setOffset] = useState(0);
   const [allProducts, setAllProducts] = useState<NomenclatureItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -33,7 +37,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query }) => {
 
   const { data, isLoading, isFetching } = useProducts({
     name: query,
-    limit: LIMIT,
+    limit: limit,
     offset,
     has_photos: true,
     with_prices: true,
@@ -45,11 +49,13 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query }) => {
   // Reset when query changes
   useEffect(() => {
     if (prevQueryRef.current !== query) {
-      prevQueryRef.current = query;
-      setAllProducts([]);
-      setOffset(0);
-      setTotalCount(0);
-      loadedOffsetsRef.current = new Set();
+      setTimeout(() => {
+        prevQueryRef.current = query;
+        setAllProducts([]);
+        setOffset(0);
+        setTotalCount(0);
+        loadedOffsetsRef.current = new Set();
+      });
     }
   }, [query]);
 
@@ -59,26 +65,30 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query }) => {
     if (loadedOffsetsRef.current.has(offset)) return;
     loadedOffsetsRef.current.add(offset);
 
-    setTotalCount(data.count);
-    if (offset === 0) {
-      setAllProducts(data.result);
-    } else {
-      setAllProducts(prev => {
-        const existingIds = new Set(prev.map(p => p.id));
-        const newItems = data.result.filter(p => !existingIds.has(p.id));
-        return [...prev, ...newItems];
-      });
-    }
+    setTimeout(() => {
+      setTotalCount(data.count);
+      if (offset === 0) {
+        setAllProducts(data.result);
+      } else {
+        setAllProducts((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const newItems = data.result.filter((p) => !existingIds.has(p.id));
+          return [...prev, ...newItems];
+        });
+      }
+    });
   }, [data, offset]);
 
   const hasMore = allProducts.length < totalCount;
 
   // Load more when sentinel becomes visible
   useEffect(() => {
-    if (inView && hasMore && !isFetching && !isLoading) {
-      setOffset(prev => prev + LIMIT);
+    if (inView && hasMore && !isFetching && !isLoading && loadMore) {
+      setTimeout(() => {
+        setOffset((prev) => prev + limit);
+      });
     }
-  }, [inView, hasMore, isFetching, isLoading]);
+  }, [inView, hasMore, isFetching, isLoading, loadMore, limit]);
 
   if (isLoading && offset === 0) {
     return (
@@ -89,14 +99,18 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query }) => {
   }
 
   if (!isLoading && allProducts.length === 0) {
-    return <div className="py-12 text-center text-gray-500">Ничего не найдено</div>;
+    return (
+      <div className="py-12 text-center text-gray-500">Ничего не найдено</div>
+    );
   }
 
   return (
     <>
-      <p className="text-sm md:text-base text-[#394426] font-manrope mb-4">
-        Найдено товаров: {totalCount}
-      </p>
+      {loadMore && (
+        <p className="text-sm md:text-base text-[#394426] font-manrope mb-4">
+          Найдено товаров: {totalCount}
+        </p>
+      )}
 
       <motion.div
         className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8"

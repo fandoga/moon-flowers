@@ -12,6 +12,7 @@ import { formatPrice } from "@/lib/utils/formatPrice";
 import { SearchInput } from "@/features/search/SearchInput";
 import { useCartStore } from "@/entities/cart/store/cartStore";
 import { ContactsModal } from "@/widgets/contacts-modal/ContactsModal";
+import CatalogButton from "@/components/ui/catalog-button";
 
 const PHONE = "+78432409055";
 const PHONE_DISPLAY = "+7 (843) 240-90-55";
@@ -170,23 +171,7 @@ const Header = () => {
               </Link>
               <div className="flex-1 max-w-2xl mx-8">
                 <div className="flex w-full">
-                  <Link href="/catalog">
-                    <div className="mr-5 bg-[#394426] text-white h-full px-10 py-4 rounded-md flex items-center gap-2 hover:bg-[#102902] transition-colors">
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M5.6665 7.18091H1.5C0.673 7.18091 0 6.50661 0 5.678V1.50291C0 0.674307 0.673 0 1.5 0H5.6665C6.4935 0 7.1665 0.674307 7.1665 1.50291V5.678C7.1665 6.50661 6.494 7.18091 5.6665 7.18091ZM14.5 7.18091H10.333C9.506 7.18091 8.833 6.50661 8.833 5.678V1.50291C8.833 0.674307 9.506 0 10.333 0H14.5C15.327 0 16 0.674307 16 1.50291V5.678C16 6.50661 15.327 7.18091 14.5 7.18091ZM5.6665 16H1.5C0.673 16 0 15.3257 0 14.4971V10.322C0 9.49339 0.673 8.81909 1.5 8.81909H5.6665C6.4935 8.81909 7.1665 9.49339 7.1665 10.322V14.4971C7.1665 15.3257 6.494 16 5.6665 16ZM14.5 16H10.333C9.506 16 8.833 15.3257 8.833 14.4971V10.322C8.833 9.49339 9.506 8.81909 10.333 8.81909H14.5C15.327 8.81909 16 9.49339 16 10.322V14.4971C16 15.3257 15.327 16 14.5 16Z"
-                          fill="white"
-                        />
-                      </svg>
-                      <span>Каталог</span>
-                    </div>
-                  </Link>
+                  <CatalogButton className="mr-5" />
                   <div className="relative flex-1">
                     <SearchInput />
                   </div>
@@ -306,13 +291,30 @@ const Header = () => {
               </Link>
               <div className="flex items-center gap-3">
                 {/* ✅ Phone icon for mobile */}
-                <a
+                <Link
                   href={`tel:${PHONE}`}
                   className="bg-[#394426]/10 p-2 rounded-md text-[#394426] hover:bg-[#394426]/20 transition-colors"
                   aria-label="Позвонить"
                 >
-                  <Phone size={22} />
-                </a>
+                  <Phone size={26} />
+                </Link>
+                <Link
+                  className="bg-[#394426]/10 p-2 rounded-md hover:bg-[#394426]/20 transition-colors"
+                  href={"https://max.ru/id165113649438_bot"}
+                  aria-label="Написать в Max"
+                >
+                  <div className="w-[26px] h-[26px]">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 720 720"
+                    >
+                      <path
+                        fill="#394426"
+                        d="M350.4,9.6C141.8,20.5,4.1,184.1,12.8,390.4c3.8,90.3,40.1,168,48.7,253.7,2.2,22.2-4.2,49.6,21.4,59.3,31.5,11.9,79.8-8.1,106.2-26.4,9-6.1,17.6-13.2,24.2-22,27.3,18.1,53.2,35.6,85.7,43.4,143.1,34.3,299.9-44.2,369.6-170.3C799.6,291.2,622.5-4.6,350.4,9.6h0ZM269.4,504c-11.3,8.8-22.2,20.8-34.7,27.7-18.1,9.7-23.7-.4-30.5-16.4-21.4-50.9-24-137.6-11.5-190.9,16.8-72.5,72.9-136.3,150-143.1,78-6.9,150.4,32.7,183.1,104.2,72.4,159.1-112.9,316.2-256.4,218.6h0Z"
+                      ></path>
+                    </svg>
+                  </div>
+                </Link>
                 <button
                   onClick={() => setIsMobileMenuOpen(true)}
                   className="text-white bg-[#394426] p-2 rounded-md cursor-pointer"

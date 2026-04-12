@@ -43,7 +43,11 @@ const PopularCategories = () => {
   const [isContactsOpen, setIsContactsOpen] = useState(false);
 
   // Запрашиваем все категории (100)
-  const { data: allCategories, isLoading, error } = useCategoriesWithPictures(100);
+  const {
+    data: allCategories,
+    isLoading,
+    error,
+  } = useCategoriesWithPictures(100);
 
   // Показываем только первые 6
   const categoriesToShow = useMemo(() => {
@@ -65,8 +69,8 @@ const PopularCategories = () => {
       <div className="container mx-auto">
         <h2 className="text-left mb-10 md:mb-18">
           <span className="font-[600] text-[clamp(24px,5vw,60px)] leading-[1] tracking-normal text-[#394426]">
-            Подберите растение <br className="block sm:hidden" /> для своего сада:{" "}
-            <br className="hidden sm:block" /> более 5000{" "}
+            Подберите растение <br className="block sm:hidden" /> для своего
+            сада: <br className="hidden sm:block" /> более 5000{" "}
           </span>
           <span className="italic font-[400] text-[clamp(28px,6vw,70px)] leading-[1] tracking-[-0.02em] text-[#394426]">
             акклиматизированных сортов
@@ -100,9 +104,7 @@ const PopularCategories = () => {
                       {/* Кнопки для десктопа */}
                       <div className="hidden mx-auto mt-[94%] sm:block w-70 flex flex-col gap-2.5 z-30 relative">
                         <Link href={`/catalog/${category.id}`}>
-                          <button
-                            className="bg-[#394426] mb-5 text-white text-xs sm:text-xl font-manrope font-medium py-2.5 sm:py-4.5 rounded-md hover:bg-[#102902] transition-colors w-full cursor-pointer"
-                          >
+                          <button className="bg-[#394426] mb-5 text-white text-xs sm:text-xl font-manrope font-medium py-2.5 sm:py-4.5 rounded-md hover:bg-[#102902] transition-colors w-full cursor-pointer">
                             Подобрать растение
                           </button>
                         </Link>
@@ -125,9 +127,7 @@ const PopularCategories = () => {
                       </h3>
                       <div className="flex flex-col gap-2.5 mt-auto">
                         <Link href={`/catalog/${category.id}`}>
-                          <button
-                            className="bg-[#394426] text-white text-[12px] font-manrope font-medium py-2.5 rounded-md hover:bg-[#102902] transition-colors shadow-md w-full cursor-pointer"
-                          >
+                          <button className="bg-[#394426] text-white text-[12px] font-manrope font-medium py-2.5 rounded-md hover:bg-[#102902] transition-colors shadow-md w-full cursor-pointer">
                             Подобрать растение
                           </button>
                         </Link>
