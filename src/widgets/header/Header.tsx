@@ -129,7 +129,7 @@ const Header = () => {
                 </span>
               </div>
 
-              <div className="flex items-start space-x-1">
+              <div className="flex items-start space-x-1 mt-1 ml-0">
                 <svg
                   width="11"
                   height="15"
