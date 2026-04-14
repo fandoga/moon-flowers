@@ -141,11 +141,11 @@ const ProductCardGroup: React.FC<ProductCardGroupProps> = ({
 
         <div className="mt-auto">
           {/* ✅ Show "от X ₽" when multiple variants, else just the price */}
-          <p className="text-xl md:text-2xl font-bold text-[#394426] mb-3">
+          {/* <p className="text-xl md:text-2xl font-bold text-[#394426] mb-3">
             {hasMultipleVariants
               ? `от ${formatPrice(minPrice === Infinity ? selectedPrice : minPrice)}`
               : `от ${formatPrice(selectedPrice)}`}
-          </p>
+          </p> */}
 
           <div className="flex w-full gap-2 sm:gap-4">
             <div className="block sm:hidden">

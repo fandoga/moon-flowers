@@ -129,7 +129,7 @@ const Header = () => {
                 </span>
               </div>
 
-              <div className="flex items-start space-x-1 mt-1 ml-0">
+              <div className="flex items-start space-x-1">
                 <svg
                   width="11"
                   height="15"
@@ -268,7 +268,7 @@ const Header = () => {
                     <span>Заявка</span>
                     {cartCount > 0 && (
                       <p className="text-xs text-[#8B8C95]">
-                        на сумму {formatPrice(cartTotal)}
+                        на сумму
                       </p>
                     )}
                   </div>

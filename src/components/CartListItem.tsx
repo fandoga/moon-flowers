@@ -80,9 +80,9 @@ export const CartItemsList: React.FC<CartItemsListProps> = ({
                     currentQuantity={item.quantity}
                   />
                   <div className="text-right">
-                    <p className="font-bold text-[#394426]">
+                    {/* <p className="font-bold text-[#394426]">
                       от {formatPrice(price * item.quantity)}
-                    </p>
+                    </p> */}
                   </div>
                 </div>
               </div>
@@ -106,8 +106,8 @@ export const CartItemsList: React.FC<CartItemsListProps> = ({
       })}
       {showTotal && (
         <div className="flex justify-end gap-3 items-center mb-5">
-          <span className="text-2xl font-medium">Итого:</span>
-          <span className="text-2xl font-bold text-[#394426]">{formatPrice(total)}</span>
+          {/* <span className="text-2xl font-medium">Итого:</span>
+          <span className="text-2xl font-bold text-[#394426]">{formatPrice(total)}</span> */}
         </div>
       )}
     </div>

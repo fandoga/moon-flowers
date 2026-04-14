@@ -226,18 +226,18 @@ const ProductPageContent: React.FC<Props> = ({
                         {getVariantLabel(p)}
                       </span>
                     </div>
-                    <span className="pl-8 text-sm md:text-md text-gray-400">
+                    {/* <span className="pl-8 text-sm md:text-md text-gray-400">
                       От {formatPrice(p.prices?.[0]?.price || 0)}
-                    </span>
+                    </span> */}
                   </label>
                 ))}
               </div>
             </div>
           )}
           <div className="">
-            <p className="text-2xl lg:text-4xl font-bold text-[#394426] mb-4">
+            {/* <p className="text-2xl lg:text-4xl font-bold text-[#394426] mb-4">
               От {formatPrice(price)} / шт.
-            </p>
+            </p> */}
             <div className="flex flex-col sm:flex-row sm:items-end gap-6 md:gap-8">
               <div className="flex items-center gap-4">
                 <div className="flex items-center border-2 border-gray rounded-sm overflow-hidden w-38">

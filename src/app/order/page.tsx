@@ -474,12 +474,12 @@ export default function OrderPage() {
               showTotal={false}
               className="max-h-[500px] overflow-y-auto"
             />
-            <div className="mt-6  flex justify-between items-center text-lg">
+            {/* <div className="mt-6  flex justify-between items-center text-lg">
               <span className="font-medium">Итого:</span>
               <span className="font-bold text-[#394426] text-xl sm:text-2xl">
                 {formatPrice(total)}
               </span>
-            </div>
+            </div> */}
           </div>
         </form>
       </div>

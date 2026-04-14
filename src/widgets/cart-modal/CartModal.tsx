@@ -62,12 +62,12 @@ const CartModal = () => {
 
             {items.length > 0 && (
               <div className="p-5 border-t mt-auto">
-                <div className="flex justify-end gap-3 items-center mb-5">
+                {/* <div className="flex justify-end gap-3 items-center mb-5">
                   <span className="text-2xl font-medium">Итого:</span>
                   <span className="text-2xl font-bold text-[#394426]">
                     {formatPrice(total)}
                   </span>
-                </div>
+                </div> */}
                 <button
                   onClick={() => {
                     window.location.href = "/order";

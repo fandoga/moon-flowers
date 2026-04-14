@@ -94,15 +94,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       <div className="p-3 sm:p-3 flex flex-col flex-1">
-        <h3 className="text-lg md:text-xl font-manrope font-bold text-[#394426] mb-1">
+        <h3 className="text-lg md:text-xl font-manrope font-bold text-[#394426] mb-3">
           {product.name}
         </h3>
 
         <div className="mt-auto">
-          {/* ✅ "от" price prefix */}
-          <p className="text-xl md:text-2xl font-bold text-[#394426] mb-3">
+          {/* <p className="text-xl md:text-2xl font-bold text-[#394426] mb-3">
             от {formatPrice(price)}
-          </p>
+          </p> */}
 
           <div className="flex w-full gap-2 sm:gap-4">
             <div className="block sm:hidden">
