@@ -124,7 +124,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             >
               {showLoader ? (
                 <Loader2 className="animate-spin mr-2 " size={18} />
-              ) : <span className="">Подробнее</span>}
+              ) : <span className="text-sm sm:text-[17px]">Подробнее</span>}
             </button>
           </div>
         </div>

@@ -31,7 +31,7 @@ const ProductCardGroup: React.FC<ProductCardGroupProps> = ({
 
   const getVariantLabel = (product: NomenclatureItem) => {
     const lengthAttr = product.attributes?.find(
-      (attr) => attr.attribute_id === 1
+      (attr) => attr.attribute_id === 1,
     );
     if (lengthAttr?.value) return lengthAttr.value;
     const match = product.name.match(/\((.*?)\)/);
@@ -167,9 +167,10 @@ const ProductCardGroup: React.FC<ProductCardGroupProps> = ({
               className="flex-1 border-2 w-[125px] w-full text-xs border-[#394426] text-[#394426] px-3 py-2 sm:px-4 sm:py-2.5 rounded-md text-[15px] sm:text-[17px] hover:bg-[#102902] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
             >
               {showLoader ? (
-                <Loader2 className="animate-spin mr-2" size={18} />
-              ) : null}
-              Подробнее
+                <Loader2 className="animate-spin mr-2 " size={18} />
+              ) : (
+                <span className="text-sm sm:text-[17px]">Подробнее</span>
+              )}
             </button>
           </div>
         </div>
