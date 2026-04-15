@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Breadcrumb from "@/widgets/breadcrumb/Breadcrumb";
 import CategoryGrid from "@/widgets/category-grid/CategoryGrid";
 import { Suspense } from "react";
-import SearchResults from "@/widgets/search-results/SearchResults";
+import SearchResults from "@/widgets/products-catalog/ProductsCatalog";
 
 const containerVariants = {
   hidden: { opacity: 0 },

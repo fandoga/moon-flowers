@@ -6,10 +6,10 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'app.tablecrm.com',
-        port: '',
-        pathname: '/api/v1/**',
+        protocol: "https",
+        hostname: "interesnoitochka.ru",
+        port: "",
+        pathname: "/api/v1/**",
       },
     ],
     qualities: [25, 50, 75, 80, 85, 90],

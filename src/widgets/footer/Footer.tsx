@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ContactsModal } from "../contacts-modal/ContactsModal";
+import FooterIcons from "./FooterIcons";
+import ActionButton from "@/components/ui/action-button";
 
 const Footer = () => {
   const [isContactsOpen, setIsContactsOpen] = useState(false);
@@ -28,177 +29,74 @@ const Footer = () => {
   ];
 
   return (
-    <div className="w-screen ml-[calc(-50vw+50%)] mr-[calc(-50vw+50%)] bg-[#394426]">
+    <div>
       <motion.footer
         initial="hidden"
-        whileInView="visible"
+        animate="visible"
         viewport={{ once: true, amount: 0.1 }}
         variants={containerVariants}
-        className="bg-[#394426] text-white"
       >
-        {/* ── Desktop ── */}
-        <div className="hidden md:block max-w-[1440px] mx-auto px-6 lg:px-10">
-          <div className="py-12">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-              {/* Колонка 1: Логотип + слоган */}
-              <div className="lg:col-span-4">
-                <div className="relative w-40 h-25 mb-4">
-                  <Image
-                    src="/logo/logo.png"
-                    alt="Клевер"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <p className="text-base font-semibold leading-snug">
-                  Питомник растений и деревьев
-                </p>
-                <p className="text-base text-white/80">в Казани</p>
-              </div>
-
-              {/* Колонка 2: Навигация (горизонтальные группы или 2 колонки) */}
-              <div className="lg:col-span-4">
-                <p className="font-bold text-white/60 text-sm uppercase tracking-wider mb-3">
-                  Навигация
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="hover:underline text-white/90 hover:text-white transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                  <button
-                    onClick={() => setIsContactsOpen(true)}
-                    className="text-left hover:underline text-white/90 hover:text-white transition-colors cursor-pointer"
-                  >
-                    Контакты
-                  </button>
-                </div>
-              </div>
-
-              {/* Колонка 3: Контакты */}
-              <div className="lg:col-span-4">
-                <p className="font-bold text-white/60 text-sm uppercase tracking-wider mb-3">
-                  Контакты
-                </p>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <svg
-                      width="11"
-                      height="15"
-                      viewBox="0 0 11 15"
-                      fill="none"
-                      className="shrink-0 mt-0.5"
-                    >
-                      <path
-                        d="M6.17891 14.6629C7.64844 12.7772 11 8.20679 11 5.63959C11 2.52607 8.53646 0 5.5 0C2.46354 0 0 2.52607 0 5.63959C0 8.20679 3.35156 12.7772 4.82109 14.6629C5.17344 15.1124 5.82656 15.1124 6.17891 14.6629ZM5.5 3.75973C5.98623 3.75973 6.45255 3.95779 6.79636 4.31033C7.14018 4.66287 7.33333 5.14102 7.33333 5.63959C7.33333 6.13817 7.14018 6.61632 6.79636 6.96886C6.45255 7.3214 5.98623 7.51946 5.5 7.51946C5.01377 7.51946 4.54745 7.3214 4.20364 6.96886C3.85982 6.61632 3.66667 6.13817 3.66667 5.63959C3.66667 5.14102 3.85982 4.66287 4.20364 4.31033C4.54745 3.95779 5.01377 3.75973 5.5 3.75973Z"
-                        fill="#8B8C95"
-                      />
-                    </svg>
-                    <span className="">
-                      г. Казань, Мамадышский тракт, 58
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2 ml-0">
-                    <svg
-                      width="11"
-                      height="15"
-                      viewBox="0 0 11 15"
-                      fill="none"
-                      className="shrink-0"
-                    >
-                      <path
-                        d="M6.17891 14.6629C7.64844 12.7772 11 8.20679 11 5.63959C11 2.52607 8.53646 0 5.5 0C2.46354 0 0 2.52607 0 5.63959C0 8.20679 3.35156 12.7772 4.82109 14.6629C5.17344 15.1124 5.82656 15.1124 6.17891 14.6629ZM5.5 3.75973C5.98623 3.75973 6.45255 3.95779 6.79636 4.31033C7.14018 4.66287 7.33333 5.14102 7.33333 5.63959C7.33333 6.13817 7.14018 6.61632 6.79636 6.96886C6.45255 7.3214 5.98623 7.51946 5.5 7.51946C5.01377 7.51946 4.54745 7.3214 4.20364 6.96886C3.85982 6.61632 3.66667 6.13817 3.66667 5.63959C3.66667 5.14102 3.85982 4.66287 4.20364 4.31033C4.54745 3.95779 5.01377 3.75973 5.5 3.75973Z"
-                        fill="#8B8C95"
-                      />
-                    </svg>
-                    <span className="text-sm">
-                      г. Казань, пос. Залесный, ул. Залесная, 58
-                    </span>
-                  </div>
-                  <a
-                    href="tel:+78432409055"
-                    className="font-medium block hover:underline"
-                  >
-                    +7 843 240-90-55
-                  </a>
-                  <a
-                    href="tel:+79662409055"
-                    className="font-medium block hover:underline"
-                  >
-                    +7 966 240-90-55
-                  </a>
-                  <p className="break-all">sadkzn@mail.ru</p>
-                </div>
-              </div>
+        <div className="max-w-[1640px] mx-auto px-14 pt-15 md:pt-30 pb-5 flex flex-col items-center bg-background">
+          <div className="flex flex-col gap-2 w-full md:gap-16 md:flex-row items-center pb-8">
+            <div>
+              <h2 className="h md:pb-6 !text-center md:!text-left">
+                Работаем ежедневно <br /> 09:00 — 21:00
+              </h2>
+              <p className="p pb-10 md:pb-0 !text-center md:!text-left">
+                Свяжитесь с нами любым удобным способом — <br /> поможем найти
+                идеальные цветы
+              </p>
             </div>
-
-            {/* Нижняя линия с копирайтом */}
-            <div className="border-t border-white/20 mt-10 pt-6 text-sm text-white/50 text-center">
-              © {new Date().getFullYear()} Питомник Клевер — Казань
+            <div className="flex flex-col items-center">
+              <p className="p py-2 font-semibold">
+                г. Москва, ул. Большая <br /> Переяславская 52/1
+              </p>
+              <p className="p py-2 font-semibold">8 (897) 326-88-88</p>
+              <p className="p py-2 font-semibold">flowers@shop.com</p>
+              <FooterIcons />
             </div>
           </div>
         </div>
-
-        {/* ── Mobile ── */}
-        <div className="md:hidden bg-[#394426] text-white mb-20 sm:mb-0">
-          <div className="px-5 py-8">
-            {/* Logo + tagline */}
-            <div className="mb-6">
-              <h1 className="text-3xl font-semibold">Клевер</h1>
-              <motion.p
-                variants={fadeInUp}
-                className="text-base mt-1 text-white/80"
+        <div className="w-full flex flex-col items-center pb-12">
+          <div className="w-full pb-8">
+            <div style={{ position: "relative", overflow: "hidden" }}>
+              <a
+                href="https://yandex.ru/maps/213/moscow/?utm_medium=mapframe&utm_source=maps"
+                style={{
+                  color: "#eee",
+                  fontSize: "12px",
+                  position: "absolute",
+                  top: "0px",
+                }}
               >
-                Питомник растений и деревьев в Казани
-              </motion.p>
+                Москва
+              </a>
+              <a
+                href="https://yandex.ru/maps/213/moscow/house/bolshaya_pereyaslavskaya_ulitsa_52s1/Z04YcANgT0cEQFtvfXt5dnRnYw==/?from=tableau_yabro&ll=37.640652%2C55.787861&utm_medium=mapframe&utm_source=maps&z=20.77"
+                style={{
+                  color: "#eee",
+                  fontSize: "12px",
+                  position: "absolute",
+                  top: "14px",
+                }}
+              >
+                Большая Переяславская улица, 52с1 — Яндекс Карты
+              </a>
+              <iframe
+                src="https://yandex.ru/map-widget/v1/?from=tableau_yabro&ll=37.640652%2C55.787861&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg1Njc0MzYwMhJX0KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINCR0L7Qu9GM0YjQsNGPINCf0LXRgNC10Y_RgdC70LDQstGB0LrQsNGPINGD0LvQuNGG0LAsIDUy0YExIgoNAJAWQhXBJl9C&z=20.77"
+                width="560"
+                height="400"
+                frameBorder="1"
+                className="w-full h-120"
+                allowFullScreen
+                style={{ position: "relative" }}
+              ></iframe>
             </div>
-
-            {/* ✅ Navigation links on mobile footer */}
-            <motion.div variants={fadeInUp} className="mb-8">
-              <h3 className="font-bold text-xl mb-3">Навигация</h3>
-              <ul className="text-base space-y-2">
-                {navLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="hover:underline text-white/90"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-                <li>
-                  <button
-                    onClick={() => setIsContactsOpen(true)}
-                    className="hover:underline text-white/90 cursor-pointer"
-                  >
-                    Контакты
-                  </button>
-                </li>
-              </ul>
-            </motion.div>
-
-            {/* Contacts */}
-            <motion.div variants={fadeInUp} className="space-y-2 text-base">
-              <p>
-                г. Казань, Мамадышский тракт, 58
-                <br />
-                пос. Залесный, ул. Залесная, 58
-              </p>
-              <a href="tel:+78432409055" className="font-medium block">
-                +7 843 240-90-55
-              </a>
-              <a href="tel:+79662409055" className="font-medium block">
-                +7 966 240-90-55
-              </a>
-              <p>sadkzn@mail.ru</p>
-            </motion.div>
           </div>
+          <ActionButton
+            src="https://tablecrm.ru"
+            text="Работать на базе TableCRM.com"
+          />
         </div>
       </motion.footer>
 

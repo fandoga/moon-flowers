@@ -1,9 +1,9 @@
 // app/search/SearchPageClient.tsx
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Breadcrumb from '@/widgets/breadcrumb/Breadcrumb';
-import SearchResults from '@/widgets/search-results/SearchResults';
+import { motion } from "framer-motion";
+import Breadcrumb from "@/widgets/breadcrumb/Breadcrumb";
+import SearchResults from "@/widgets/products-catalog/ProductsCatalog";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -35,8 +35,8 @@ export default function SearchPageClient({ query }: Props) {
           <motion.div variants={itemVariants}>
             <Breadcrumb
               paths={[
-                { url: '/', name: 'Главная' },
-                { url: '/search', name: 'Поиск' },
+                { url: "/", name: "Главная" },
+                { url: "/search", name: "Поиск" },
               ]}
             />
           </motion.div>
@@ -65,9 +65,12 @@ export default function SearchPageClient({ query }: Props) {
         <motion.div variants={itemVariants}>
           <Breadcrumb
             paths={[
-              { url: '/', name: 'Главная' },
-              { url: '/search', name: 'Поиск' },
-              { url: `/search?q=${encodeURIComponent(query)}`, name: `«${query}»` },
+              { url: "/", name: "Главная" },
+              { url: "/search", name: "Поиск" },
+              {
+                url: `/search?q=${encodeURIComponent(query)}`,
+                name: `«${query}»`,
+              },
             ]}
           />
         </motion.div>

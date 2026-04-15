@@ -1,21 +1,19 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  useQueries,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCart, addToCart, removeFromCart } from "../api/api";
-import { getProductById } from "@/entities/product/api/api";
 import {
   getCartMeta,
   addCartMeta,
   removeCartMeta,
 } from "@/lib/cartLocalStorage";
 import { CartGood } from "@/entities/cart/types/types";
-import { NomenclatureItem } from "@/entities/product/types/types";
 
-type CartItemWithProduct = CartGood & {
-  product: NomenclatureItem;
+export type CartItemWithProduct = CartGood & {
+  product?: {
+    id: number;
+    name?: string;
+    prices?: Array<{ price: number }>;
+    photos?: Array<{ url: string }>;
+  };
   addedAt: number;
 };
 
@@ -41,36 +39,18 @@ export const useCartProducts = () => {
     error: cartError,
   } = useCart();
   const cartItems = cartData?.goods || [];
-
-  const productQueries = useQueries({
-    queries: cartItems.map((item: CartGood) => ({
-      queryKey: ["product", item.nomenclature_id],
-      queryFn: () => getProductById(item.nomenclature_id),
-      enabled: !cartLoading,
-    })),
-  });
-
-  const isLoading = cartLoading || productQueries.some((q) => q.isLoading);
-  const error = cartError || productQueries.find((q) => q.error)?.error;
-
-  const products = productQueries.map((q) => q.data).filter(Boolean) as NomenclatureItem[];
-
+  const isLoading = cartLoading;
+  const error = cartError;
   const cartMeta = getCartMeta();
 
-  const itemsWithNullable = cartItems.map((item: CartGood, index: number) => {
+  const itemsWithProducts = cartItems.map((item: CartGood) => {
     const meta = cartMeta.find((m) => m.productId === item.nomenclature_id);
-    const product = products[index];
-    if (!product) return null;
     return {
       ...item,
-      product,
+      product: undefined,
       addedAt: meta?.addedAt || 0,
-    };
+    } as CartItemWithProduct;
   });
-
-  const itemsWithProducts = itemsWithNullable.filter(
-    (item): item is CartItemWithProduct => item !== null && item.product !== undefined
-  );
 
   itemsWithProducts.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
 

@@ -1,23 +1,80 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { LoaderCircle, Trash2 } from "lucide-react";
 import Breadcrumb from "@/widgets/breadcrumb/Breadcrumb";
-import { useCartProducts } from "@/entities/cart/hooks/hooks";
-import { useCreateFullOrder } from "@/entities/order/hooks/hooks";
+import {
+  useCartProducts,
+  useRemoveFromCart,
+} from "@/entities/cart/hooks/hooks";
+import { clearCartMeta } from "@/lib/cartLocalStorage";
 import { formatPrice } from "@/lib/utils/formatPrice";
-import { LoaderCircle } from "lucide-react";
-import { CartItemsList } from "@/components/CartListItem";
 import { applyPhoneMask } from "@/lib/utils/phoneMask";
+import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 
-const STORAGE_KEY = "order_form_data";
+const FORM_STORAGE_KEY = "order_form_data";
+const LOCAL_ORDERS_STORAGE_KEY = "orders_local";
+
+type Address = {
+  index: string;
+  city: string;
+  street: string;
+  house: string;
+};
+
+type AddressSuggestion = {
+  value: string;
+  data: {
+    postal_code: string;
+    city: string;
+    street: string;
+    house: string;
+  };
+};
+
+type LocalOrder = {
+  id: number;
+  createdAt: string;
+  customer: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+  };
+  delivery: {
+    method: "delivery" | "pickup";
+    address?: string;
+  };
+  paymentMethod: "cash" | "card";
+  comment: string;
+  total: number;
+  goods: Array<{
+    nomenclature_id: number;
+    quantity: number;
+    price: number;
+    title: string;
+  }>;
+};
+
+const getLocalOrders = (): LocalOrder[] => {
+  if (typeof window === "undefined") return [];
+  const raw = localStorage.getItem(LOCAL_ORDERS_STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as LocalOrder[];
+  } catch {
+    return [];
+  }
+};
 
 export default function OrderPage() {
   const router = useRouter();
-  const { data: cartItemsRaw = [] } = useCartProducts();
-  const createFullOrder = useCreateFullOrder();
+  const queryClient = useQueryClient();
+  const removeFromCart = useRemoveFromCart();
+  const { data: cartItems = [], isLoading: isCartLoading } = useCartProducts();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -26,7 +83,7 @@ export default function OrderPage() {
     "delivery",
   );
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
-  const [address, setAddress] = useState({
+  const [address, setAddress] = useState<Address>({
     index: "",
     city: "",
     street: "",
@@ -34,39 +91,39 @@ export default function OrderPage() {
   });
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [addressQuery, setAddressQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
-  const cartItems = cartItemsRaw.filter(
-    (item): item is NonNullable<typeof item> => item !== null,
-  );
-
-  // Загрузка сохранённых данных из localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setFirstName(data.firstName || "");
-        setLastName(data.lastName || "");
-        setPhone(data.phone || "");
-        setDeliveryMethod(data.deliveryMethod || "delivery");
-        setPaymentMethod(data.paymentMethod || "cash");
-        setAddress(
-          data.address || { index: "", city: "", street: "", house: "" },
-        );
-        setComment(data.comment || "");
-      } catch (e) {
-        console.error("Failed to load form data from localStorage", e);
-      }
+    const stored = localStorage.getItem(FORM_STORAGE_KEY);
+    if (!stored) return;
+    try {
+      const data = JSON.parse(stored) as {
+        firstName?: string;
+        lastName?: string;
+        phone?: string;
+        deliveryMethod?: "delivery" | "pickup";
+        paymentMethod?: "cash" | "card";
+        address?: Address;
+        comment?: string;
+      };
+      setFirstName(data.firstName || "");
+      setLastName(data.lastName || "");
+      setPhone(data.phone || "");
+      setDeliveryMethod(data.deliveryMethod || "delivery");
+      setPaymentMethod(data.paymentMethod || "cash");
+      setAddress(
+        data.address || { index: "", city: "", street: "", house: "" },
+      );
+      setComment(data.comment || "");
+    } catch {
+      // ignore invalid saved payload
     }
   }, []);
 
-  // Сохранение данных при изменении
   useEffect(() => {
-    const data = {
+    const payload = {
       firstName,
       lastName,
       phone,
@@ -75,7 +132,7 @@ export default function OrderPage() {
       address,
       comment,
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(payload));
   }, [
     firstName,
     lastName,
@@ -86,13 +143,13 @@ export default function OrderPage() {
     comment,
   ]);
 
-  // Поиск адреса через Nominatim
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (!addressQuery.trim() || addressQuery.length < 3) {
         setSuggestions([]);
         return;
       }
+
       setLoadingSuggestions(true);
       try {
         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
@@ -101,12 +158,23 @@ export default function OrderPage() {
         const res = await fetch(url, {
           headers: {
             Accept: "application/json",
-            "User-Agent": "YourAppName/1.0",
+            "User-Agent": "MoonFlowers/1.0",
           },
         });
-        const data = await res.json();
-        const suggestions = data.map((item: any) => ({
-          value: item.display_name,
+        const data: Array<{
+          display_name?: string;
+          address?: {
+            postcode?: string;
+            city?: string;
+            town?: string;
+            village?: string;
+            road?: string;
+            house_number?: string;
+          };
+        }> = await res.json();
+
+        const mapped: AddressSuggestion[] = data.map((item) => ({
+          value: item.display_name || "",
           data: {
             postal_code: item.address?.postcode || "",
             city:
@@ -118,25 +186,25 @@ export default function OrderPage() {
             house: item.address?.house_number || "",
           },
         }));
-        setSuggestions(suggestions);
-      } catch (error) {
-        console.error("Failed to fetch address suggestions:", error);
+        setSuggestions(mapped.filter((item) => item.value.length > 0));
+      } catch {
+        setSuggestions([]);
       } finally {
         setLoadingSuggestions(false);
       }
     };
 
-    const handler = setTimeout(fetchSuggestions, 300);
-    return () => clearTimeout(handler);
+    const timer = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(timer);
   }, [addressQuery]);
 
-  const handleSelectAddress = useCallback((suggestion: any) => {
-    const data = suggestion.data;
+  const handleSelectAddress = useCallback((suggestion: AddressSuggestion) => {
+    const parsed = suggestion.data;
     setAddress({
-      index: data.postal_code || "",
-      city: data.city || "",
-      street: data.street || "",
-      house: data.house || "",
+      index: parsed.postal_code,
+      city: parsed.city,
+      street: parsed.street,
+      house: parsed.house,
     });
     setAddressQuery(suggestion.value);
     setSuggestions([]);
@@ -150,79 +218,87 @@ export default function OrderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!phone) {
       toast.error("Введите номер телефона");
       return;
     }
+    if (cartItems.length === 0) {
+      toast.error("Корзина пуста");
+      return;
+    }
+    if (deliveryMethod === "delivery") {
+      const hasAddress =
+        address.index && address.city && address.street && address.house;
+      if (!hasAddress) {
+        toast.error("Заполните адрес доставки");
+        return;
+      }
+    }
 
     setIsSubmitting(true);
-
     try {
-      const goods = cartItems.map((item) => ({
-        nomenclature_id: item.nomenclature_id,
-        quantity: item.quantity,
-        price: item.product?.prices?.[0]?.price || 0,
-      }));
+      const orderId = Date.now();
+      const deliveryAddress =
+        deliveryMethod === "delivery"
+          ? `${address.index}, ${address.city}, ${address.street}, ${address.house}`
+          : "Самовывоз";
 
-      let deliveryAddress = "";
-      if (deliveryMethod === "delivery") {
-        deliveryAddress = `${address.index}, ${address.city}, ${address.street}, ${address.house}`;
-      }
-
-      const result = await createFullOrder.mutateAsync({
-        goods,
+      const localOrder: LocalOrder = {
+        id: orderId,
+        createdAt: new Date().toISOString(),
         customer: { firstName, lastName, phone },
         delivery: { method: deliveryMethod, address: deliveryAddress },
         paymentMethod,
         comment,
         total,
-      });
+        goods: cartItems.map((item) => ({
+          nomenclature_id: item.nomenclature_id,
+          quantity: item.quantity,
+          price: item.product?.prices?.[0]?.price || 0,
+          title: item.product?.name || `Товар #${item.nomenclature_id}`,
+        })),
+      };
 
-      if (result.type === "payment") {
-        window.location.href = (result as { url: string }).url;
-      } else {
-        router.push(`/order/success?order_id=${result.orderId}`);
-      }
-    } catch (err: unknown) {
-      console.error("Ошибка создания заявки:", err);
-      let errorMessage = "Произошла ошибка";
-      if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as {
-          response?: { data?: { message?: string } };
-        };
-        errorMessage = axiosError.response?.data?.message || errorMessage;
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      toast.error(`Ошибка: ${errorMessage}`);
+      const existingOrders = getLocalOrders();
+      localStorage.setItem(
+        LOCAL_ORDERS_STORAGE_KEY,
+        JSON.stringify([localOrder, ...existingOrders]),
+      );
+
+      localStorage.removeItem("cart");
+      clearCartMeta();
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+
+      toast.success("Заказ сохранен");
+      router.push(`/order/success?order_id=${orderId}`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Не удалось оформить заказ";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <main className="py-8 md:py-12 bg-[#F8F9FB] min-h-screen font-manrope">
+    <main className="py-8 md:py-12 bg-background min-h-screen">
       <div className="container mx-auto max-w-[1440px]">
         <Breadcrumb
           paths={[
             { url: "/", name: "Главная" },
-            { url: "/cart", name: "Заявки" },
-            { url: "/order", name: "Оформление заявки" },
+            { url: "/order", name: "Оформление заказа" },
           ]}
         />
 
-        <h1 className="mt-6 text-3xl md:text-4xl font-bold text-[#394426] mb-8 md:mb-12">
-          Оформление заявки
+        <h1 className="mt-6 text-3xl md:text-4xl font-bold mb-8 md:mb-12">
+          Оформление заказа
         </h1>
 
         <form
           onSubmit={handleSubmit}
           className="flex flex-col lg:flex-row gap-8 sm:gap-6"
         >
-          {/* Левая колонка – форма */}
           <div className="w-full lg:w-3/5 space-y-5 lg:order-none order-2">
-            {/* Блок данных пользователя */}
             <div className="bg-gray-200 p-6 rounded-xl">
               <h2 className="text-xl md:text-2xl font-bold text-[#394426] mb-6">
                 Данные пользователя
@@ -255,56 +331,51 @@ export default function OrderPage() {
               </div>
             </div>
 
-            {/* Способ получения */}
             <div className="bg-gray-200 p-6 rounded-xl">
               <h2 className="text-xl md:text-2xl font-bold text-[#394426] mb-4">
                 Способ получения
               </h2>
               <div className="flex flex-col md:flex-row md:justify-between gap-4">
-                <div className="bg-white w-full md:w-auto md:flex-1 rounded-sm p-4">
-                  <label className="flex flex-col gap-1 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="delivery"
-                        value="delivery"
-                        checked={deliveryMethod === "delivery"}
-                        onChange={() => setDeliveryMethod("delivery")}
-                        className="w-5 h-5 accent-[#394426]"
-                      />
-                      <span className="pl-2 text-base md:text-lg text-[#394426] font-bold">
-                        Доставка
-                      </span>
-                    </div>
-                    <p className="pl-2 text-sm text-gray-600 ml-7">
-                      курьерская служба
-                    </p>
-                  </label>
-                </div>
-                <div className="bg-white w-full md:w-auto md:flex-1 rounded-sm p-4">
-                  <label className="flex flex-col gap-1 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="delivery"
-                        value="pickup"
-                        checked={deliveryMethod === "pickup"}
-                        onChange={() => setDeliveryMethod("pickup")}
-                        className="w-5 h-5 accent-[#394426]"
-                      />
-                      <span className="pl-2 text-base md:text-lg text-[#394426] font-bold">
-                        Самовывоз
-                      </span>
-                    </div>
-                    <p className="pl-2 text-sm text-gray-600 ml-7">
-                      бесплатно, со склада
-                    </p>
-                  </label>
-                </div>
+                <label className="bg-white w-full md:flex-1 rounded-sm p-4 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="delivery"
+                      value="delivery"
+                      checked={deliveryMethod === "delivery"}
+                      onChange={() => setDeliveryMethod("delivery")}
+                      className="w-5 h-5 accent-[#394426]"
+                    />
+                    <span className="pl-2 text-base md:text-lg text-[#394426] font-bold">
+                      Доставка
+                    </span>
+                  </div>
+                  <p className="pl-9 text-sm text-gray-600">
+                    курьерская служба
+                  </p>
+                </label>
+
+                <label className="bg-white w-full md:flex-1 rounded-sm p-4 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="delivery"
+                      value="pickup"
+                      checked={deliveryMethod === "pickup"}
+                      onChange={() => setDeliveryMethod("pickup")}
+                      className="w-5 h-5 accent-[#394426]"
+                    />
+                    <span className="pl-2 text-base md:text-lg text-[#394426] font-bold">
+                      Самовывоз
+                    </span>
+                  </div>
+                  <p className="pl-9 text-sm text-gray-600">
+                    бесплатно, со склада
+                  </p>
+                </label>
               </div>
             </div>
 
-            {/* Адрес доставки (если выбрана доставка) */}
             {deliveryMethod === "delivery" && (
               <div className="bg-gray-200 p-6 rounded-xl">
                 <h2 className="text-xl md:text-2xl font-bold text-[#394426] mb-4">
@@ -325,13 +396,13 @@ export default function OrderPage() {
                   )}
                   {suggestions.length > 0 && (
                     <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-sm mt-1 max-h-60 overflow-y-auto">
-                      {suggestions.map((s, idx) => (
+                      {suggestions.map((item, idx) => (
                         <li
-                          key={idx}
+                          key={`${item.value}-${idx}`}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                          onClick={() => handleSelectAddress(s)}
+                          onClick={() => handleSelectAddress(item)}
                         >
-                          {s.value}
+                          {item.value}
                         </li>
                       ))}
                     </ul>
@@ -346,7 +417,7 @@ export default function OrderPage() {
                       setAddress({ ...address, index: e.target.value })
                     }
                     required
-                    className="col-span-1 px-4 py-3 bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-[#394426] placeholder-gray-400 text-black"
+                    className="px-4 py-3 bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-[#394426] placeholder-gray-400 text-black"
                   />
                   <input
                     type="text"
@@ -356,7 +427,7 @@ export default function OrderPage() {
                       setAddress({ ...address, city: e.target.value })
                     }
                     required
-                    className="col-span-1 px-4 py-3 bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-[#394426] placeholder-gray-400 text-black"
+                    className="px-4 py-3 bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-[#394426] placeholder-gray-400 text-black"
                   />
                   <input
                     type="text"
@@ -366,7 +437,7 @@ export default function OrderPage() {
                       setAddress({ ...address, street: e.target.value })
                     }
                     required
-                    className="col-span-1 px-4 py-3 bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-[#394426] placeholder-gray-400 text-black"
+                    className="px-4 py-3 bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-[#394426] placeholder-gray-400 text-black"
                   />
                   <input
                     type="text"
@@ -376,65 +447,57 @@ export default function OrderPage() {
                       setAddress({ ...address, house: e.target.value })
                     }
                     required
-                    className="col-span-1 px-4 py-3 bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-[#394426] placeholder-gray-400 text-black"
+                    className="px-4 py-3 bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-[#394426] placeholder-gray-400 text-black"
                   />
                 </div>
               </div>
             )}
 
-            {/* Способ оплаты */}
             <div className="bg-gray-200 p-6 rounded-xl">
               <h2 className="text-xl md:text-2xl font-bold text-[#394426] mb-4">
                 Способ оплаты
               </h2>
               <div className="flex flex-col md:flex-row md:justify-between gap-4">
-                <div className="bg-white w-full md:w-auto md:flex-1 rounded-sm p-4">
-                  <label className="flex flex-col gap-1 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="cash"
-                        checked={paymentMethod === "cash"}
-                        onChange={() => setPaymentMethod("cash")}
-                        className="w-5 h-5 accent-[#394426]"
-                      />
-                      <span className="font-bold text-base pl-2 md:text-lg text-[#394426]">
-                        Наличными при получении
-                      </span>
-                    </div>
-                    <p className="text-sm pl-2 text-gray-600 ml-7">
-                      оплата при получении
-                    </p>
-                  </label>
-                </div>
-                <div className="bg-white w-full md:w-auto md:flex-1 rounded-sm p-4">
-                  <label className="flex flex-col gap-1 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="card"
-                        checked={paymentMethod === "card"}
-                        onChange={() => setPaymentMethod("card")}
-                        className="w-5 h-5 accent-[#394426]"
-                      />
-                      <span className="font-bold pl-2 text-base md:text-lg text-[#394426]">
-                        Банковская карта
-                      </span>
-                    </div>
-                    <p className="pl-2 text-sm text-gray-600 ml-7">
-                      100% предоплата
-                    </p>
-                  </label>
-                </div>
+                <label className="bg-white w-full md:flex-1 rounded-sm p-4 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="cash"
+                      checked={paymentMethod === "cash"}
+                      onChange={() => setPaymentMethod("cash")}
+                      className="w-5 h-5 accent-[#394426]"
+                    />
+                    <span className="font-bold text-base pl-2 md:text-lg text-[#394426]">
+                      Наличными при получении
+                    </span>
+                  </div>
+                  <p className="text-sm pl-9 text-gray-600">
+                    оплата при получении
+                  </p>
+                </label>
+                <label className="bg-white w-full md:flex-1 rounded-sm p-4 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="card"
+                      checked={paymentMethod === "card"}
+                      onChange={() => setPaymentMethod("card")}
+                      className="w-5 h-5 accent-[#394426]"
+                    />
+                    <span className="font-bold pl-2 text-base md:text-lg text-[#394426]">
+                      Банковская карта
+                    </span>
+                  </div>
+                  <p className="pl-9 text-sm text-gray-600">100% предоплата</p>
+                </label>
               </div>
             </div>
 
-            {/* Комментарий */}
             <div className="bg-gray-200 p-6 rounded-xl">
               <textarea
-                placeholder="Комментарий к заявке"
+                placeholder="Комментарий к заказу"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={4}
@@ -442,11 +505,10 @@ export default function OrderPage() {
               />
             </div>
 
-            {/* Кнопка отправки */}
             <div className="mt-6 border-t border-gray-300 pt-6">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || cartItems.length === 0}
                 className="w-full bg-[#394426] text-white px-6 py-4 rounded-sm font-medium text-lg hover:bg-[#102902] transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
@@ -455,7 +517,7 @@ export default function OrderPage() {
                     Оформление...
                   </>
                 ) : (
-                  "Оформить заявку"
+                  "Оформить заказ"
                 )}
               </button>
               <p className="mt-3 text-sm text-gray-500 text-center">
@@ -465,21 +527,81 @@ export default function OrderPage() {
             </div>
           </div>
 
-          {/* Правая колонка – интерактивная корзина */}
           <div className="w-full lg:w-2/5 bg-white rounded-xl p-4 sm:p-8 shadow-lg lg:sticky lg:top-24 h-fit lg:order-none order-1">
             <h2 className="text-2xl font-bold text-[#394426] mb-6">
-              Ваша заявка
+              Ваш заказ
             </h2>
-            <CartItemsList
-              showTotal={false}
-              className="max-h-[500px] overflow-y-auto"
-            />
-            {/* <div className="mt-6  flex justify-between items-center text-lg">
+            {isCartLoading ? (
+              <div className="py-8 flex justify-center">
+                <LoaderCircle className="animate-spin h-6 w-6 text-[#394426]" />
+              </div>
+            ) : cartItems.length === 0 ? (
+              <p className="text-gray-500">Корзина пуста</p>
+            ) : (
+              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                {cartItems.map((item) => {
+                  const imageUrl =
+                    item.product?.photos?.[0]?.url &&
+                    (item.product.photos[0].url.includes("pictures/")
+                      ? `${process.env.NEXT_PUBLIC_API_URL}/${item.product.photos[0].url}`
+                      : `${process.env.NEXT_PUBLIC_API_URL}/photos/${item.product.photos[0].url}`);
+
+                  const price = item.product?.prices?.[0]?.price || 0;
+                  return (
+                    <div
+                      key={item.nomenclature_id}
+                      className="rounded-lg border border-gray-200 p-3 flex gap-3"
+                    >
+                      <div className="relative w-18 h-18 rounded-md overflow-hidden bg-gray-100 shrink-0">
+                        <Image
+                          src={imageUrl || "/placeholder.jpg"}
+                          alt={item.product?.name || "Товар"}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-[#394426] truncate">
+                          {item.product?.name ||
+                            `Товар #${item.nomenclature_id}`}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {formatPrice(price)} x {item.quantity}
+                        </p>
+                        <p className="font-semibold mt-1">
+                          {formatPrice(price * item.quantity)}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <AddToCartButton
+                            productId={item.nomenclature_id}
+                            currentQuantity={item.quantity}
+                            className="!w-[120px]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removeFromCart.mutate({
+                                nomenclature_id: item.nomenclature_id,
+                              })
+                            }
+                            className="p-2 rounded-md hover:bg-red-50 text-red-500 cursor-pointer"
+                            aria-label={`Удалить ${item.product?.name}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="mt-6 border-t pt-4 flex justify-between items-center text-lg">
               <span className="font-medium">Итого:</span>
               <span className="font-bold text-[#394426] text-xl sm:text-2xl">
                 {formatPrice(total)}
               </span>
-            </div> */}
+            </div>
           </div>
         </form>
       </div>

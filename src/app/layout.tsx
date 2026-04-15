@@ -1,28 +1,33 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Manrope, Source_Serif_4 } from "next/font/google";
+import { Inter } from "next/font/google";
 import Header from "@/widgets/header/Header";
 import Footer from "@/widgets/footer/Footer";
 import { Providers } from "./providers";
 import { Toaster } from "react-hot-toast";
-import CartModal from "@/widgets/cart-modal/CartModal";
+import localFont from "next/font/local";
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ["cyrillic", "latin"],
-  variable: "--font-manrope",
+  variable: "--font-inter",
 });
 
-const sourceSerif = Source_Serif_4({
-  subsets: ["cyrillic", "latin"],
-  variable: "--font-source-serif",
-  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
-  style: ["italic", "normal"],
+const sans = localFont({
+  src: [
+    {
+      path: "../../public/fonts/BezierSans_Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--sans",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Клевер — питомник растений и деревьев в Казани",
-    template: "%s | Клевер — питомник растений Казань",
+    default: "Moon Flowers - цветы",
+    template: "%s | Moon Flowers - цветы",
   },
   description:
     "Крупномеры, саженцы, посадочный материал из собственного питомника в Казани. Доставка, посадка, гарантия качества.",
@@ -89,19 +94,18 @@ export default function RootLayout({
     <html lang="ru">
       <body
         className={`
-          ${manrope.variable} ${sourceSerif.variable}
-          font-manrope antialiased text-gray-800 bg-[#F8F9FB]
+          ${inter.variable} ${sans.variable}
+          font-inter antialiased bg-background
           flex flex-col min-h-screen
-          overflow-x-hidden
         `}
       >
         <Providers>
           <Header />
-          <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-[40px]">
+          <main className="flex-1 w-full max-w-[1640px] mx-auto px-4 sm:px-[40px]">
             {children}
           </main>
           <Footer />
-          <CartModal />
+          {/* <CartModal /> */}
         </Providers>
         <Toaster position="top-right" />
       </body>

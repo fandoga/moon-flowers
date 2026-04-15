@@ -5,9 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { NomenclatureItem } from "@/entities/product/types/types";
-import { formatPrice } from "@/lib/utils/formatPrice";
 import { normalizeProductName } from "@/lib/utils/normalizeName";
-import { FavoriteButton } from "@/features/favorites/FavoriteButton";
 import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { useCartItemQuantity } from "@/entities/cart/hooks/hooks";
 
@@ -88,9 +86,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
           className="object-cover"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
         />
-        <div className="absolute top-3 right-3">
-          <FavoriteButton productId={product.id} />
-        </div>
       </div>
 
       <div className="p-3 sm:p-3 flex flex-col flex-1">
@@ -124,7 +119,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
             >
               {showLoader ? (
                 <Loader2 className="animate-spin mr-2 " size={18} />
-              ) : <span className="text-sm sm:text-[17px]">Подробнее</span>}
+              ) : (
+                <span className="text-sm sm:text-[17px]">Подробнее</span>
+              )}
             </button>
           </div>
         </div>
