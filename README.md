@@ -1,4 +1,4 @@
-# cle-ver.ru
+# Moon.Flowers
 
 
 
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://git.tablecrm.com/tablecrm/websites/cle-ver.ru.git
+git remote add origin https://git.tablecrm.com/tablecrm/websites/moon.flowers.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://git.tablecrm.com/tablecrm/websites/cle-ver.ru/-/settings/integrations)
+- [ ] [Set up project integrations](https://git.tablecrm.com/tablecrm/websites/moon.flowers/-/settings/integrations)
 
 ## Collaborate with your team
 
