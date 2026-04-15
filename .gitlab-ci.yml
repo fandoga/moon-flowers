@@ -1,0 +1,49 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  NODE_OPTIONS: "--max-old-space-size=1800"
+
+cache:
+  key: npm
+  paths:
+    - node_modules/
+    - ~/.npm/
+
+build:
+  stage: build
+  image: node:22
+  tags:
+    - clever-runner
+  only:
+    - main
+  script:
+    - npm ci 
+    - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
+    - npm run build
+  artifacts:
+    paths:
+      - .next/
+      - public/
+      - package.json
+      - package-lock.json
+      - next.config.ts
+      - .env.production
+    expire_in: 1 week
+
+deploy:
+  stage: deploy
+  tags:
+    - clever-runner
+  only:
+    - main
+  script:
+    - mkdir -p /var/www/cle-ver.ru
+    - cp -rv .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/cle-ver.ru/
+    - cd /var/www/cle-ver.ru
+    - npm ci --production
+    - pm2 restart cle-ver || pm2 start npm --name cle-ver -- start
+  environment:
+    name: production
+    url: https://cle-ver.ru
