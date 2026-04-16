@@ -7,7 +7,9 @@ export const getMyVideos = async (
   try {
     const response = await api.get<VideosMyResponse>(
       "/videos/recommendations",
-      { params },
+      {
+        params,
+      },
     );
     return response.data;
   } catch (error) {

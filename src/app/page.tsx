@@ -1,6 +1,7 @@
 // app/page.tsx
 import Hero from "@/widgets/hero/Hero";
 import PopularProducts from "@/widgets/popular-products/PopularProducts";
+import Reviews from "@/widgets/reviews/Reviews";
 import Stories from "@/widgets/stories/Stories";
 import type { Metadata } from "next";
 
@@ -33,12 +34,14 @@ export default function Home() {
       <div className="overflow-x-hidden">
         <Hero />
       </div>
-
-      <div className="overflow-x-hidden">
+      <div>
         <Stories />
       </div>
-      <div className="overflow-x-hidden">
+      <div>
         <PopularProducts />
+      </div>
+      <div>
+        <Reviews />
       </div>
     </main>
   );

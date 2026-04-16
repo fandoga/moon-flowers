@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Breadcrumb from "@/widgets/breadcrumb/Breadcrumb";
 import CategoryGrid from "@/widgets/category-grid/CategoryGrid";
 import { Suspense } from "react";
-import SearchResults from "@/widgets/products-catalog/ProductsCatalog";
+import ProductsCatalog from "@/widgets/products-catalog/ProductsCatalog";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -24,25 +24,18 @@ const itemVariants = {
 export default function CatalogPage() {
   return (
     <motion.main
-      className="py-8 md:py-12 bg-[#F8F9FB] max-w-[1440px] m-auto"
+      className="py-8 md:py-12 bg-background max-w-[1440px] m-auto"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       <div className="container mx-auto">
-        <motion.div variants={itemVariants}>
-          <Breadcrumb
-            paths={[
-              { url: "/", name: "Главная" },
-              { url: "/catalog", name: "Каталог" },
-            ]}
-          />
-        </motion.div>
+        <motion.div variants={itemVariants}></motion.div>
         <motion.h1
           variants={itemVariants}
-          className="mt-4 pb-10 text-4xl md:text-5xl font-bold text-[#394426] mb-2"
+          className="h pb-10 text-4xl md:text-5xl mb-2"
         >
-          Каталог растений
+          Каталог
         </motion.h1>
         <motion.div variants={itemVariants}>
           <Suspense
@@ -50,7 +43,7 @@ export default function CatalogPage() {
               <div className="py-12 text-center">Загрузка товаров...</div>
             }
           >
-            <SearchResults query="" />
+            <ProductsCatalog query="" />
           </Suspense>
         </motion.div>
       </div>

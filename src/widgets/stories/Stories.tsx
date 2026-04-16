@@ -2,22 +2,18 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useMyVideos } from "@/entities/video";
+import { StoryVideo, useMyVideos } from "@/entities/video";
 import Image from "next/image";
-
-type StoryVideo = {
-  id: number;
-  title: string;
-  src: string;
-  poster?: string;
-};
+import Videos from "../videos/Videos";
+import Logo from "@/components/ui/logo";
 
 const Stories = () => {
   const { data } = useMyVideos({ limit: 15 });
-  console.log(data);
   const [currentPage, setCurrentPage] = useState(0);
   const [activeVideo, setActiveVideo] = useState<StoryVideo | null>(null);
   const [hoveredVideoId, setHoveredVideoId] = useState<number | null>(null);
+  const [activeProgress, setActiveProgress] = useState(0);
+  const activeVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(
     (typeof window !== "undefined" &&
       window.matchMedia("(hover: none), (pointer: coarse)").matches) ||
@@ -49,6 +45,7 @@ const Stories = () => {
         id,
         title: typeof item.title === "string" ? item.title : `Видео #${id}`,
         src: srcCandidate,
+        avatar: item.channel_avatar || "",
         poster:
           typeof item.preview_url === "string"
             ? item.preview_url
@@ -97,23 +94,24 @@ const Stories = () => {
     return () => observer.disconnect();
   }, [isTouchDevice, renderedVideos]);
 
-  const handleMouseEnter = (id: number) => {
-    if (isTouchDevice) return;
-    setHoveredVideoId(id);
-    const element = videoRefs.current[id];
-    element?.play().catch(() => undefined);
-  };
-
-  const handleMouseLeave = (id: number) => {
-    if (isTouchDevice) return;
-    setHoveredVideoId((current) => (current === id ? null : current));
-    const element = videoRefs.current[id];
-    if (!element) return;
-    element.pause();
-    element.currentTime = 0;
-  };
-
   const closeModal = () => setActiveVideo(null);
+
+  const pauseActive = () => {
+    if (!isTouchDevice) return;
+    activeVideoRef.current?.pause();
+  };
+
+  const playActiv = () => {
+    if (!isTouchDevice) return;
+    activeVideoRef.current?.play().catch(() => undefined);
+  };
+
+  if (!data)
+    return (
+      <section className="w-full h-100">
+        <Logo alwaysEnabled />
+      </section>
+    );
 
   return (
     <section className="pt-30 pb-5 pb-20  bg-background">
@@ -123,14 +121,14 @@ const Stories = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-left mb-5 md:mb-12"
+          className="text-left mb-5 md:mb-12 flex flex-col items-end md:pr-80"
         >
           <h2 className="h !text-right pb-4">
-            Тот самый
+            <span className="pr-6"> Тот самый</span>
             <br />
             букет из сторис
           </h2>
-          <p className="p !text-right pb-12">
+          <p className="p !w-fit pb-12">
             Собрали все букеты из видео — теперь <br />
             вы легко найдёте и закажете в пару кликов
           </p>
@@ -146,80 +144,9 @@ const Stories = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory pb-2 sm:pb-0"
+            className="-mx-4 flex sm:mx-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory pb-2 sm:pb-0"
           >
-            {renderedVideos.map((video) => {
-              const showInfo = isTouchDevice || hoveredVideoId === video.id;
-              return (
-                <button
-                  key={video.id}
-                  type="button"
-                  onMouseEnter={() => handleMouseEnter(video.id)}
-                  onMouseLeave={() => handleMouseLeave(video.id)}
-                  onClick={() => setActiveVideo(video)}
-                  className="group cursor-pointer relative overflow-hidden rounded-2xl bg-black/90 w-full aspect-[9/14] text-left shrink-0 snap-start sm:w-auto sm:max-w-none"
-                  aria-label={`Открыть видео: ${video.title}`}
-                >
-                  <video
-                    ref={(node) => {
-                      videoRefs.current[video.id] = node;
-                    }}
-                    src={video.src}
-                    poster={video.poster}
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    className="h-full w-full object-cover"
-                  />
-                  <AnimatePresence>
-                    {showInfo && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 12 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="pointer-events-none absolute left-3 right-3 bottom-3 flex items-center"
-                      >
-                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-white/20">
-                          <Image
-                            src={video.poster || "/hero/background.png"}
-                            alt={video.title}
-                            width={80}
-                            height={80}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-
-                        <div className="min-w-0 flex-1 h-12 rounded-lg bg-black px-4 py-1 text-white">
-                          <p className="truncate text-md leading-tight">
-                            {video.title}
-                          </p>
-                        </div>
-
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-black text-white">
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 9 9"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M7.59967 0.999814L1 7.59948M7.59967 0.999814L7.59967 6.65667M7.59967 0.999814L1.94281 0.999814"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </button>
-              );
-            })}
+            <Videos data={data} />
           </motion.div>
         )}
 
@@ -239,40 +166,6 @@ const Stories = () => {
           </div>
         )}
       </div>
-
-      {activeVideo && (
-        <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-[1px] px-4 py-6 sm:py-10"
-          onClick={closeModal}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="mx-auto h-full max-w-[420px] flex items-center">
-            <div
-              className="relative w-full rounded-2xl overflow-hidden bg-black"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <video
-                key={activeVideo.id}
-                src={activeVideo.src}
-                poster={activeVideo.poster}
-                controls
-                autoPlay
-                playsInline
-                className="w-full max-h-[85vh] object-contain"
-              />
-              <button
-                type="button"
-                onClick={closeModal}
-                className="absolute top-3 right-3 rounded-full bg-black/55 px-2.5 py-1.5 text-xs text-white"
-                aria-label="Закрыть видео"
-              >
-                Закрыть
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 };

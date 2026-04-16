@@ -31,12 +31,13 @@ const PopularProducts = () => {
 
   return (
     <div>
-      <div>
+      <div className="md:pr-80 flex flex-col items-end">
         <h2 className="h !text-right">
-          Найди свой <br />
+          <span className="pr-6">Найди свой</span>
+          <br />
           идеальный букет
         </h2>
-        <p className="p !text-right">
+        <p className="p !w-fit">
           Подберём композицию под настроение, <br /> случай и ваши пожелания
         </p>
       </div>
@@ -50,7 +51,7 @@ const PopularProducts = () => {
           </div>
         ))}
       </div>
-      <ProductsCatalog loadMore={false} query="" limit={4} />
+      <ProductsCatalog loadMore={false} query="" size={8} />
     </div>
   );
 };

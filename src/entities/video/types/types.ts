@@ -8,7 +8,16 @@ export interface VideoItem {
   video_url?: string;
   public_url?: string;
   preview_url?: string;
+  channel_avatar?: string;
 }
+
+export type StoryVideo = {
+  avatar: string;
+  id: number;
+  title: string;
+  src: string;
+  poster?: string;
+};
 
 export interface VideosMyResponse {
   limit: number;
