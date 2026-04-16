@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import ProductCard from "@/widgets/product-card/ProductCard";
-import { Loader2 } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { NomenclatureItem } from "@/entities/product/types/types";
+import { LoaderCircle } from "lucide-react";
+import { useMpProducts, type MpProduct } from "@/entities/mp-product";
+import ProductCard from "../product-card/ProductCard";
+import Logo from "@/components/ui/logo";
+
+type ProductsCatalogProps = {
+  query: string;
+  size?: number;
+  loadMore?: boolean;
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -17,55 +24,95 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
 };
 
-interface ProductsCatalogProps {
-  query: string;
-  limit?: number;
-  loadMore?: boolean;
-}
-
 const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
-  limit = 10,
+  query,
+  size,
   loadMore = true,
 }) => {
-  const [offset, setOffset] = useState(0);
-  const [allProducts, setAllProducts] = useState<NomenclatureItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const loadedOffsetsRef = useRef<Set<number>>(new Set());
-
   const { ref: sentinelRef, inView } = useInView({ threshold: 0 });
+  const [page, setPage] = useState<number>(1);
+  const [items, setItems] = useState<MpProduct[]>([]);
 
-  const hasMore = allProducts.length < totalCount;
+  const search = query.trim().length > 0 ? query : undefined;
+
+  const { data, isLoading, isFetching } = useMpProducts({
+    seller_id: 783,
+    size: size || 12,
+    page,
+    search,
+  });
+
+  console.log(data);
+
+  const totalCount = data?.count ?? Math.max(data?.result?.length ?? 0, 0);
+  const received = useMemo(() => data?.result ?? [], [data?.result]);
+  const hasMore = items.length < totalCount;
+
+  useEffect(() => {
+    setTimeout(() => {
+      setPage(1);
+      setItems([]);
+    }, 0);
+  }, [query, size]);
+
+  useEffect(() => {
+    if (!received.length) return;
+    setTimeout(() => {
+      setItems((prev) => {
+        if (page === 0) return received;
+
+        const map = new Map<string, MpProduct>();
+        for (const p of prev) map.set(String(p.id), p);
+        for (const p of received) map.set(String(p.id), p);
+        return Array.from(map.values());
+      });
+    }, 0);
+  }, [received, page]);
+
+  useEffect(() => {
+    if (!loadMore) return;
+    if (!inView) return;
+    if (!hasMore) return;
+    if (isLoading || isFetching) return;
+    setTimeout(() => {
+      setPage((prev) => prev + 1);
+    }, 0);
+  }, [inView, hasMore, loadMore, size, isLoading, isFetching]);
+
+  const showLoader = (isLoading || isFetching) && items.length === 0;
 
   return (
     <>
-      {loadMore && (
-        <p className="text-sm md:text-base text-[#394426] font-manrope mb-4">
-          Найдено товаров: {totalCount}
-        </p>
+      {showLoader ? (
+        <div className="py-12 bg-baclground h-200 flex justify-center">
+          <Logo alwaysEnabled />
+        </div>
+      ) : (
+        <motion.div
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {items.map((product) => (
+            <motion.div key={Number(product.id)} variants={itemVariants}>
+              <ProductCard product={product} />
+            </motion.div>
+          ))}
+        </motion.div>
       )}
 
-      <motion.div
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {allProducts.map((product) => (
-          <motion.div key={product.id} variants={itemVariants}>
-            <ProductCard product={product} />
-          </motion.div>
-        ))}
-      </motion.div>
-
-      {/* Sentinel element for infinite scroll */}
-      {hasMore && (
+      {loadMore && hasMore && (
         <div ref={sentinelRef} className="flex justify-center py-10"></div>
       )}
+      {isFetching && items.length > 0 && loadMore && (
+        <div className="w-full flex justify-center h-10 py-10">
+          <Logo alwaysEnabled />
+        </div>
+      )}
 
-      {!hasMore && allProducts.length > 0 && (
-        <p className="text-center text-gray-400 py-8 text-sm">
-          Все товары загружены
-        </p>
+      {data?.error && (
+        <p className="text-center text-red-500 py-8 text-sm">{data.error}</p>
       )}
     </>
   );

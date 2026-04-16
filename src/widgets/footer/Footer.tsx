@@ -94,7 +94,7 @@ const Footer = () => {
             </div>
           </div>
           <ActionButton
-            src="https://tablecrm.ru"
+            src="https://tablecrm.com/"
             text="Работать на базе TableCRM.com"
           />
         </div>

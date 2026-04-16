@@ -25,15 +25,20 @@ const Hero = () => {
               height={500}
             />
           </div>
-          <div className="py-4 md:py-10">
-            <h1 className="h">
-              Свежие цветы <br /> каждый день
-            </h1>
-            <p className="p">
-              Создаем наборы с характером — для любого настроения и повода
-            </p>
+          <div className="flex flex-col md:flex-row items-start md:items-center md:gap-40">
+            <div className="py-4 md:pt-10">
+              <h1 className="h">
+                Свежие цветы <br /> каждый день
+              </h1>
+            </div>
+            <div>
+              <p className="p py-4">
+                Создаем наборы с характером — <br /> для любого настроения и
+                повода
+              </p>
+              <ActionButton src="/catalog" text="Выбрать букет" />
+            </div>
           </div>
-          <ActionButton src="/catalog" text="Выбрать букет" />
         </motion.div>
       </div>
     </section>

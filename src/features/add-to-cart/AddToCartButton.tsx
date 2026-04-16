@@ -1,175 +1,177 @@
 "use client";
 
-import React, { useCallback, useRef, useState, useEffect } from "react";
-import { Plus, Minus, LoaderCircle } from "lucide-react";
-import { useAddToCart, useRemoveFromCart } from "@/entities/cart/hooks/hooks";
-import { useCartStore } from "@/entities/cart/store/cartStore";
-import toast from "react-hot-toast";
+import React, { useCallback, useEffect, useState } from "react";
+import { Check, LoaderCircle, Minus } from "lucide-react";
 
 const MAX_QUANTITY = 50;
+const LOCAL_CART_KEY = "cart_local";
+const CART_EVENT_NAME = "cart-local-updated";
 
 interface AddToCartButtonProps {
   productId: number;
-  currentQuantity?: number;
+  productName?: string;
+  price: number;
+  imageUrl?: string;
   className?: string;
   hideControls?: boolean;
 }
 
+type LocalCartItem = {
+  id: number;
+  name?: string;
+  price: number;
+  imageUrl?: string;
+  quantity: number;
+};
+
+type LocalCartState = {
+  items: Record<string, LocalCartItem>;
+};
+
+const readCart = (): LocalCartState => {
+  try {
+    if (typeof window === "undefined") return { items: {} };
+    const raw = window.localStorage.getItem(LOCAL_CART_KEY);
+    if (!raw) return { items: {} };
+    const parsed = JSON.parse(raw) as LocalCartState;
+    if (!parsed?.items || typeof parsed.items !== "object")
+      return { items: {} };
+    return parsed;
+  } catch {
+    return { items: {} };
+  }
+};
+
+const writeCart = (next: LocalCartState) => {
+  try {
+    window.localStorage.setItem(LOCAL_CART_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(CART_EVENT_NAME));
+  } catch {
+    // ignore write errors
+  }
+};
+
+const getQuantity = (productId: number) => {
+  const cart = readCart();
+  return cart.items[String(productId)]?.quantity ?? 0;
+};
+
 export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
   productId,
-  currentQuantity,
+  productName,
+  imageUrl,
   className = "",
+  price,
   hideControls = false,
 }) => {
-  const addToCart = useAddToCart();
-  const removeFromCart = useRemoveFromCart();
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const deltaRef = useRef(0);
-  const loadingStartTimeRef = useRef<number | null>(null);
-  const hideTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [quantity, setQuantity] = useState(() => getQuantity(productId));
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [hasClicked, setClicked] = useState(false);
 
-  const [optimisticQuantity, setOptimisticQuantity] = useState(
-    currentQuantity ?? 0
+  const syncFromStorage = useCallback(() => {
+    setQuantity(getQuantity(productId));
+  }, [productId]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      syncFromStorage();
+    });
+  }, [syncFromStorage]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onCustom = () => syncFromStorage();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === LOCAL_CART_KEY) syncFromStorage();
+    };
+
+    window.addEventListener(CART_EVENT_NAME, onCustom);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(CART_EVENT_NAME, onCustom);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [syncFromStorage]);
+
+  const updateQuantity = useCallback(
+    (nextQty: number) => {
+      const clamped = Math.max(0, Math.min(MAX_QUANTITY, nextQty));
+      setIsUpdating(true);
+      setQuantity(clamped);
+
+      const cart = readCart();
+      const key = String(productId);
+
+      if (clamped <= 0) {
+        delete cart.items[key];
+      } else {
+        cart.items[key] = {
+          id: productId,
+          price: price,
+          name: productName,
+          imageUrl,
+          quantity: clamped,
+        };
+      }
+
+      writeCart(cart);
+      setIsUpdating(false);
+    },
+    [productId, productName, imageUrl, price],
   );
-  const [showLoader, setShowLoader] = useState(false);
-
-  useEffect(() => {
-    const newValue = currentQuantity ?? 0;
-    if (optimisticQuantity !== newValue) {
-      setOptimisticQuantity(newValue);
-    }
-  }, [currentQuantity]);
-
-  useEffect(() => {
-    const isLoading = addToCart.isPending || removeFromCart.isPending;
-
-    if (isLoading) {
-      if (!loadingStartTimeRef.current) {
-        loadingStartTimeRef.current = Date.now();
-        setShowLoader(true);
-      }
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current);
-        hideTimerRef.current = undefined;
-      }
-    } else {
-      if (loadingStartTimeRef.current) {
-        const elapsed = Date.now() - loadingStartTimeRef.current;
-        const remaining = Math.max(0, 500 - elapsed);
-        if (remaining > 0) {
-          hideTimerRef.current = setTimeout(() => {
-            setShowLoader(false);
-            loadingStartTimeRef.current = null;
-            hideTimerRef.current = undefined;
-          }, remaining);
-        } else {
-          setShowLoader(false);
-          loadingStartTimeRef.current = null;
-        }
-      }
-    }
-  }, [addToCart.isPending, removeFromCart.isPending]);
 
   const handleImmediateAdd = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      if ((currentQuantity ?? 0) >= MAX_QUANTITY) {
-        toast.error(`Максимальное количество: ${MAX_QUANTITY} шт.`);
-        return;
-      }
-      addToCart.mutate(
-        { nomenclature_id: productId, quantity: 1 },
-        {
-          onSuccess: () => {
-            useCartStore.getState().openCart();
-          },
-        }
-      );
+      setClicked(true);
+      updateQuantity(quantity + 1);
     },
-    [addToCart, productId, currentQuantity]
-  );
-
-  const scheduleUpdate = useCallback(
-    (delta: number) => {
-      const newQty = optimisticQuantity + delta;
-
-      // ✅ Enforce max 50 limit
-      if (newQty > MAX_QUANTITY) {
-        toast.error(`Максимальное количество товара: ${MAX_QUANTITY} шт.`);
-        return;
-      }
-
-      setOptimisticQuantity(Math.max(0, newQty));
-      deltaRef.current += delta;
-
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-      timeoutRef.current = setTimeout(() => {
-        if (deltaRef.current !== 0) {
-          const finalQuantity = (currentQuantity ?? 0) + deltaRef.current;
-          if (finalQuantity <= 0) {
-            removeFromCart.mutate({ nomenclature_id: productId });
-          } else {
-            addToCart.mutate(
-              { nomenclature_id: productId, quantity: deltaRef.current },
-              {
-                onSettled: () => {
-                  deltaRef.current = 0;
-                },
-              }
-            );
-          }
-        }
-        timeoutRef.current = undefined;
-      }, 300);
-    },
-    [addToCart, removeFromCart, productId, currentQuantity, optimisticQuantity]
+    [quantity, updateQuantity],
   );
 
   const handleIncrement = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      scheduleUpdate(1);
+      updateQuantity(quantity + 1);
     },
-    [scheduleUpdate]
+    [quantity, updateQuantity],
   );
 
   const handleDecrement = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (optimisticQuantity > 0) scheduleUpdate(-1);
+      updateQuantity(quantity - 1);
     },
-    [optimisticQuantity, scheduleUpdate]
+    [quantity, updateQuantity],
   );
 
   if (hideControls) {
     return (
       <button
+        type="button"
         onClick={handleImmediateAdd}
-        disabled={showLoader}
-        className={`
-          bg-[#394426] h-full cursor-pointer flex gap-2 items-center justify-center 
-          text-white px-2 py-2 sm:px-4 sm:py-3 rounded-md text-sm font-manrope font-medium 
-          hover:bg-[#102902] disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-[140px] 
-          ${className}
-        `}
+        disabled={isUpdating || hasClicked || quantity >= MAX_QUANTITY}
+        className="cursor-pointer bg-gray rounded-lg p-2 w-12 h-12 flex items-center justify-center"
       >
-        {showLoader ? (
-          <LoaderCircle className="h-5 w-5 animate-spin" />
+        {hasClicked ? (
+          <Check />
         ) : (
           <>
             <svg
-              viewBox="0 0 16 14"
+              width="14"
+              height="15"
+              viewBox="0 0 14 15"
               fill="none"
-              className="w-6 h-4 sm:w-5 sm:h-5"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M0 0.65625C0 0.292578 0.299764 0 0.672368 0H1.94707C2.5634 0 3.1097 0.35 3.36464 0.875H14.879C15.6158 0.875 16.1537 1.55859 15.9603 2.25312L14.8117 6.41758C14.5736 7.27617 13.7751 7.875 12.8646 7.875H4.78222L4.9335 8.6543C4.99514 8.96328 5.27249 9.1875 5.59467 9.1875H13.6715C14.0441 9.1875 14.3439 9.48008 14.3439 9.84375C14.3439 10.2074 14.0441 10.5 13.6715 10.5H5.59467C4.62533 10.5 3.79328 9.82734 3.61398 8.90039L2.16839 1.49023C2.14878 1.38633 2.05633 1.3125 1.94707 1.3125H0.672368C0.299764 1.3125 0 1.01992 0 0.65625ZM3.58596 12.6875C3.58596 12.5151 3.62075 12.3445 3.68833 12.1852C3.75591 12.026 3.85496 11.8813 3.97983 11.7594C4.1047 11.6375 4.25294 11.5409 4.41609 11.4749C4.57924 11.4089 4.75411 11.375 4.9307 11.375C5.10729 11.375 5.28216 11.4089 5.44531 11.4749C5.60846 11.5409 5.7567 11.6375 5.88157 11.7594C6.00644 11.8813 6.1055 12.026 6.17308 12.1852C6.24066 12.3445 6.27544 12.5151 6.27544 12.6875C6.27544 12.8599 6.24066 13.0305 6.17308 13.1898C6.1055 13.349 6.00644 13.4937 5.88157 13.6156C5.7567 13.7375 5.60846 13.8341 5.44531 13.9001C5.28216 13.9661 5.10729 14 4.9307 14C4.75411 14 4.57924 13.9661 4.41609 13.9001C4.25294 13.8341 4.1047 13.7375 3.97983 13.6156C3.85496 13.4937 3.75591 13.349 3.68833 13.1898C3.62075 13.0305 3.58596 12.8599 3.58596 12.6875ZM12.9991 11.375C13.3558 11.375 13.6978 11.5133 13.95 11.7594C14.2022 12.0056 14.3439 12.3394 14.3439 12.6875C14.3439 13.0356 14.2022 13.3694 13.95 13.6156C13.6978 13.8617 13.3558 14 12.9991 14C12.6425 14 12.3004 13.8617 12.0482 13.6156C11.7961 13.3694 11.6544 13.0356 11.6544 12.6875C11.6544 12.3394 11.7961 12.0056 12.0482 11.7594C12.3004 11.5133 12.6425 11.375 12.9991 11.375Z"
-                fill="white"
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M4.22102 0.8C4.43825 0.328 4.90684 0 5.44836 0H8.55164C9.09316 0 9.56097 0.328 9.77898 0.8C10.3089 0.8048 10.7224 0.8296 11.0917 0.9784C11.5325 1.15622 11.9159 1.45841 12.198 1.8504C12.4827 2.2456 12.6169 2.752 12.8 3.4488L13.3757 5.6264L13.5929 6.2992L13.6115 6.3232C14.3105 7.2464 13.9777 8.6192 13.3121 11.364C12.8885 13.1104 12.6774 13.9832 12.0459 14.492C11.4144 15 10.5416 15 8.79602 15H5.20398C3.45839 15 2.5856 15 1.95408 14.492C1.32257 13.9832 1.11077 13.1104 0.687947 11.364C0.0222953 8.6192 -0.310531 7.2464 0.388481 6.3232L0.407101 6.2992L0.62433 5.6264L1.19999 3.4488C1.38386 2.752 1.51807 2.2448 1.80202 1.8496C2.08421 1.4579 2.46759 1.156 2.90834 0.9784C3.27763 0.8296 3.69036 0.804 4.22102 0.8ZM4.22257 2.0024C3.70898 2.008 3.50261 2.028 3.33193 2.0968C3.09451 2.19254 2.88802 2.35529 2.73611 2.5664C2.59956 2.756 2.51888 3.0208 2.29389 3.8744L1.85167 5.5456C2.64301 5.4 3.7245 5.4 5.20321 5.4H8.79602C10.2755 5.4 11.3562 5.4 12.1476 5.544L11.7061 3.8728C11.4811 3.0192 11.4004 2.7544 11.2639 2.5648C11.112 2.35369 10.9055 2.19094 10.6681 2.0952C10.4974 2.0264 10.291 2.0064 9.77743 2.0008C9.66727 2.23988 9.49364 2.44186 9.27669 2.58331C9.05973 2.72477 8.80832 2.7999 8.55164 2.8H5.44836C5.19176 2.79997 4.94041 2.72496 4.72346 2.58365C4.50651 2.44234 4.33284 2.24133 4.22257 2.0024Z"
+                fill="black"
               />
             </svg>
-            <span className="hidden sm:block sm:text-[16px]">В корзину</span>
           </>
         )}
       </button>
@@ -182,24 +184,30 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     >
       <div className="flex w-full h-full items-center justify-between border-2 border-gray rounded-sm overflow-hidden">
         <button
+          type="button"
           onClick={handleDecrement}
-          disabled={optimisticQuantity <= 0 || showLoader}
+          disabled={quantity <= 0 || isUpdating}
           className="p-2 sm:p-4 text-xl font-bold text-[#394426] hover:bg-gray-100 disabled:opacity-50 cursor-pointer"
         >
           <Minus className="size-[12px] sm:size-[16px]" />
         </button>
         <span className="sm:px-3 py-2 text-sm sm:text-lg text-base font-medium w-10 text-center flex items-center justify-center">
-          {showLoader ? (
+          {isUpdating ? (
             <LoaderCircle className="h-4 w-4 animate-spin" />
           ) : (
-            optimisticQuantity
+            quantity
           )}
         </span>
         <button
+          type="button"
           onClick={handleIncrement}
-          disabled={showLoader || optimisticQuantity >= MAX_QUANTITY}
+          disabled={isUpdating || quantity >= MAX_QUANTITY}
           className="px-2 sm:px-4 py-2 text-xl text-[#394426] hover:bg-gray-100 cursor-pointer disabled:opacity-40"
-          title={optimisticQuantity >= MAX_QUANTITY ? `Максимум ${MAX_QUANTITY} шт.` : undefined}
+          title={
+            quantity >= MAX_QUANTITY
+              ? `Максимум ${MAX_QUANTITY} шт.`
+              : undefined
+          }
         >
           +
         </button>

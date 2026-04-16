@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/api/v1/**",
       },
+      {
+        protocol: "https",
+        hostname: "app.tablecrm.com",
+        port: "",
+        pathname: "/api/v1/**",
+      },
     ],
     qualities: [25, 50, 75, 80, 85, 90],
   },
