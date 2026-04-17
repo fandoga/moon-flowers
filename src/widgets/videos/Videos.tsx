@@ -1,3 +1,5 @@
+"use client";
+
 import { AnimatePresence, motion } from "framer-motion";
 import { StoryVideo, VideosMyResponse } from "@/entities/video";
 import Image from "next/image";
@@ -235,14 +237,14 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
 
       {activeVideo && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-[1px] py-6 sm:py-10"
+          className={`fixed inset-0 z-50 bg-black/90 md:bg-[url(${activeVideo.poster})] backdrop-blur-[1px] py-6 sm:py-10`}
           onClick={closeModal}
           role="dialog"
           aria-modal="true"
         >
-          <div className="mx-auto w-full h-full flex items-center">
+          <div className="mx-auto w-full h-full md:w-fit flex items-center">
             <div
-              className="relative w-full overflow-hidden bg-black"
+              className="relative w-full overflow-hidden"
               onClick={(event) => event.stopPropagation()}
             >
               {/* progress bar (stories-style) */}
@@ -282,7 +284,7 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
                 onTouchStart={pauseActive}
                 onTouchEnd={playActive}
                 onTouchCancel={playActive}
-                className="w-full max-h-[100vh] object-contain"
+                className="rounded-xl w-full md:max-h-[80vh] max-h-[100vh] object-contain"
               />
             </div>
           </div>

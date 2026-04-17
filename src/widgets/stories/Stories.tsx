@@ -94,17 +94,6 @@ const Stories = () => {
     return () => observer.disconnect();
   }, [isTouchDevice, renderedVideos]);
 
-  const closeModal = () => setActiveVideo(null);
-
-  const pauseActive = () => {
-    if (!isTouchDevice) return;
-    activeVideoRef.current?.pause();
-  };
-
-  const playActiv = () => {
-    if (!isTouchDevice) return;
-    activeVideoRef.current?.play().catch(() => undefined);
-  };
 
   if (!data)
     return (
