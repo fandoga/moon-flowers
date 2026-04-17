@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { LoaderCircle } from "lucide-react";
 import { useMpProducts, type MpProduct } from "@/entities/mp-product";
 import ProductCard from "../product-card/ProductCard";
 import Logo from "@/components/ui/logo";
@@ -11,6 +10,7 @@ import Logo from "@/components/ui/logo";
 type ProductsCatalogProps = {
   query: string;
   size?: number;
+  category?: string;
   loadMore?: boolean;
 };
 
@@ -27,6 +27,7 @@ const itemVariants = {
 const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   query,
   size,
+  category,
   loadMore = true,
 }) => {
   const { ref: sentinelRef, inView } = useInView({ threshold: 0 });
@@ -35,14 +36,20 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
 
   const search = query.trim().length > 0 ? query : undefined;
 
+  const normalizeCategory = (value?: string) =>
+    String(value ?? "")
+      .toLowerCase()
+      .replace(/[-_]+/g, "")
+      .replace(/\s+/g, "")
+      .trim();
+
   const { data, isLoading, isFetching } = useMpProducts({
-    seller_id: 783,
+    category: normalizeCategory(category),
+    seller_id: 813,
     size: size || 12,
     page,
     search,
   });
-
-  console.log(data);
 
   const totalCount = data?.count ?? Math.max(data?.result?.length ?? 0, 0);
   const received = useMemo(() => data?.result ?? [], [data?.result]);
@@ -53,13 +60,20 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
       setPage(1);
       setItems([]);
     }, 0);
-  }, [query, size]);
+  }, [query, size, category]);
 
   useEffect(() => {
-    if (!received.length) return;
+    if (!received.length) {
+      if (page <= 1) {
+        setTimeout(() => {
+          setItems([]);
+        });
+      }
+      return;
+    }
     setTimeout(() => {
       setItems((prev) => {
-        if (page === 0) return received;
+        if (page <= 1) return received;
 
         const map = new Map<string, MpProduct>();
         for (const p of prev) map.set(String(p.id), p);

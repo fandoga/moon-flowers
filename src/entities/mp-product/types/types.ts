@@ -15,7 +15,7 @@ export interface MpProduct {
   price_longitude: 0;
   created_at: "2026-04-16T09:17:56.876Z";
   updated_at: "2026-04-16T09:17:56.876Z";
-  images: ["string"];
+  images: string[];
   videos: [];
   barcodes: ["string"];
   type: "string";
@@ -65,6 +65,7 @@ export interface MpProductsResponse {
 }
 
 export interface MpProductsQueryParams {
+  category?: string;
   seller_id?: number;
   size?: number;
   page?: number;

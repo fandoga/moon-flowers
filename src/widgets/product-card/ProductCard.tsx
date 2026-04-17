@@ -9,9 +9,9 @@ const ProductCard: React.FC<{ product: MpProduct }> = ({ product }) => {
   const router = useRouter();
   const productId = Number(product.id);
 
-  const imageUrl = Array.isArray(product.images)
-    ? product.images[0]
-    : undefined;
+  const imageUrl = [3, 2, 1, 0]
+    .map((index) => product.images?.[index])
+    .find((url) => Boolean(url));
   const price = Number(product.price) || 0;
 
   return (

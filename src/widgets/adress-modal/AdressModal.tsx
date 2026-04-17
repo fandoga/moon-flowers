@@ -109,7 +109,7 @@ const AdressModal = () => {
                 className="text-center outline-none rounded-lg p-3 bg-gray"
               />
             </div>
-            <div className="w-full  overlflow-hidden py-8">
+            <div className="w-full overlflow-hidden py-8">
               <div style={{ position: "relative", overflow: "hidden" }}>
                 <a
                   href="https://yandex.ru/maps/213/moscow/?utm_medium=mapframe&utm_source=maps"
@@ -138,7 +138,7 @@ const AdressModal = () => {
                   width="560"
                   height="400"
                   frameBorder="1"
-                  className="w-full h-120 rounded-4xl"
+                  className="w-full md:h-80 lg:h-100 rounded-4xl"
                   allowFullScreen
                   style={{ position: "relative" }}
                 ></iframe>

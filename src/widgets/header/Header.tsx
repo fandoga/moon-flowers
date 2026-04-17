@@ -153,8 +153,8 @@ const Header = () => {
     <>
       {/* ── Main header bar ── */}
       <div className="bg-transparent top-0 z-50">
-        <header className="max-w-[1640px] mx-auto overscroll-y-contain">
-          <div className="container mx-auto">
+        <header className="px-12 max-w-[1740px] mx-auto overscroll-y-contain">
+          <div className=" container mx-auto">
             {/* Desktop layout */}
             <div className="hidden md:flex items-center py-8 justify-between">
               <Link href="/" className="flex items-center scale-115 ">
@@ -173,7 +173,7 @@ const Header = () => {
                 </div>
               </div>
               <AdressModal />
-              <div className="flex w-150 gap-7">
+              <div className="flex xl:w-150 gap-7">
                 <Link href="/catalog">Каталог</Link>
                 <Link href="/about-us">О нас</Link>
                 <Link href="/blog">Блог</Link>
