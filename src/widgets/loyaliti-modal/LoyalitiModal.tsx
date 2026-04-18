@@ -1,6 +1,5 @@
 import { useLoyalityCardData } from "@/entities/loyaliti/hooks/useLoyalityCard";
 import { formatPhone, getCleanPhone } from "@/lib/utils/formatPhone";
-import { spawn } from "child_process";
 import { Check, Loader } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -19,9 +18,8 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
   const [modalPhone, setPhone] = useState("");
   const [modalName, setName] = useState("");
   const [inputError, setInputError] = useState("");
-  const { currentCard } = useLoyalityCardData();
-
-  const { createOrGetCard, error, isLoading } = useLoyalityCardData();
+  const { currentCard, createOrGetCard, error, isLoading } =
+    useLoyalityCardData();
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -36,9 +34,9 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
       setName(name || "");
       setInputError("");
     });
-  }, [isOpen]);
+  }, [isOpen, name, phone]);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     const cleanPhone = getCleanPhone(modalPhone);
 
     if (cleanPhone.length !== 11 || modalName.length === 0) {
@@ -46,17 +44,17 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
       return;
     }
 
-    createOrGetCard({
-      phone_number: cleanPhone,
-      contragent_name: modalName,
-    });
-
-    if (error) {
-      setInputError(error.message);
-      return;
+    try {
+      await createOrGetCard({
+        phone_number: cleanPhone,
+        contragent_name: modalName,
+      });
+      setOpen(false);
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : "Не удалось создать карту лояльности";
+      setInputError(message);
     }
-
-    setOpen(false);
   };
 
   return (

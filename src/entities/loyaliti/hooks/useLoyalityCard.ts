@@ -10,8 +10,11 @@ import {
   subscribeLogoPoints,
   writeLogoPoints,
 } from "@/entities/loyaliti/lib/pointsStorage";
-
-const LOCAL_STORAGE_KEY = "loyality_card_data";
+import {
+  readStoredLoyalityCard,
+  subscribeLoyalityCard,
+  writeStoredLoyalityCard,
+} from "@/entities/loyaliti/lib/cardStorage";
 
 /**
  * Хук для работы с картой лояльности
@@ -43,28 +46,25 @@ export const useLoyalityCardData = () => {
 
   // Загружаем карту из localStorage при инициализации
   useEffect(() => {
-    try {
-      const timer = setTimeout(() => {
-        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (saved) {
-          setCurrentCard(JSON.parse(saved));
-        }
-      });
+    setCurrentCard(readStoredLoyalityCard());
+    setIsInitialized(true);
+  }, []);
 
-      return () => clearTimeout(timer);
-    } catch {
-      console.error("Failed to load loyalty card from localStorage");
-    } finally {
-      setIsInitialized(true);
-    }
+  // Подписываемся на изменения карты между компонентами/вкладками
+  useEffect(() => {
+    const unsubscribe = subscribeLoyalityCard((nextCard) => {
+      setCurrentCard(nextCard);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Сохраняем карту в localStorage при изменении
   useEffect(() => {
     if (currentCard) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentCard));
-    } else {
-      // localStorage.removeItem(LOCAL_STORAGE_KEY);
+      writeStoredLoyalityCard(currentCard);
     }
   }, [currentCard]);
 
@@ -175,6 +175,7 @@ export const useLoyalityCardData = () => {
    */
   const logout = useCallback(() => {
     setCurrentCard(null);
+    writeStoredLoyalityCard(null);
   }, []);
 
   return {
@@ -200,14 +201,15 @@ export const useSavedLoyaltyCard = () => {
   const [card, setCard] = useState<LoyalityCard | null>(null);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        setTimeout(() => setCard(JSON.parse(saved)));
-      }
-    } catch {
-      console.error("Failed to load loyalty card");
-    }
+    setCard(readStoredLoyalityCard());
+
+    const unsubscribe = subscribeLoyalityCard((nextCard) => {
+      setCard(nextCard);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return card;

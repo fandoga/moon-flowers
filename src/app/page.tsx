@@ -21,11 +21,6 @@ export const metadata: Metadata = {
       },
     ],
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "Клевер — питомник растений Казань",
-    images: ["/og-home.jpg"],
-  },
 };
 
 export default function Home() {

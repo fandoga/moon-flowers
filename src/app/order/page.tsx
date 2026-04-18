@@ -232,7 +232,7 @@ export default function OrderPage() {
                         onClick={() => setDeliveryMethod("ToOther")}
                         className={`cursor-pointer w-1/2 rounded-lg p-2 ${deliveryMethod === "ToOther" && "bg-background"}`}
                       >
-                        Вручить не мнеы
+                        Вручить не мне
                       </button>
                     </div>
                     <input
@@ -369,7 +369,7 @@ export default function OrderPage() {
                 fullWidth
                 loading={isSubmitting}
                 disabled={cartItems.length === 0}
-                className="px-4 py-2"
+                className="px-4 py-2 cursor-pointer"
               />
             </div>
           </aside>
