@@ -1,7 +1,11 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import ProductsCatalog from "../products-catalog/ProductsCatalog";
 
 const PopularProducts = () => {
+  const [category, setCategory] = useState("");
+
   const categories = [
     {
       id: "all",
@@ -25,7 +29,7 @@ const PopularProducts = () => {
     },
     {
       id: "basket",
-      name: "Коризны",
+      name: "Корзины",
     },
   ];
 
@@ -44,14 +48,21 @@ const PopularProducts = () => {
       <div className="flex items-center gap-2 overflow-x-auto py-8 md:py-12 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {categories.map((item) => (
           <div
-            className="w-40 md:w-60 h-15 shrink-0 pt-4.5 text-center p-2 bg-gray rounded-xl"
+            onClick={() => {
+              if (item.id === "all") {
+                setCategory("");
+                return;
+              }
+              setCategory(item.name);
+            }}
+            className="cursor-pointer w-40 md:w-60 h-15 shrink-0 pt-4.5 text-center p-2 bg-gray rounded-xl"
             key={item.id}
           >
             {item.name}
           </div>
         ))}
       </div>
-      <ProductsCatalog loadMore={false} query="" size={8} />
+      <ProductsCatalog category={category} loadMore={false} query="" size={8} />
     </div>
   );
 };

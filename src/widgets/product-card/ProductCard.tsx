@@ -5,30 +5,29 @@ import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { formatPrice } from "@/lib/utils/formatPrice";
 import { useRouter } from "next/navigation";
 
-const ProductCard: React.FC<{ product: MpProduct }> = ({ product }) => {
+const ProductCard: React.FC<{
+  product: MpProduct;
+  displayOnHover?: boolean;
+}> = ({ product, displayOnHover = false }) => {
   const router = useRouter();
   const productId = Number(product.id);
 
-  const imageUrl = Array.isArray(product.images)
-    ? product.images[0]
-    : undefined;
+  const imageUrl = [3, 2, 1, 0]
+    .map((index) => product.images?.[index])
+    .find((url) => Boolean(url));
   const price = Number(product.price) || 0;
 
   return (
     <div
-      className="relative rounded-xl overflow-hidden relative flex flex-col h-full cursor-pointer hover:scale-[1.02] transition-transform duration-200"
+      className="relative rounded-xl overflow-hidden flex flex-col w-full md:h-full cursor-pointer hover:scale-[1.02] transition-transform duration-200 group"
       role="button"
       tabIndex={0}
       onClick={() => {
-        const params = new URLSearchParams({
-          category: "0",
-          name: product.name ? String(product.name) : "",
-          variantId: String(productId),
-        });
-        router.push(`/catalog?${params.toString()}`);
+        if (!Number.isFinite(productId)) return;
+        router.push(`/catalog/${productId}`);
       }}
     >
-      <div className="w-full h-full aspect-[5/6]">
+      <div className="relative w-full aspect-[5/6] md:h-full">
         {/* Next Image не настроен на домен tablecrm, поэтому fallback через <img> */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -38,13 +37,17 @@ const ProductCard: React.FC<{ product: MpProduct }> = ({ product }) => {
         />
       </div>
 
-      <div className="absolute z-20 p-3 flex flex-col flex-1">
+      <div
+        className={`absolute z-20 p-3 flex flex-col flex-1 transition-all duration-300 ${displayOnHover ? "opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0" : ""}`}
+      >
         <h3 className="bg-gray p-2 rounded-lg mb-3 ">
           {product.name ? String(product.name) : "Товар"}
         </h3>
       </div>
 
-      <div className="absolute flex items-center z-20 bottom-5 right-5">
+      <div
+        className={`absolute flex items-center z-20 bottom-5 right-5 transition-all duration-300 ${displayOnHover ? "opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0" : ""}`}
+      >
         <div className="bg-gray rounded-lg p-3 whitespace-nowrap">
           {formatPrice(price)}
         </div>

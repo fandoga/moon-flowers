@@ -10,6 +10,8 @@ import ActionButton from "@/components/ui/action-button";
 import LoyalitiModal from "@/widgets/loyaliti-modal/LoyalitiModal";
 import { useAddressSuggestions, useSavedAddressForm } from "@/entities/address";
 import DatePicker from "@/widgets/time-picker/TimePicker";
+import { useLoyalityCardData } from "@/entities/loyaliti";
+import { formatPhone } from "@/lib/utils/formatPhone";
 
 const CART_LOCAL_KEY = "cart_local";
 const CART_EVENT_NAME = "cart-local-updated";
@@ -43,19 +45,19 @@ const writeCart = (next: LocalCart) => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(CART_LOCAL_KEY, JSON.stringify(next));
     window.dispatchEvent(new Event(CART_EVENT_NAME));
-  } catch {
-    // ignore write errors
-  }
+  } catch {}
 };
 
 export default function OrderPage() {
-  const [, setFirstName] = useState("");
+  const [name, setFirstName] = useState("");
   const [addressQuery, setAddressQuery] = useState("");
   const [apartment, setApartment] = useState("");
   const [entrance, setEntrance] = useState("");
   const [floor, setFloor] = useState("");
   const { data } = useAddressSuggestions(addressQuery);
   const [suggOpen, setSuggOpen] = useState(false);
+  const { syncBalance, currentCard, points, escrow, balanceEscrow } =
+    useLoyalityCardData();
 
   const suggestions = useMemo(
     () => data?.suggestions ?? [],
@@ -68,7 +70,20 @@ export default function OrderPage() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const savedAddress = useSavedAddressForm();
-  const [cart, setCart] = useState<LocalCart>(() => readCart());
+
+  // Keep initial SSR/CSR markup identical; hydrate cart from localStorage in effect.
+  const [cart, setCart] = useState<LocalCart>({ items: {} });
+  const balanceSyncDone = React.useRef(false);
+
+  useEffect(() => {
+    // Гарантия 100% что выполнится только один раз
+    if (balanceSyncDone.current) return;
+    if (!currentCard || points === undefined) return;
+
+    syncBalance();
+
+    balanceSyncDone.current = true;
+  }, [currentCard, points, syncBalance]);
 
   useEffect(() => {
     if (savedAddress) {
@@ -102,6 +117,10 @@ export default function OrderPage() {
     setCart(next);
   };
 
+  const handleEscrow = () => {
+    balanceEscrow(total);
+  };
+
   const cartItems = Object.values(cart.items);
 
   const total = cartItems.reduce(
@@ -109,7 +128,8 @@ export default function OrderPage() {
     0,
   );
   const deliveryPrice = cartItems.length > 0 ? 897 : 0;
-  const grandTotal = total + deliveryPrice;
+  const grandTotal = total + deliveryPrice - (escrow || 0);
+  const hasEscrow = (escrow ?? 0) > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,22 +232,25 @@ export default function OrderPage() {
                         onClick={() => setDeliveryMethod("ToOther")}
                         className={`cursor-pointer w-1/2 rounded-lg p-2 ${deliveryMethod === "ToOther" && "bg-background"}`}
                       >
-                        Вручить не мне
+                        Вручить не мнеы
                       </button>
                     </div>
                     <input
                       onChange={(e) => setFirstName(e.target.value)}
                       className="bg-gray rounded-lg p-3 w-full"
-                      placeholder="Имя"
+                      placeholder={currentCard?.contragent || "Имя"}
                       type="text"
                     />
                     <input
                       onChange={(e) => setPhone(e.target.value)}
                       className="bg-gray rounded-lg p-3 w-full"
-                      placeholder="+7 (000) 000-00-00"
+                      placeholder={
+                        formatPhone(currentCard?.card_number || "") ||
+                        "+7 (000) 000-00-00"
+                      }
                       type="tel"
                     />
-                    <LoyalitiModal />
+                    <LoyalitiModal phone={phone} name={name} />
                   </div>
                 </div>
               </div>
@@ -292,15 +315,25 @@ export default function OrderPage() {
           </div>
           <aside className="lg:sticky lg:top-24 h-fit">
             <div className="rounded-xl bg-white/40 space-y-3">
-              <div className="flex items-center cursor-pointer">
+              <div
+                onClick={() => handleEscrow()}
+                className="flex items-center cursor-pointer"
+              >
                 <button
+                  disabled={points === 0}
                   type="button"
-                  className="flex-1 h-12 rounded-xl bg-black text-white text-sm"
+                  className={`${hasEscrow ? "!text-muted-foreground" : ""} cursor-pointer flex-1 h-12 rounded-xl bg-black text-white`}
                 >
-                  Списать баллы
+                  {hasEscrow
+                    ? "Баллы применены"
+                    : points === 0
+                      ? "Нечего списывать"
+                      : "Списать баллы"}
                 </button>
-                <div className="w-12 h-12 rounded-xl bg-black text-white flex items-center justify-center font-semibold">
-                  17
+                <div
+                  className={`${hasEscrow ? "!text-muted-foreground" : ""} min-w-10 h-12 px-2 rounded-xl bg-black flex text-white items-center justify-center font-semibold`}
+                >
+                  {points}
                 </div>
               </div>
               <div className="space-y-2 text-base">
@@ -310,8 +343,8 @@ export default function OrderPage() {
                     {cartItems.length === 0
                       ? "Товаров нет"
                       : cartItems.length === 1
-                        ? "товар"
-                        : "товаров"}
+                        ? " товар"
+                        : " товаров"}
                   </span>
                   <span>{formatPrice(total)}</span>
                 </div>
@@ -319,6 +352,12 @@ export default function OrderPage() {
                   <span>Доставка</span>
                   <span>{formatPrice(deliveryPrice)}</span>
                 </div>
+                {hasEscrow && (
+                  <div className="flex items-center pt-2 border-t border-[#DCDCDC] justify-between">
+                    <span>Выгода</span>
+                    <span>-{formatPrice(escrow ?? 0)}</span>
+                  </div>
+                )}
                 <div className="flex items-center pt-2 border-t border-[#DCDCDC] justify-between">
                   <span>Общая стоимость</span>
                   <span>{formatPrice(grandTotal)}</span>

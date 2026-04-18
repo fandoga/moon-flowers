@@ -1,4 +1,10 @@
-import { tableCrmApi } from "@/shared/api/clients";
+import axios from "axios";
+
+// ✅ Теперь все запросы идут через серверный прокси /api/loyality
+// Это полностью убирает CORS блокировки
+const loyalitiApi = axios.create({
+  baseURL: "/api/loyality",
+});
 import {
   CreateLoyalityCardRequest,
   CreateLoyalityCardResponse,
@@ -8,12 +14,13 @@ import {
   LoyalityTransactionsQueryParams,
   LoyalityTransactionsResponse,
 } from "../types/types";
+import { tableCrmApi } from "@/shared/api/clients";
 
 export const getLoyalityCards = async (): Promise<LoyalityCardsResponse> => {
   try {
-    const response = await tableCrmApi.get<LoyalityCardsResponse>(
+    const response = await loyalitiApi.get<LoyalityCardsResponse>(
       "/loyality_cards/",
-      {},
+      { params: {} },
     );
 
     return response.data;
@@ -32,26 +39,26 @@ export const getLoyalityCards = async (): Promise<LoyalityCardsResponse> => {
 export const createLoyalityCard = async (
   params: CreateLoyalityCardRequest,
 ): Promise<CreateLoyalityCardResponse> => {
-  const card_number = crypto.randomUUID();
+  const organization_id = process.env.ORG_ID;
 
   try {
     const response = await tableCrmApi.post<CreateLoyalityCardResponse>(
       "/loyality_cards/",
       [
         {
-          card_number,
-          tags: "",
+          tags: null,
           phone_number: params.phone_number,
           contragent_id: 0,
           contragent_name: params.contragent_name,
-          organization_id: 275, // ⚠️ скорее всего ОБЯЗАТЕЛЬНО
+          organization_id,
+          created_at: Math.floor(Date.now() / 1000),
           cashback_percent: 0,
           minimal_checque_amount: 0,
           max_withdraw_percentage: 0,
           start_period: 0,
           end_period: 0,
           max_percentage: 0,
-          lifetime: 0,
+          lifetime: null,
           status_card: true,
           is_deleted: false,
           apple_wallet_advertisement: "TableCRM",
@@ -79,7 +86,13 @@ export const addLoyalityTransactionAccrual = async (
   params: LoyalityTransactionCreate | LoyalityTransactionCreate[],
 ): Promise<AddLoyalityTransactionResponse> => {
   try {
-    const payload = Array.isArray(params) ? params : [params];
+    const basePayload = Array.isArray(params) ? params : [params];
+
+    // Оборачиваем каждый элемент в нужные общие поля
+    const payload = basePayload.map((item) => ({
+      ...item,
+      dated: Math.floor(Date.now() / 1000),
+    }));
 
     const response = await tableCrmApi.post<AddLoyalityTransactionResponse>(
       "/loyality_transactions/",
@@ -106,7 +119,7 @@ export const getLoyalityTransactions = async (
   params: LoyalityTransactionsQueryParams = {},
 ): Promise<LoyalityTransactionsResponse> => {
   try {
-    const response = await tableCrmApi.get<LoyalityTransactionsResponse>(
+    const response = await loyalitiApi.get<LoyalityTransactionsResponse>(
       "/loyality_transactions/",
       {
         params,
