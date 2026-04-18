@@ -13,9 +13,9 @@ const ProductCard: React.FC<{
   const productId = Number(product.id);
 
   const imageUrl = [3, 2, 1, 0]
-    .map((index) => product.images?.[index])
+    .map((index) => product.photos?.[index])
     .find((url) => Boolean(url));
-  const price = Number(product.price) || 0;
+  const price = Number(product.prices?.[0].price) || 0;
 
   return (
     <div
@@ -52,7 +52,7 @@ const ProductCard: React.FC<{
           {formatPrice(price)}
         </div>
         <AddToCartButton
-          price={product.price}
+          price={product.prices?.[0].price}
           productId={productId}
           productName={product.name ? String(product.name) : undefined}
           imageUrl={imageUrl}

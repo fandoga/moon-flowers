@@ -80,7 +80,7 @@ export default function ProductPage() {
                 {/* Основное изображение */}
                 <div className="flex-1 relative aspect-square rounded-3xl overflow-hidden">
                   <Image
-                    src={product.images[activeImage] || ""}
+                    src={product.photos?.[0] || ""}
                     alt={product.name}
                     fill
                     className="object-cover"
@@ -89,7 +89,7 @@ export default function ProductPage() {
                 </div>
                 {/* Галерея миниатюр */}
                 <div className="hidden md:flex flex-col gap-3">
-                  {product.images?.map((img, index) => (
+                  {product.photos?.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setActiveImage(index)}
@@ -118,7 +118,9 @@ export default function ProductPage() {
                   {product.name}
                 </h1>
 
-                <div className="h !text-3xl !my-6">{product.price} ₽</div>
+                <div className="h !text-3xl !my-6">
+                  {product.prices[0].price} ₽
+                </div>
 
                 <div
                   onClick={() => {
@@ -136,9 +138,9 @@ export default function ProductPage() {
                     if (!cart.items[key]) {
                       cart.items[key] = {
                         id: product.id,
-                        price: product.price,
+                        price: product.prices[0].price,
                         name: product.name,
-                        imageUrl: product.images[0],
+                        imageUrl: product.photos?.[0],
                         quantity: 0,
                       };
                     }
@@ -175,8 +177,8 @@ export default function ProductPage() {
                   <AddToCartButton
                     productId={product.id}
                     productName={product.name}
-                    imageUrl={product.images[0]}
-                    price={product.price}
+                    imageUrl={product.photos?.[0]}
+                    price={product.prices[0].price}
                     hideControls
                     className="absolute w-60 opacity-0 pointer-events-none"
                   />
@@ -203,7 +205,7 @@ export default function ProductPage() {
             </div>
             <div className="h-80 w-fit flex">
               <ProductsCatalog
-                category={product.category_name}
+                category={product.global_category_id}
                 displayInfo={false}
                 loadMore={false}
                 query=""
@@ -218,7 +220,7 @@ export default function ProductPage() {
             </div>
             <div className="w-full">
               <ProductsCatalog
-                category={product.category_name}
+                category={product.global_category_id}
                 loadMore={false}
                 query=""
                 size={2}

@@ -6,14 +6,13 @@ import { useInView } from "react-intersection-observer";
 import { useMpProducts, type MpProduct } from "@/entities/mp-product";
 import ProductCard from "../product-card/ProductCard";
 import Logo from "@/components/ui/logo";
-import { normalizeCategory } from "@/lib/utils/normalizeCategory";
 
 type ProductsCatalogProps = {
   query: string;
   limit?: number;
   size?: number;
   displayInfo?: boolean;
-  category?: string;
+  category?: number | string;
   loadMore?: boolean;
 };
 
@@ -44,7 +43,7 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   const search = query.trim().length > 0 ? query : undefined;
 
   const { data, isLoading, isFetching } = useMpProducts({
-    global_category_name: normalizeCategory(category),
+    category_id: category,
     limit: perPage,
     offset,
     search,
@@ -56,6 +55,7 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   const hasMoreByCount =
     typeof totalCount === "number" ? items.length < totalCount : true;
   const hasMore = loadMore ? canLoadMore && hasMoreByCount : false;
+  console.log(visibleItems);
 
   useEffect(() => {
     setTimeout(() => {

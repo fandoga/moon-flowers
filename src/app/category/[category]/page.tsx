@@ -14,7 +14,7 @@ const MobileProcutCatalog = () => {
   // Декодируем URL encoded строку (кириллица)
   const decodedCategory = decodeURIComponent(paramsValue as string);
   const category = normalizeCategory(decodedCategory);
-  const { data, isLoading } = useMpProducts({ category });
+  const { data, isLoading } = useMpProducts({ global_category_name: category });
   const result = data?.result;
   const [normalizedItems, setNormalizedItems] = useState<CatalogItemType[]>([]);
 
@@ -25,8 +25,8 @@ const MobileProcutCatalog = () => {
     const items: CatalogItemType[] = result.map((product) => ({
       id: String(product.id),
       name: product.name,
-      price: product.price,
-      image: product.images?.[0] || "",
+      price: product.prices?.[0].price,
+      image: product.photos?.[0] || "",
       count: result.length,
     }));
 

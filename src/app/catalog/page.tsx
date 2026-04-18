@@ -13,6 +13,7 @@ export interface CatalogItemType {
   price?: number;
   image?: string | "";
   count?: number;
+  categoryId?: number;
 }
 
 const containerVariants = {
@@ -31,7 +32,7 @@ const itemVariants = {
 };
 
 export default function CatalogPage() {
-  const [category, setCategory] = useState<string | undefined>("");
+  const [category, setCategory] = useState<number | undefined>();
   const [isTouchDevice, setIsTouchDevice] = useState<boolean>();
 
   // Загружаем товары для каждой категории отдельно
@@ -74,9 +75,10 @@ export default function CatalogPage() {
     return {
       id: cat.id,
       name: cat.name,
-      price: firstProduct?.price || 0,
-      image: firstProduct?.images?.[0] || "",
+      price: firstProduct?.prices[0].price || 0,
+      image: firstProduct?.photos?.[0] || "",
       count: cat.query.data?.count || 0,
+      categoryId: firstProduct?.category,
     };
   });
 
@@ -121,7 +123,7 @@ export default function CatalogPage() {
           </motion.h1>
           <div className="flex items-center gap-2 py-8 md:py-12 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <div
-              onClick={() => setCategory("")}
+              onClick={() => setCategory(undefined)}
               className="cursor-pointer w-40 md:w-60 h-15 shrink-0 pt-4.5 text-center p-2 bg-gray rounded-xl"
               key="all"
             >
@@ -129,7 +131,7 @@ export default function CatalogPage() {
             </div>
             {filteredCategories.map((item) => (
               <div
-                onClick={() => setCategory(item.name)}
+                onClick={() => setCategory(item.categoryId)}
                 className="cursor-pointer w-40 md:w-60 h-15 shrink-0 pt-4.5 text-center p-2 bg-gray rounded-xl"
                 key={item.id}
               >
