@@ -52,15 +52,38 @@ export const getPicturesById = async (
   productId: number | string,
 ): Promise<Pictures | null> => {
   try {
-    const response = await tableCrmApi.get<Pictures[]>("/pictures/", {
+    const response = await tableCrmApi.get("/pictures/", {
       params: {
         entity: "nomenclature",
         entity_id: productId,
       },
     });
-    const pictures = response.data ?? [];
-    const mainPicture = pictures.find((item) => item.is_main) ?? pictures[0];
-    return mainPicture ?? null;
+    const data = response.data as unknown;
+    const dataWithResult = data as { result?: Pictures | Pictures[] } | null;
+
+    let normalizedList: Pictures[] = [];
+    if (Array.isArray(data)) {
+      normalizedList = data as Pictures[];
+    } else if (Array.isArray(dataWithResult?.result)) {
+      normalizedList = dataWithResult.result;
+    } else if (dataWithResult?.result) {
+      normalizedList = [dataWithResult.result];
+    } else if (data && typeof data === "object") {
+      normalizedList = [data as Pictures];
+    }
+
+    const mainPicture =
+      normalizedList.find((item) => Boolean(item?.is_main)) ??
+      normalizedList[0];
+
+    if (!mainPicture) return null;
+
+    // Some responses may miss entity_id; keep mapping stable.
+    if (!mainPicture.entity_id) {
+      return { ...mainPicture, entity_id: Number(productId) } as Pictures;
+    }
+
+    return mainPicture;
   } catch (error) {
     console.error("Failed to load product:", error);
     return null;

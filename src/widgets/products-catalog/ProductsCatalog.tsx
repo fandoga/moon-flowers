@@ -129,6 +129,8 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
     });
   }, [visibleItems, picturesQueries, allPrices]);
 
+  console.log(enrichedItems);
+
   const hasMoreByCount =
     typeof totalCount === "number" ? items.length < totalCount : true;
   const hasMore = loadMore ? canLoadMore && hasMoreByCount : false;
@@ -169,7 +171,6 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
         const next = Array.from(map.values());
         const appendedUnique = map.size - before;
 
-        // Stop only when backend returns duplicate window (no growth).
         if (loadMore && appendedUnique <= 0) {
           setCanLoadMore(false);
         }

@@ -25,6 +25,7 @@ export interface MpProduct {
   id: 0;
   unit_name: "string";
   barcodes: ["string"];
+  price: 0;
   prices: [
     {
       price: 0;
@@ -47,6 +48,7 @@ export interface MpProduct {
     },
   ];
   photos: [string] | null;
+  images: [string];
   videos: [
     {
       id: 0;

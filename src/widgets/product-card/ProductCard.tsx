@@ -12,10 +12,11 @@ const ProductCard: React.FC<{
   const router = useRouter();
   const productId = Number(product.id);
 
-  const imageUrl = [3, 2, 1, 0]
-    .map((index) => product.photos?.[index])
-    .find((url) => Boolean(url));
-  const price = Number(product.prices?.[0].price) || 0;
+  const imageUrl =
+    [3, 2, 1, 0]
+      .map((index) => product.photos?.[index])
+      .find((url) => Boolean(url)) || product.images[0];
+  const price = Number(product.prices?.[0].price) || product.price || 0;
 
   return (
     <div
