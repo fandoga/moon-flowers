@@ -12,7 +12,7 @@ export const getMpProducts = async (
 ): Promise<MpProductsResponse> => {
   try {
     const response = await tableCrmApi.get<MpProductsResponse>(
-      "/nomenclature",
+      "/nomenclature/",
       {
         params,
       },
@@ -39,7 +39,7 @@ export const getMpProductById = async (
 ): Promise<MpProduct | null> => {
   try {
     const response = await tableCrmApi.get<MpProduct>(
-      `/nomenclature/${productId}`,
+      `/nomenclature/${productId}/`,
     );
     return response.data;
   } catch (error) {
@@ -52,10 +52,15 @@ export const getPicturesById = async (
   productId: number | string,
 ): Promise<Pictures | null> => {
   try {
-    const response = await tableCrmApi.get<Pictures>(
-      `/pictures/?entity=nomenclature&entity_id=${productId}`,
-    );
-    return response.data;
+    const response = await tableCrmApi.get<Pictures[]>("/pictures/", {
+      params: {
+        entity: "nomenclature",
+        entity_id: productId,
+      },
+    });
+    const pictures = response.data ?? [];
+    const mainPicture = pictures.find((item) => item.is_main) ?? pictures[0];
+    return mainPicture ?? null;
   } catch (error) {
     console.error("Failed to load product:", error);
     return null;
@@ -64,7 +69,7 @@ export const getPicturesById = async (
 
 export const getPricesById = async (): Promise<Prices | null> => {
   try {
-    const response = await tableCrmApi.get<Prices>(`/prices`);
+    const response = await tableCrmApi.get<Prices>(`/prices/`);
     return response.data;
   } catch (error) {
     console.error("Failed to load product:", error);
