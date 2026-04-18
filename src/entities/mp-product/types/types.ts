@@ -80,32 +80,34 @@ export interface Pictures {
 }
 
 export interface Prices {
-  id: 0;
-  nomenclature_id: 0;
-  nomenclature_name: "string";
-  type: "string";
-  warehouse_id: 0;
-  address: "string";
-  latitude: 0;
-  longitude: 0;
-  description_short: "string";
-  description_long: "string";
-  code: "string";
-  unit: 0;
-  unit_name: "string";
-  category: 0;
-  category_name: "string";
-  manufacturer: 0;
-  manufacturer_name: "string";
-  price: 0;
-  price_type: "string";
-  date_from: 0;
-  date_to: 0;
-  radius: 0;
-  hide_outside_radius: true;
-  photos: [];
-  updated_at: 0;
-  created_at: 0;
+  result: {
+    id: 0;
+    nomenclature_id: 0;
+    nomenclature_name: "string";
+    type: "string";
+    warehouse_id: 0;
+    address: "string";
+    latitude: 0;
+    longitude: 0;
+    description_short: "string";
+    description_long: "string";
+    code: "string";
+    unit: 0;
+    unit_name: "string";
+    category: 0;
+    category_name: "string";
+    manufacturer: 0;
+    manufacturer_name: "string";
+    price: 0;
+    price_type: "string";
+    date_from: 0;
+    date_to: 0;
+    radius: 0;
+    hide_outside_radius: true;
+    photos: [];
+    updated_at: 0;
+    created_at: 0;
+  };
 }
 
 export interface MpProductsResponse {

@@ -3,7 +3,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { useMpProducts, type MpProduct } from "@/entities/mp-product";
+import { useQueries } from "@tanstack/react-query";
+import {
+  useMpProducts,
+  usePrices,
+  type MpProduct,
+} from "@/entities/mp-product";
+import { getPicturesById } from "@/entities/mp-product/api/api";
 import ProductCard from "../product-card/ProductCard";
 import Logo from "@/components/ui/logo";
 
@@ -52,10 +58,80 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   const totalCount = data?.count;
   const received = useMemo(() => data?.result ?? [], [data?.result]);
   const visibleItems = loadMore ? items : received;
+  const { data: allPrices } = usePrices();
+
+  // Безопасно приводим к массиву, защита от null/undefined/не массива
+  const productIds = useMemo(
+    () =>
+      visibleItems
+        .map((product) => Number(product.id))
+        .filter((id) => Number.isFinite(id) && id > 0),
+    [visibleItems],
+  );
+
+  const picturesQueries = useQueries({
+    queries: productIds.map((productId) => ({
+      queryKey: ["mp-product-pictures", productId],
+      queryFn: () => getPicturesById(productId),
+      staleTime: 60_000,
+    })),
+  });
+
+  const enrichedItems = useMemo(() => {
+    const pictureByProductId = new Map<number, string>();
+    for (const query of picturesQueries) {
+      const picture = query.data;
+      if (!picture) continue;
+      const productId = Number(picture.entity_id);
+      const url = picture.public_url || picture.url;
+      if (Number.isFinite(productId) && url) {
+        pictureByProductId.set(productId, url);
+      }
+    }
+
+    const priceByProductId = new Map<number, number>();
+    const pricesList = Array.isArray(allPrices?.result)
+      ? allPrices.result
+      : allPrices?.result
+        ? [allPrices.result]
+        : [];
+    for (const price of pricesList) {
+      const productId = Number(price.nomenclature_id);
+      const amount = Number(price.price);
+      if (!Number.isFinite(productId) || !Number.isFinite(amount)) continue;
+      if (!priceByProductId.has(productId)) {
+        priceByProductId.set(productId, amount);
+      }
+    }
+
+    return visibleItems.map((product) => {
+      const current = product as MpProduct & {
+        images?: string[];
+        photos?: string[] | null;
+        prices?: Array<{ price?: number }>;
+        price?: number;
+      };
+      const productId = Number(current.id);
+
+      const fallbackImage =
+        current.photos?.[0] || current.images?.[0] || "/placeholder.jpg";
+      const resolvedImage = pictureByProductId.get(productId) || fallbackImage;
+      const fallbackPrice = Number(
+        current.prices?.[0]?.price ?? current.price ?? 0,
+      );
+      const resolvedPrice = priceByProductId.get(productId) ?? fallbackPrice;
+
+      return {
+        ...current,
+        images: [resolvedImage],
+        price: resolvedPrice,
+      } as MpProduct;
+    });
+  }, [visibleItems, picturesQueries, allPrices]);
+
   const hasMoreByCount =
     typeof totalCount === "number" ? items.length < totalCount : true;
   const hasMore = loadMore ? canLoadMore && hasMoreByCount : false;
-  console.log(visibleItems);
 
   useEffect(() => {
     setTimeout(() => {
@@ -138,7 +214,7 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
           initial="hidden"
           animate="visible"
         >
-          {visibleItems.map((product) => (
+          {enrichedItems.map((product) => (
             <motion.div key={Number(product.id)} variants={itemVariants}>
               <ProductCard displayOnHover={!displayInfo} product={product} />
             </motion.div>

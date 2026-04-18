@@ -62,13 +62,9 @@ export const getPicturesById = async (
   }
 };
 
-export const getPricesById = async (
-  productId: number | string,
-): Promise<Prices | null> => {
+export const getPricesById = async (): Promise<Prices | null> => {
   try {
-    const response = await tableCrmApi.get<Prices>(
-      `/prices/?entity=nomenclature&entity_id=${productId}`,
-    );
+    const response = await tableCrmApi.get<Prices>(`/prices`);
     return response.data;
   } catch (error) {
     console.error("Failed to load product:", error);

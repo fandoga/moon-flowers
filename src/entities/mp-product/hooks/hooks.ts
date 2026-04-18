@@ -36,10 +36,9 @@ export const usePictures = (productId: number | string | null | undefined) => {
   });
 };
 
-export const usePrices = (productId: number | string | null | undefined) => {
+export const usePrices = () => {
   return useQuery<Prices | null>({
-    queryKey: ["mp-product-prices", productId],
-    queryFn: () => (productId ? getPricesById(productId) : null),
-    enabled: !!productId,
+    queryKey: ["mp-product-prices"],
+    queryFn: () => getPricesById(),
   });
 };
