@@ -125,5 +125,5 @@ export interface MpProductsQueryParams {
   limit?: number;
   offset?: number;
   search?: string;
-  category_id?: number | string;
+  category?: number | string;
 }

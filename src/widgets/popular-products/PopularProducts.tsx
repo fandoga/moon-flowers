@@ -4,31 +4,31 @@ import React, { useState } from "react";
 import ProductsCatalog from "../products-catalog/ProductsCatalog";
 
 const PopularProducts = () => {
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<number>();
 
   const categories = [
     {
-      id: "all",
+      category_id: null,
       name: "Все",
     },
     {
-      id: "mono",
+      category_id: 5092,
       name: "Моно-букеты",
     },
     {
-      id: "wedding",
+      category_id: 5093,
       name: "Свадебные",
     },
     {
-      id: "autor",
+      category_id: 5094,
       name: "Авторские",
     },
     {
-      id: "dry",
+      category_id: 5095,
       name: "Сухоцветы",
     },
     {
-      id: "basket",
+      category_id: 5096,
       name: "Корзины",
     },
   ];
@@ -49,14 +49,14 @@ const PopularProducts = () => {
         {categories.map((item) => (
           <div
             onClick={() => {
-              if (item.id === "all") {
-                setCategory("");
+              if (item.category_id === null) {
+                setCategory(undefined);
                 return;
               }
-              setCategory(item.name);
+              setCategory(item.category_id);
             }}
             className="cursor-pointer w-40 md:w-60 h-15 shrink-0 pt-4.5 text-center p-2 bg-gray rounded-xl"
-            key={item.id}
+            key={item.name}
           >
             {item.name}
           </div>

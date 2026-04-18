@@ -3,12 +3,12 @@
 import { motion } from "framer-motion";
 import { Suspense, useEffect, useState } from "react";
 import ProductsCatalog from "@/widgets/products-catalog/ProductsCatalog";
-import { useMpProducts } from "@/entities/mp-product";
+import { useEnrichedMpProducts, useMpProducts } from "@/entities/mp-product";
 import Logo from "@/components/ui/logo";
 import CatalogReels from "@/widgets/catalog-reels/CatalogReels";
 
 export interface CatalogItemType {
-  id: string;
+  id: string | number;
   name?: string | "";
   price?: number;
   image?: string | "";
@@ -38,7 +38,7 @@ export default function CatalogPage() {
   // Загружаем товары для каждой категории отдельно
   const monoProducts = useMpProducts({
     limit: 1,
-    global_category_name: "монобукеты",
+    category: "5092",
   });
   const weddingProducts = useMpProducts({
     limit: 1,
@@ -58,27 +58,56 @@ export default function CatalogPage() {
   });
 
   const categoriesQueries = [
-    { id: "mono", name: "Моно-букеты", query: monoProducts },
-    { id: "wedding", name: "Свадебные", query: weddingProducts },
-    { id: "autor", name: "Авторские", query: autorProducts },
-    { id: "dry", name: "Сухоцветы", query: dryProducts },
-    { id: "basket", name: "Корзины", query: basketProducts },
-  ];
+    { id: 5092, key: "mono", name: "Моно-букеты", query: monoProducts },
+    { id: 5093, key: "wedding", name: "Свадебные", query: weddingProducts },
+    { id: 5094, key: "autor", name: "Авторские", query: autorProducts },
+    { id: 5095, key: "dry", name: "Сухоцветы", query: dryProducts },
+    { id: 5096, key: "basket", name: "Корзины", query: basketProducts },
+  ] as const;
+  const { enrichedItems: monoEnriched } = useEnrichedMpProducts(
+    monoProducts.data?.result ?? [],
+  );
+  const { enrichedItems: weddingEnriched } = useEnrichedMpProducts(
+    weddingProducts.data?.result ?? [],
+  );
+  const { enrichedItems: autorEnriched } = useEnrichedMpProducts(
+    autorProducts.data?.result ?? [],
+  );
+  const { enrichedItems: dryEnriched } = useEnrichedMpProducts(
+    dryProducts.data?.result ?? [],
+  );
+  const { enrichedItems: basketEnriched } = useEnrichedMpProducts(
+    basketProducts.data?.result ?? [],
+  );
+  const firstProductByCategory: Record<
+    string,
+    (typeof monoEnriched)[number] | undefined
+  > = {
+    mono: monoEnriched[0],
+    wedding: weddingEnriched[0],
+    autor: autorEnriched[0],
+    dry: dryEnriched[0],
+    basket: basketEnriched[0],
+  };
 
   const isLoading = categoriesQueries.some((q) => q.query.isLoading);
 
   // Собираем категории с реальными данными
   const mobileCategories = categoriesQueries.map((cat) => {
-    const products = cat.query.data?.result || [];
-    const firstProduct = products[0];
+    const firstProduct = firstProductByCategory[cat.key];
+    const resolvedPrice = Number(
+      firstProduct?.price ?? firstProduct?.prices?.[0]?.price ?? 0,
+    );
+    const resolvedImage =
+      firstProduct?.images?.[0] || firstProduct?.photos?.[0] || "";
 
     return {
       id: cat.id,
       name: cat.name,
-      price: firstProduct?.prices[0].price || 0,
-      image: firstProduct?.photos?.[0] || "",
+      price: Number.isFinite(resolvedPrice) ? resolvedPrice : 0,
+      image: resolvedImage,
       count: cat.query.data?.count || 0,
-      categoryId: firstProduct?.category,
+      categoryId: Number(firstProduct?.category ?? cat.id),
     };
   });
 

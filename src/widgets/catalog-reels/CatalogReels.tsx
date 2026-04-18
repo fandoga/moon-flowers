@@ -63,11 +63,11 @@ const CatalogReels: React.FC<CatalogReelsProps> = ({
               {isCategories ? (
                 <ActionButton
                   text="Показать еще"
-                  href={`/category/${item.name}`}
+                  href={`/category/${item.id}`}
                 />
               ) : (
                 <AddToCartButton
-                  productId={parseInt(item.id)}
+                  productId={Number(item.id)}
                   productName={item.name}
                   price={item.price ?? 0}
                   imageUrl={item.image}
