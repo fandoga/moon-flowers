@@ -35,11 +35,26 @@ export default function CatalogPage() {
   const [isTouchDevice, setIsTouchDevice] = useState<boolean>();
 
   // Загружаем товары для каждой категории отдельно
-  const monoProducts = useMpProducts({ category: "монобукеты", size: 1 });
-  const weddingProducts = useMpProducts({ category: "свадебные", size: 1 });
-  const autorProducts = useMpProducts({ category: "авторские", size: 1 });
-  const dryProducts = useMpProducts({ category: "сухоцветы", size: 1 });
-  const basketProducts = useMpProducts({ category: "корзины", size: 1 });
+  const monoProducts = useMpProducts({
+    limit: 1,
+    global_category_name: "монобукеты",
+  });
+  const weddingProducts = useMpProducts({
+    limit: 1,
+    global_category_name: "Свадебные",
+  });
+  const autorProducts = useMpProducts({
+    limit: 1,
+    global_category_name: "Авторские",
+  });
+  const dryProducts = useMpProducts({
+    limit: 1,
+    global_category_name: "Сухоцветы",
+  });
+  const basketProducts = useMpProducts({
+    limit: 1,
+    global_category_name: "Корзины",
+  });
 
   const categoriesQueries = [
     { id: "mono", name: "Моно-букеты", query: monoProducts },
@@ -104,7 +119,7 @@ export default function CatalogPage() {
           >
             Каталог
           </motion.h1>
-          <div className="flex items-center gap-2 overflow-x-auto py-8 md:py-12 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center gap-2 py-8 md:py-12 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <div
               onClick={() => setCategory("")}
               className="cursor-pointer w-40 md:w-60 h-15 shrink-0 pt-4.5 text-center p-2 bg-gray rounded-xl"

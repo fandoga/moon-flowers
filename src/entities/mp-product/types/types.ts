@@ -59,16 +59,15 @@ export interface MpProduct {
 export interface MpProductsResponse {
   result: MpProduct[];
   count?: number;
-  size?: number;
-  page?: number;
+  limit?: number;
+  offset?: number;
   error?: string;
 }
 
 export interface MpProductsQueryParams {
-  category?: string;
-  seller_id?: number;
-  size?: number;
-  page?: number;
+  global_category_name?: string;
+  limit?: number;
+  offset?: number;
   search?: string;
   category_id?: number | string;
 }

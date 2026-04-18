@@ -10,6 +10,7 @@ import { normalizeCategory } from "@/lib/utils/normalizeCategory";
 
 type ProductsCatalogProps = {
   query: string;
+  limit?: number;
   size?: number;
   displayInfo?: boolean;
   category?: string;
@@ -28,57 +29,79 @@ const itemVariants = {
 
 const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   query,
+  limit,
   size,
   category,
   displayInfo = true,
   loadMore = true,
 }) => {
   const { ref: sentinelRef, inView } = useInView({ threshold: 0 });
-  const [page, setPage] = useState<number>(1);
+  const [offset, setOffset] = useState<number>(0);
   const [items, setItems] = useState<MpProduct[]>([]);
+  const [canLoadMore, setCanLoadMore] = useState(true);
+  const perPage = limit ?? size ?? 12;
 
   const search = query.trim().length > 0 ? query : undefined;
 
   const { data, isLoading, isFetching } = useMpProducts({
-    category: normalizeCategory(category),
-    seller_id: 813,
-    size: size || 12,
-    page,
+    global_category_name: normalizeCategory(category),
+    limit: perPage,
+    offset,
     search,
   });
 
-  const totalCount = data?.count ?? Math.max(data?.result?.length ?? 0, 0);
+  const totalCount = data?.count;
   const received = useMemo(() => data?.result ?? [], [data?.result]);
   const visibleItems = loadMore ? items : received;
-  const hasMore = loadMore ? items.length < totalCount : false;
+  const hasMoreByCount =
+    typeof totalCount === "number" ? items.length < totalCount : true;
+  const hasMore = loadMore ? canLoadMore && hasMoreByCount : false;
 
   useEffect(() => {
     setTimeout(() => {
-      setPage(1);
+      setOffset(0);
       setItems([]);
+      setCanLoadMore(true);
     }, 0);
-  }, [query, size, category]);
+  }, [query, perPage]);
 
   useEffect(() => {
     if (!received.length) {
-      if (page <= 1) {
+      if (isLoading || isFetching) return;
+
+      if (offset === 0) {
         setTimeout(() => {
           setItems([]);
         });
+      }
+      if (loadMore && offset > 0) {
+        setTimeout(() => setCanLoadMore(false), 0);
       }
       return;
     }
     setTimeout(() => {
       setItems((prev) => {
-        if (page <= 1) return received;
+        if (offset === 0) {
+          if (loadMore) setCanLoadMore(true);
+          return received;
+        }
 
         const map = new Map<string, MpProduct>();
         for (const p of prev) map.set(String(p.id), p);
+        const before = map.size;
         for (const p of received) map.set(String(p.id), p);
-        return Array.from(map.values());
+        const next = Array.from(map.values());
+        const appendedUnique = map.size - before;
+
+        // Stop only when backend returns duplicate window (no growth).
+        if (loadMore && appendedUnique <= 0) {
+          setCanLoadMore(false);
+        }
+
+        return next;
       });
     }, 0);
-  }, [received, page]);
+  }, [received, offset, loadMore, perPage, isLoading, isFetching]);
 
   useEffect(() => {
     if (!loadMore) return;
@@ -86,13 +109,13 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
     if (!hasMore) return;
     if (isLoading || isFetching) return;
     setTimeout(() => {
-      setPage((prev) => prev + 1);
+      setOffset((prev) => prev + perPage);
     }, 0);
-  }, [inView, hasMore, loadMore, size, isLoading, isFetching]);
+  }, [inView, hasMore, loadMore, perPage, isLoading, isFetching]);
 
   const showLoader = (isLoading || isFetching) && visibleItems.length === 0;
   const showEmptyState = !showLoader && visibleItems.length === 0;
-  const desktopCols = size ? (size < 4 ? size : 4) : 4;
+  const desktopCols = perPage < 4 ? perPage : 4;
   const lgColsClass =
     desktopCols === 1
       ? "lg:grid-cols-1"

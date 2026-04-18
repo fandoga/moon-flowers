@@ -1,13 +1,20 @@
 import { tableCrmApi } from "@/shared/api/clients";
-import { MpProductsQueryParams, MpProductsResponse, MpProduct } from "../types/types";
+import {
+  MpProductsQueryParams,
+  MpProductsResponse,
+  MpProduct,
+} from "../types/types";
 
 export const getMpProducts = async (
   params?: MpProductsQueryParams,
 ): Promise<MpProductsResponse> => {
   try {
-    const response = await tableCrmApi.get<MpProductsResponse>("/mp/products", {
-      params,
-    });
+    const response = await tableCrmApi.get<MpProductsResponse>(
+      "/nomenclature",
+      {
+        params,
+      },
+    );
     return response.data;
   } catch (error) {
     const message =
@@ -18,8 +25,8 @@ export const getMpProducts = async (
     return {
       result: [],
       count: 0,
-      size: params?.size,
-      page: params?.page,
+      limit: params?.limit,
+      offset: params?.offset,
       error: message,
     };
   }
@@ -29,7 +36,9 @@ export const getMpProductById = async (
   productId: number | string,
 ): Promise<MpProduct | null> => {
   try {
-    const response = await tableCrmApi.get<MpProduct>(`/mp/products/${productId}`);
+    const response = await tableCrmApi.get<MpProduct>(
+      `/nomenclature/${productId}`,
+    );
     return response.data;
   } catch (error) {
     console.error("Failed to load product:", error);
