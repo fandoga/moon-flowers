@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ContactsModal } from "../contacts-modal/ContactsModal";
 import FooterIcons from "./FooterIcons";
 import ActionButton from "@/components/ui/action-button";
 
@@ -99,11 +98,6 @@ const Footer = () => {
           />
         </div>
       </motion.footer>
-
-      <ContactsModal
-        isOpen={isContactsOpen}
-        onClose={() => setIsContactsOpen(false)}
-      />
     </div>
   );
 };

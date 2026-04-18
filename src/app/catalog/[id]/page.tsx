@@ -190,7 +190,7 @@ export default function ProductPage() {
           </div>
           <motion.div
             variants={itemVariants}
-            className="hidden md:flex items-end w-full gap-12 h-150 pt-30 justify-between pt-4"
+            className="hidden xl:flex items-end w-full gap-12 h-150 pt-30 justify-between pt-4"
           >
             <div className="flex flex-col h-full justify-between">
               <h2 className="h">
@@ -212,7 +212,7 @@ export default function ProductPage() {
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="md:hidden w-full pt-8">
+          <motion.div variants={itemVariants} className="xl:hidden w-full pt-8">
             <div className="mb-4">
               <h2 className="h">Может заинтересовать</h2>
             </div>

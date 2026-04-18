@@ -175,7 +175,7 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
 
   return (
     <>
-      {renderedVideos.map((video) => (
+      {renderedVideos.slice(2, 6).map((video) => (
         <button
           key={video.id}
           onClick={() => {
