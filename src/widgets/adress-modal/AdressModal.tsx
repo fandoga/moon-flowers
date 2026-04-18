@@ -49,16 +49,18 @@ const AdressModal = () => {
       {isOpen && (
         <div
           onClick={() => setOpen(false)}
-          className="cursor-default fixed inset-0 z-50 bg-black/60 flex justify-center items-center"
+          className="cursor-default px-10 fixed inset-0 z-50 bg-black/60 flex justify-center items-center"
         >
           <div
             onClick={(e) => {
               e.stopPropagation();
               setSuggOpen(false);
             }}
-            className="bg-background rounded-2xl py-14 px-22"
+            className="bg-background rounded-2xl py-6 xl:py-14 px-12 xl:px-22"
           >
-            <h2 className="h !text-center">Куда везти цветы?</h2>
+            <h2 className="h !text-4xl xl:!text-5xl !text-center">
+              Куда везти цветы?
+            </h2>
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-3 relative">
                 <input
