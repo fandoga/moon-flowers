@@ -6,10 +6,12 @@ import { useInView } from "react-intersection-observer";
 import { useMpProducts, type MpProduct } from "@/entities/mp-product";
 import ProductCard from "../product-card/ProductCard";
 import Logo from "@/components/ui/logo";
+import { normalizeCategory } from "@/lib/utils/normalizeCategory";
 
 type ProductsCatalogProps = {
   query: string;
   size?: number;
+  displayInfo?: boolean;
   category?: string;
   loadMore?: boolean;
 };
@@ -28,6 +30,7 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   query,
   size,
   category,
+  displayInfo = true,
   loadMore = true,
 }) => {
   const { ref: sentinelRef, inView } = useInView({ threshold: 0 });
@@ -35,13 +38,6 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   const [items, setItems] = useState<MpProduct[]>([]);
 
   const search = query.trim().length > 0 ? query : undefined;
-
-  const normalizeCategory = (value?: string) =>
-    String(value ?? "")
-      .toLowerCase()
-      .replace(/[-_]+/g, "")
-      .replace(/\s+/g, "")
-      .trim();
 
   const { data, isLoading, isFetching } = useMpProducts({
     category: normalizeCategory(category),
@@ -53,7 +49,8 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
 
   const totalCount = data?.count ?? Math.max(data?.result?.length ?? 0, 0);
   const received = useMemo(() => data?.result ?? [], [data?.result]);
-  const hasMore = items.length < totalCount;
+  const visibleItems = loadMore ? items : received;
+  const hasMore = loadMore ? items.length < totalCount : false;
 
   useEffect(() => {
     setTimeout(() => {
@@ -93,7 +90,17 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
     }, 0);
   }, [inView, hasMore, loadMore, size, isLoading, isFetching]);
 
-  const showLoader = (isLoading || isFetching) && items.length === 0;
+  const showLoader = (isLoading || isFetching) && visibleItems.length === 0;
+  const showEmptyState = !showLoader && visibleItems.length === 0;
+  const desktopCols = size ? (size < 4 ? size : 4) : 4;
+  const lgColsClass =
+    desktopCols === 1
+      ? "lg:grid-cols-1"
+      : desktopCols === 2
+        ? "lg:grid-cols-2"
+        : desktopCols === 3
+          ? "lg:grid-cols-3"
+          : "lg:grid-cols-4";
 
   return (
     <>
@@ -103,14 +110,14 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
         </div>
       ) : (
         <motion.div
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8"
+          className={`grid grid-cols-1 md:grid-cols-2 ${lgColsClass} gap-4 sm:gap-6 lg:gap-8 w-full`}
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {items.map((product) => (
+          {visibleItems.map((product) => (
             <motion.div key={Number(product.id)} variants={itemVariants}>
-              <ProductCard product={product} />
+              <ProductCard displayOnHover={!displayInfo} product={product} />
             </motion.div>
           ))}
         </motion.div>
@@ -119,14 +126,20 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
       {loadMore && hasMore && (
         <div ref={sentinelRef} className="flex justify-center py-10"></div>
       )}
-      {isFetching && items.length > 0 && loadMore && (
+      {isFetching && visibleItems.length > 0 && loadMore && (
         <div className="w-full flex justify-center h-10 py-10">
           <Logo alwaysEnabled />
         </div>
       )}
 
-      {data?.error && (
-        <p className="text-center text-red-500 py-8 text-sm">{data.error}</p>
+      {showEmptyState && (
+        <div className="w-full min-h-[220px] rounded-xl border border-[#E7E7E7] flex items-center justify-center px-4 text-center">
+          <p
+            className={`text-sm ${data?.error ? "text-red-500" : "text-muted-foreground"}`}
+          >
+            {data?.error || "Товары не найдены"}
+          </p>
+        </div>
       )}
     </>
   );

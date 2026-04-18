@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Store } from "lucide-react";
 import { ContactsModal } from "@/widgets/contacts-modal/ContactsModal";
 import Logo from "@/components/ui/logo";
 import AdressModal from "../adress-modal/AdressModal";
@@ -11,38 +10,11 @@ import LoyalitiModal from "../loyaliti-modal/LoyalitiModal";
 import { LocalCart } from "@/app/order/page";
 import { formatPrice } from "@/lib/utils/formatPrice";
 
-const LOGO_POINTS_KEY = "logo_points";
-const LOGO_POINTS_EVENT = "logo-points-updated";
+import { useBonusCounter } from "@/components/ui/bonus-counter/useBonusCounter";
 const CART_LOCAL_KEY = "cart_local";
 const CART_EVENT_NAME = "cart-local-updated";
 
-const RollingDigit = ({ digit }: { digit: string }) => {
-  return (
-    <div className="relative h-6 w-3.5 overflow-hidden">
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={digit}
-          initial={{ y: "-110%" }}
-          animate={{
-            y: "0%",
-            transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
-          }}
-          exit={{
-            y: ["0%", "0%", "110%"],
-            transition: {
-              duration: 0.25,
-              times: [0, 0.78, 1],
-              ease: "easeInOut",
-            },
-          }}
-          className="absolute inset-0 flex items-center justify-center tabular-nums"
-        >
-          {digit}
-        </motion.span>
-      </AnimatePresence>
-    </div>
-  );
-};
+import RollingDigit from "@/components/ui/bonus-counter/RollingDigit";
 
 const readCart = (): LocalCart => {
   try {
@@ -59,14 +31,22 @@ const readCart = (): LocalCart => {
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isContactsOpen, setIsContactsOpen] = useState(false);
-  const [logoPoints, setLogoPoints] = useState(0);
-  const [isPointsReady, setIsPointsReady] = useState(false);
-  const [cart, setCart] = useState<LocalCart>(() => readCart());
+  const {
+    points: logoPoints,
+    isReady: isPointsReady,
+    pointDigits,
+  } = useBonusCounter();
+  // ✅ Инициализируем всегда пустой корзиной на сервере и первом клиентском рендере
+  const [cart, setCart] = useState<LocalCart>({ items: {} });
+  // ✅ Флаг что компонент уже смонтировался на клиенте
 
   useEffect(() => {
-    const syncCart = () => setCart(readCart());
+    //  Только после монтирования читаем реальную корзину из localStorage
+    setTimeout(() => {
+      setCart(readCart());
+    });
 
-    syncCart();
+    const syncCart = () => setCart(readCart());
     window.addEventListener(CART_EVENT_NAME, syncCart);
     window.addEventListener("storage", (e) => {
       if (e.key === CART_LOCAL_KEY) syncCart();
@@ -101,43 +81,6 @@ const Header = () => {
     };
   }, [isMobileMenuOpen]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const readPoints = () => {
-      const raw = localStorage.getItem(LOGO_POINTS_KEY);
-      setLogoPoints(raw ? Number(raw) || 0 : 0);
-      setIsPointsReady(true);
-    };
-
-    const initTimer = window.setTimeout(readPoints, 0);
-
-    const onPointsUpdate = (event: Event) => {
-      const custom = event as CustomEvent<{ points?: number }>;
-      if (typeof custom.detail?.points === "number") {
-        setLogoPoints(custom.detail.points);
-      }
-    };
-
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === LOGO_POINTS_KEY) {
-        setLogoPoints(event.newValue ? Number(event.newValue) || 0 : 0);
-      }
-    };
-
-    window.addEventListener(LOGO_POINTS_EVENT, onPointsUpdate as EventListener);
-    window.addEventListener("storage", onStorage);
-
-    return () => {
-      window.clearTimeout(initTimer);
-      window.removeEventListener(
-        LOGO_POINTS_EVENT,
-        onPointsUpdate as EventListener,
-      );
-      window.removeEventListener("storage", onStorage);
-    };
-  }, []);
-
   const submenuVariants = {
     hidden: { opacity: 0, x: 50 },
     visible: { opacity: 1, x: 0, transition: { duration: 0.2 } },
@@ -147,12 +90,11 @@ const Header = () => {
   const handleLinkClick = () => {
     setIsMobileMenuOpen(false);
   };
-  const pointDigits = Math.max(0, logoPoints).toString().split("");
 
   return (
     <>
       {/* ── Main header bar ── */}
-      <div className="bg-transparent top-0 z-50">
+      <div className="relative bg-transparent top-0">
         <header className="px-0 lg:px-12 max-w-[1740px] mx-auto overscroll-y-contain">
           <div className=" container mx-auto">
             {/* Desktop layout */}
@@ -174,7 +116,7 @@ const Header = () => {
               </div>
               <AdressModal />
               <div className="flex items-center justify-end">
-                <div className="flex w-auto 2xl:w-150 gap-7">
+                <div className="flex w-auto 2xl:w-150 flex justify-end">
                   <Link className="bg-gray rounded-lg p-3" href="/catalog">
                     Каталог
                   </Link>
@@ -206,7 +148,7 @@ const Header = () => {
             </div>
 
             {/* Mobile top bar */}
-            <div className="flex md:hidden items-center justify-between px-4 py-3 relative z-1">
+            <div className="flex md:hidden md:relative top-0 z-1000 w-full items-center justify-between px-4 py-3 relative">
               <Link href={"/"} className="min-w-20">
                 <Logo />
               </Link>
@@ -233,19 +175,19 @@ const Header = () => {
                     />
                   </svg>
                 </Link>
-                <button
-                  onClick={() => setIsMobileMenuOpen(true)}
-                  className="text-white cursor-pointer"
+                <Link
+                  href={"/catalog"}
+                  className="text-white cursor-pointer pt-1"
                 >
-                  <Menu color="black" size={32} />
-                </button>
+                  <Store color="black" size={30} />
+                </Link>
               </div>
             </div>
           </div>
         </header>
 
         {/* Mobile slide-out menu */}
-        <AnimatePresence>
+        {/* <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
               key="mobile-menu"
@@ -253,7 +195,7 @@ const Header = () => {
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="fixed inset-0 bg-background z-60 md:hidden overscroll-y-contain"
+              className="fixed inset-0 z-1200 bg-background z-60 md:hidden overscroll-y-contain"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <div
@@ -329,7 +271,7 @@ const Header = () => {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
+        </AnimatePresence> */}
       </div>
 
       <ContactsModal

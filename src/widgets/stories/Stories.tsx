@@ -94,14 +94,6 @@ const Stories = () => {
     return () => observer.disconnect();
   }, [isTouchDevice, renderedVideos]);
 
-
-  if (!data)
-    return (
-      <section className="w-full h-100">
-        <Logo alwaysEnabled />
-      </section>
-    );
-
   return (
     <section className="pt-30 pb-5 pb-20  bg-background">
       <div className="container mx-auto">
@@ -123,7 +115,11 @@ const Stories = () => {
           </p>
         </motion.div>
 
-        {renderedVideos.length === 0 ? (
+        {!data ? (
+          <section className="w-full flex items-center justify-center h-100">
+            <Logo alwaysEnabled />
+          </section>
+        ) : renderedVideos.length === 0 ? (
           <div className="w-full py-16 text-center text-lg text-[#394426]">
             {data?.error || "Видео пока недоступны"}
           </div>
@@ -139,7 +135,7 @@ const Stories = () => {
           </motion.div>
         )}
 
-        {!isTouchDevice && totalPages > 1 && (
+        {/* {!isTouchDevice && totalPages > 1 && (
           <div className="mt-6 flex items-center justify-center gap-2">
             {Array.from({ length: totalPages }).map((_, pageIndex) => (
               <button
@@ -153,7 +149,7 @@ const Stories = () => {
               />
             ))}
           </div>
-        )}
+        )} */}
       </div>
     </section>
   );

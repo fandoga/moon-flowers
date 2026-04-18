@@ -18,9 +18,9 @@ interface AddToCartButtonProps {
 
 type LocalCartItem = {
   id: number;
-  name?: string;
+  name: string;
   price: number;
-  imageUrl?: string;
+  imageUrl: string;
   quantity: number;
 };
 
@@ -109,8 +109,8 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
         cart.items[key] = {
           id: productId,
           price: price,
-          name: productName,
-          imageUrl,
+          name: productName ?? "",
+          imageUrl: imageUrl ?? "",
           quantity: clamped,
         };
       }
@@ -152,7 +152,7 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
         type="button"
         onClick={handleImmediateAdd}
         disabled={isUpdating || hasClicked || quantity >= MAX_QUANTITY}
-        className="cursor-pointer bg-gray rounded-lg p-2 w-12 h-12 flex items-center justify-center"
+        className={`${className} cursor-pointer bg-gray rounded-lg p-2 w-12 h-12 flex items-center justify-center`}
       >
         {hasClicked ? (
           <Check />

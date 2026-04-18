@@ -1,5 +1,5 @@
 import { tableCrmApi } from "@/shared/api/clients";
-import { MpProductsQueryParams, MpProductsResponse } from "../types/types";
+import { MpProductsQueryParams, MpProductsResponse, MpProduct } from "../types/types";
 
 export const getMpProducts = async (
   params?: MpProductsQueryParams,
@@ -22,5 +22,17 @@ export const getMpProducts = async (
       page: params?.page,
       error: message,
     };
+  }
+};
+
+export const getMpProductById = async (
+  productId: number | string,
+): Promise<MpProduct | null> => {
+  try {
+    const response = await tableCrmApi.get<MpProduct>(`/mp/products/${productId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to load product:", error);
+    return null;
   }
 };

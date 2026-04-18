@@ -1,51 +1,105 @@
-import { useCreateLoyalityCard } from "@/entities/loyaliti";
-import React, { useState } from "react";
+import { useLoyalityCardData } from "@/entities/loyaliti/hooks/useLoyalityCard";
+import { formatPhone, getCleanPhone } from "@/lib/utils/formatPhone";
+import { spawn } from "child_process";
+import { Check, Loader } from "lucide-react";
+import React, { useEffect, useState } from "react";
 
-const LoyalitiModal = ({ simple }: { simple?: boolean }) => {
+interface LoyalitiModalProps {
+  simple?: boolean;
+  name?: string;
+  phone?: string;
+}
+
+const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
+  simple,
+  name,
+  phone,
+}) => {
   const [isOpen, setOpen] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [name, setName] = useState("");
+  const [modalPhone, setPhone] = useState("");
+  const [modalName, setName] = useState("");
   const [inputError, setInputError] = useState("");
+  const { currentCard } = useLoyalityCardData();
 
-  const { error } = useCreateLoyalityCard();
-  const createCard = useCreateLoyalityCard();
+  const { createOrGetCard, error, isLoading } = useLoyalityCardData();
+  const [hydrated, setHydrated] = useState(false);
 
-  const handleCreate = () => {
-    setInputError("");
-    if (phone.length < 6 || name.length <= 0) {
-      setInputError("Заполните все поля");
+  useEffect(() => {
+    setTimeout(() => {
+      setHydrated(true);
+    });
+  }, [phone, name]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setPhone(phone || "");
+      setName(name || "");
+      setInputError("");
+    });
+  }, [isOpen]);
+
+  const handleClick = () => {
+    const cleanPhone = getCleanPhone(modalPhone);
+
+    if (cleanPhone.length !== 11 || modalName.length === 0) {
+      setInputError("Заполните все поля корректно");
       return;
     }
 
-    createCard.mutate({ phone_number: phone, contragent_name: name });
+    createOrGetCard({
+      phone_number: cleanPhone,
+      contragent_name: modalName,
+    });
+
+    if (error) {
+      setInputError(error.message);
+      return;
+    }
+
     setOpen(false);
   };
 
   return (
     <>
       <div
-        onClick={() => setOpen(true)}
-        className={`${simple ? "bg-gray" : "group hover:bg-background hover:border-black hover:text-black transition-all border-1 border-black bg-black  text-white"} cursor-pointer h-12  flex justify-between items-center  pl-4 rounded-lg p-1 w-full`}
+        onClick={() => {
+          if (currentCard) return;
+          setOpen(true);
+        }}
+        className={`${currentCard && "!text-muted-foreground !bg-gray !border-none"} ${simple ? "bg-gray" : "group hover:bg-background hover:border-black hover:text-black transition-all border-1 border-black bg-black  text-white"} cursor-pointer h-12  flex justify-between items-center  pl-4 rounded-lg p-1 w-full`}
       >
-        {simple ? "Применить баллы" : "Подключить карту лояльности"}
+        {" "}
+        {hydrated && currentCard
+          ? simple
+            ? "Баллы применены"
+            : "Карта лояльности включена"
+          : simple
+            ? "Применить баллы"
+            : "Подключить карту лояльности"}
         {!simple && (
-          <div className="flex justify-center group-hover:bg-black items-center bg-white w-10 h-10 rounded-lg">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              className="text-black group-hover:text-white transition-colors"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12.75 6.75H6.75M6.75 6.75H0.75M6.75 6.75V0.75M6.75 6.75V12.75"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          <div
+            className={`flex justify-center ${currentCard ? "!text-muted-foreground !bg-gray" : "group-hover:bg-black group-hover:text-white"} items-center text-black bg-white w-10 h-10 rounded-lg`}
+          >
+            {currentCard ? (
+              <Check />
+            ) : (
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                className="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12.75 6.75H6.75M6.75 6.75H0.75M6.75 6.75V0.75M6.75 6.75V12.75"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
           </div>
         )}
       </div>
@@ -64,13 +118,15 @@ const LoyalitiModal = ({ simple }: { simple?: boolean }) => {
             </p>
             <div className="pt-8 flex flex-col gap-4">
               <input
+                value={modalName}
                 onChange={(e) => setName(e.target.value)}
                 className="bg-gray  rounded-lg p-3 w-full"
                 placeholder="Имя"
                 type="text"
               />
               <input
-                onChange={(e) => setPhone(e.target.value)}
+                value={modalPhone}
+                onChange={(e) => setPhone(formatPhone(e.target.value))}
                 className="bg-gray rounded-lg p-3 w-full"
                 placeholder="+7 (000) 000-00-00"
                 type="tel"
@@ -78,12 +134,18 @@ const LoyalitiModal = ({ simple }: { simple?: boolean }) => {
               {inputError.length > 0 && (
                 <span className="text-sm text-destructive">{inputError}</span>
               )}
+              {error && (
+                <span className="text-sm text-destructive">
+                  {error.message}
+                </span>
+              )}
               <button
-                onClick={() => handleCreate()}
+                onClick={() => handleClick()}
                 type="button"
-                className="cursor-pointer h-12 bg-black text-white p-2 rounded-lg"
+                className="cursor-pointer h-12 bg-black flex items-center justify-center gap-2 text-white p-2 rounded-lg"
               >
                 Получить баллы
+                {isLoading && <Loader />}
               </button>
             </div>
           </div>

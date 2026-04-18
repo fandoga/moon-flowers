@@ -1,11 +1,26 @@
 export interface LoyalityCard {
-  id?: number | string;
-  card_number?: string;
-  phone?: string;
-  name?: string;
-  balance?: number;
-  created_at?: string;
-  updated_at?: string;
+  id: 0;
+  card_number: 0;
+  tags: string;
+  balance: 0;
+  income: 0;
+  outcome: 0;
+  contragent_id: 0;
+  organization_id: 0;
+  contragent: string;
+  organization: string;
+  cashback_percent: 0;
+  minimal_checque_amount: 0;
+  max_withdraw_percentage: 0;
+  start_period: 0;
+  end_period: 0;
+  max_percentage: 0;
+  lifetime: 0;
+  apple_wallet_advertisement: string;
+  status_card: true;
+  is_deleted: true;
+  created_at: 0;
+  updated_at: 0;
 }
 
 export interface LoyalityCardsResponse {
@@ -24,7 +39,7 @@ export interface CreateLoyalityCardResponse {
   error?: string;
 }
 
-export type LoyalityTransactionType = "accrual" | string;
+export type LoyalityTransactionType = "accrual" | "withdraw";
 
 export interface LoyalityTransaction {
   id?: number;
@@ -55,7 +70,7 @@ export interface LoyalityTransactionCreate {
   type?: LoyalityTransactionType;
   dated?: number;
   amount?: number;
-  loyality_card_number: string;
+  loyality_card_number: number;
   tags?: string;
   name?: string;
   description?: string;
