@@ -17,7 +17,7 @@ const Reviews = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        className="text-left mb-5 md:mb-12 flex flex-col items-end md:pr-80"
+        className="text-left mb-5 md:mb-12 flex flex-col items-end lg:pr-80"
       >
         <h2 className="h !text-right pb-4">
           <span className="pr-6"> Что говорят</span>
@@ -29,7 +29,7 @@ const Reviews = () => {
         </p>
       </motion.div>
 
-      <div className="-mx-4 grid md:grid-cols-2 lg:grid-cols-4 gap-2">
+      <div className="-mx-4 grid md:grid-cols-2 xl:grid-cols-4 gap-2">
         <Videos isReviews data={data} />
       </div>
     </div>

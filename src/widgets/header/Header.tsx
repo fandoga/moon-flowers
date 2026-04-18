@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Store } from "lucide-react";
-import { ContactsModal } from "@/widgets/contacts-modal/ContactsModal";
 import Logo from "@/components/ui/logo";
 import AdressModal from "../adress-modal/AdressModal";
 import LoyalitiModal from "../loyaliti-modal/LoyalitiModal";
@@ -273,11 +272,6 @@ const Header = () => {
           )}
         </AnimatePresence> */}
       </div>
-
-      <ContactsModal
-        isOpen={isContactsOpen}
-        onClose={() => setIsContactsOpen(false)}
-      />
     </>
   );
 };

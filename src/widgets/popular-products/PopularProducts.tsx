@@ -35,7 +35,7 @@ const PopularProducts = () => {
 
   return (
     <div>
-      <div className="md:pr-80 flex flex-col items-end">
+      <div className="lg:pr-80 flex flex-col items-end">
         <h2 className="h !text-right">
           <span className="pr-6">Найди свой</span>
           <br />
