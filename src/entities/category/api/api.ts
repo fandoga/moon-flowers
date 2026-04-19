@@ -8,14 +8,18 @@ import {
   PicturesResponse,
   Category,
   BatchPicturesResponse,
-  CategoryTreeItem
+  CategoryTreeItem,
 } from "../types/types";
+import { tableCrmApi } from "@/shared/api/clients";
 
 export const getCategoriesPicturesBatch = async (entity_ids: number[]) => {
-  const response = await api.post<BatchPicturesResponse>("/pictures/batch/", {
-    entity: "categories",
-    entity_ids,
-  });
+  const response = await tableCrmApi.post<BatchPicturesResponse>(
+    "/pictures/batch/",
+    {
+      entity: "categories",
+      entity_ids,
+    },
+  );
   return response.data;
 };
 
@@ -24,7 +28,7 @@ export const getCategories = async (params?: CategoryQueryParams) => {
   // Убираем include_photo из параметров, чтобы не передавать его на бэкенд (или можно оставить, если бэкенд его игнорирует)
   const queryParams = needPhotos ? { ...params, include_photo: false } : params;
 
-  const response = await api.get<CategoryListResponse>("/categories/", {
+  const response = await tableCrmApi.get<CategoryListResponse>("/categories/", {
     params: queryParams,
   });
   const categories = response.data.result;
@@ -56,10 +60,15 @@ export const getCategories = async (params?: CategoryQueryParams) => {
 export const getCategoryTree = async (params?: CategoryTreeParams) => {
   const needPhotos = params?.include_photo === true;
   const queryParams = needPhotos ? { ...params, include_photo: false } : params;
-  
-  const response = await api.get<CategoryTreeResponse>('/categories_tree/', { params: queryParams });
+
+  const response = await tableCrmApi.get<CategoryTreeResponse>(
+    "/categories_tree/",
+    {
+      params: queryParams,
+    },
+  );
   const tree = response.data.result;
-  
+
   if (needPhotos && tree.length > 0) {
     // Собираем все id категорий из дерева (рекурсивно)
     const collectIds = (items: CategoryTreeItem[]): number[] => {
@@ -73,12 +82,15 @@ export const getCategoryTree = async (params?: CategoryTreeParams) => {
     const entityIds = collectIds(tree);
     if (entityIds.length) {
       const picturesBatch = await getCategoriesPicturesBatch(entityIds);
-      
+
       // Рекурсивно обходим дерево и добавляем picture
-      const enrichWithPhotos = (items: CategoryTreeItem[]): CategoryTreeItem[] => {
-        return items.map(item => {
+      const enrichWithPhotos = (
+        items: CategoryTreeItem[],
+      ): CategoryTreeItem[] => {
+        return items.map((item) => {
           const categoryPictures = picturesBatch.result[item.key] || [];
-          const mainPicture = categoryPictures.find(p => p.is_main) || categoryPictures[0];
+          const mainPicture =
+            categoryPictures.find((p) => p.is_main) || categoryPictures[0];
           const pictureUrl = mainPicture
             ? `${process.env.NEXT_PUBLIC_API_URL}/${mainPicture.url}`
             : null;
@@ -89,11 +101,11 @@ export const getCategoryTree = async (params?: CategoryTreeParams) => {
           };
         });
       };
-      
+
       return { ...response.data, result: enrichWithPhotos(tree) };
     }
   }
-  
+
   return response.data;
 };
 

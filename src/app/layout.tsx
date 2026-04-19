@@ -6,6 +6,7 @@ import Footer from "@/widgets/footer/Footer";
 import { Providers } from "./providers";
 import { Toaster } from "react-hot-toast";
 import localFont from "next/font/local";
+import InitialLoader from "@/widgets/initial-loader.tsx/InitialLoader";
 
 const inter = Inter({
   subsets: ["cyrillic", "latin"],
@@ -100,12 +101,13 @@ export default function RootLayout({
         `}
       >
         <Providers>
-          <Header />
-          <main className="flex-1 w-full max-w-[1640px] mx-auto px-4 sm:px-[40px]">
-            {children}
-          </main>
-          <Footer />
-          {/* <CartModal /> */}
+          <InitialLoader>
+            <Header />
+            <main className="flex-1 w-full max-w-[1640px] mx-auto px-4 sm:px-[40px]">
+              {children}
+            </main>
+            <Footer />
+          </InitialLoader>
         </Providers>
         <Toaster position="top-right" />
       </body>

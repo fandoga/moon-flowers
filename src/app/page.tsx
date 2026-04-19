@@ -29,13 +29,13 @@ export default function Home() {
       <div className="overflow-x-hidden">
         <Hero />
       </div>
-      <div>
+      <div id="stories">
         <Stories />
       </div>
-      <div>
+      <div id="recommendations">
         <PopularProducts />
       </div>
-      <div>
+      <div id="reviews">
         <Reviews />
       </div>
     </main>

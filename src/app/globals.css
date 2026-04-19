@@ -6,6 +6,7 @@
 
 @theme inline {
   --color-gray: var(--gray);
+  --color-skeleton: var(--skeleton);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--sans);
@@ -99,6 +100,7 @@
 :root {
   --background: #fffbf9;
   --gray: #eeeeee;
+  --skeleton: #dedede;
 }
 
 .dark {
@@ -157,7 +159,7 @@ input[type="search"] {
 }
 
 .h {
-  @apply text-4xl font-sans text-left md:text-6xl leading-tight mb-4 md:mb-6;
+  @apply text-4xl font-sans text-left md:text-5xl xl:text-6xl leading-tight mb-4 md:mb-6;
 }
 
 .p {

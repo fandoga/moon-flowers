@@ -12,6 +12,16 @@ import { useAddressSuggestions, useSavedAddressForm } from "@/entities/address";
 import DatePicker from "@/widgets/time-picker/TimePicker";
 import { useLoyalityCardData } from "@/entities/loyaliti";
 import { formatPhone } from "@/lib/utils/formatPhone";
+import {
+  buildDeliveryDoc,
+  buildDocSalesOrder,
+  getOrderEnvDefaults,
+  resolveDeliveryUnix,
+  useCreateOrder,
+  useSendDeliveryInfo,
+} from "@/entities/order";
+import { useRouter } from "next/router";
+import Link from "next/link";
 
 const CART_LOCAL_KEY = "cart_local";
 const CART_EVENT_NAME = "cart-local-updated";
@@ -50,26 +60,31 @@ const writeCart = (next: LocalCart) => {
 
 export default function OrderPage() {
   const [name, setFirstName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
   const [addressQuery, setAddressQuery] = useState("");
+  const [date, setDate] = useState<Date>();
+  const [time, setTime] = useState("10:30");
+  const [deliveryPreferSoon, setDeliveryPreferSoon] = useState(true);
   const [apartment, setApartment] = useState("");
   const [entrance, setEntrance] = useState("");
   const [floor, setFloor] = useState("");
   const { data } = useAddressSuggestions(addressQuery);
   const [suggOpen, setSuggOpen] = useState(false);
+  const createOrder = useCreateOrder();
+  const sendDelivery = useSendDeliveryInfo();
   const { syncBalance, currentCard, points, escrow, balanceEscrow } =
     useLoyalityCardData();
+
+  const [activeInput, setActiveInput] = useState<"From" | "To">("From");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const savedAddress = useSavedAddressForm();
 
   const suggestions = useMemo(
     () => data?.suggestions ?? [],
     [data?.suggestions],
   );
-
-  const [phone, setPhone] = useState("");
-  const [deliveryMethod, setDeliveryMethod] = useState<"ToMe" | "ToOther">(
-    "ToMe",
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const savedAddress = useSavedAddressForm();
 
   // Keep initial SSR/CSR markup identical; hydrate cart from localStorage in effect.
   const [cart, setCart] = useState<LocalCart>({ items: {} });
@@ -133,16 +148,113 @@ export default function OrderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone) {
-      toast.error("Введите номер телефона");
-      return;
-    }
     if (cartItems.length === 0) {
       toast.error("Корзина пуста");
       return;
     }
 
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10) {
+      toast.error("Введите номер телефона");
+      return;
+    }
+
+    if (!addressQuery.trim()) {
+      toast.error("Укажите адрес доставки");
+      return;
+    }
+
+    const envDefaults = getOrderEnvDefaults();
+    const contragentId = currentCard
+      ? currentCard.contragent_id > 0
+        ? currentCard.contragent_id
+        : envDefaults.contragent
+      : null;
+
+    const document = buildDocSalesOrder({
+      cartLines: cartItems,
+      deliveryPrice,
+      escrowRub: escrow ?? 0,
+      loyalityCardId: currentCard ? currentCard.id : null,
+      contragentId,
+      organization: envDefaults.organization,
+      warehouse: envDefaults.warehouse,
+      defaultUnit: envDefaults.goodsUnit,
+      deliveryNomenclatureId: envDefaults.deliveryNomenclatureId,
+    });
+
+    const addressLine = [
+      addressQuery.trim(),
+      apartment.trim() && `кв. ${apartment.trim()}`,
+      entrance.trim() && `подъезд ${entrance.trim()}`,
+      floor.trim() && `эт. ${floor.trim()}`,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    const recipientNameRaw = currentCard?.contragent?.trim()
+      ? currentCard.contragent.trim()
+      : recipientName.trim() || currentCard?.contragent?.trim() || "Клиент";
+
+    const deliveryPayload = buildDeliveryDoc({
+      address: addressLine,
+      delivery_date: resolveDeliveryUnix({
+        preferSoon: deliveryPreferSoon,
+        date,
+        time,
+      }),
+      delivery_price: deliveryPrice,
+      recipient: {
+        name: recipientNameRaw,
+        phone: recipientPhone.trim(),
+      },
+      note: [
+        apartment.trim() && `кв. ${apartment.trim()}`,
+        entrance.trim() && `подъезд ${entrance.trim()}`,
+        floor.trim() && `этаж ${floor.trim()}`,
+      ]
+        .filter(Boolean)
+        .join(". "),
+    });
+
     setIsSubmitting(true);
+    try {
+      const result = await createOrder.mutateAsync([document]);
+      if (!result.success) {
+        toast.error(result.error ?? "Не удалось создать заказ");
+        return;
+      }
+
+      if (!result.order_id) {
+        toast.error(
+          "Заказ создан, но сервер не вернул номер — доставку сохранить нельзя",
+        );
+        writeCart({ items: {} });
+        setCart({ items: {} });
+        return;
+      }
+
+      const deliveryResult = await sendDelivery.mutateAsync({
+        orderId: result.order_id,
+        ...deliveryPayload,
+      });
+
+      if (!deliveryResult.success) {
+        toast.error(
+          deliveryResult.error ??
+            "Заказ создан, но не удалось сохранить доставку",
+        );
+      } else {
+        toast.success(`Заказ №${result.order_id} оформлен`);
+      }
+
+      writeCart({ items: {} });
+      setCart({ items: {} });
+    } catch {
+      toast.error("Не удалось создать заказ");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -169,9 +281,10 @@ export default function OrderPage() {
 
                   const price = item.price || 0;
                   return (
-                    <div
+                    <Link
+                      href={`/catalog/${item.id}`}
                       key={item.id}
-                      className="grid grid-cols-1 md:grid-cols-[1fr_210px_210px] gap-4 px-4 py-4 border-b border-[#E7E7E7]"
+                      className="cursor-pointer grid grid-cols-1 md:grid-cols-[1fr_210px_210px] gap-4 px-4 py-4 border-b border-[#E7E7E7]"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-100 shrink-0">
@@ -208,7 +321,7 @@ export default function OrderPage() {
                       <div className="flex items-center text-xl font-semibold">
                         {formatPrice(price * item.quantity)}
                       </div>
-                    </div>
+                    </Link>
                   );
                 })
               )}
@@ -221,33 +334,46 @@ export default function OrderPage() {
                   <div className="flex flex-col items-center gap-2">
                     <div className="bg-gray w-full max-h-12 flex items-center justify-between rounded-lg p-1">
                       <button
-                        onClick={() => setDeliveryMethod("ToMe")}
+                        onClick={() => {
+                          setActiveInput("From");
+                        }}
                         type="button"
-                        className={`cursor-pointer w-1/2 rounded-lg p-2 ${deliveryMethod === "ToMe" && "bg-background"}`}
+                        className={`cursor-pointer w-1/2 rounded-lg p-2 ${activeInput === "From" && "bg-background"}`}
                       >
-                        Я Получатель
+                        От кого
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDeliveryMethod("ToOther")}
-                        className={`cursor-pointer w-1/2 rounded-lg p-2 ${deliveryMethod === "ToOther" && "bg-background"}`}
+                        onClick={() => setActiveInput("To")}
+                        className={`cursor-pointer w-1/2 rounded-lg p-2 ${activeInput === "To" && "bg-background"}`}
                       >
-                        Вручить не мне
+                        Кому
                       </button>
                     </div>
                     <input
-                      onChange={(e) => setFirstName(e.target.value)}
+                      value={activeInput === "From" ? name : recipientName}
+                      onChange={(e) => {
+                        if (activeInput === "From") {
+                          setFirstName(e.target.value);
+                        } else {
+                          setRecipientName(e.target.value);
+                        }
+                      }}
                       className="bg-gray rounded-lg p-3 w-full"
                       placeholder={currentCard?.contragent || "Имя"}
                       type="text"
                     />
                     <input
-                      onChange={(e) => setPhone(e.target.value)}
+                      value={activeInput === "From" ? phone : recipientPhone}
+                      onChange={(e) => {
+                        if (activeInput === "From") {
+                          setPhone(formatPhone(e.target.value));
+                        } else {
+                          setRecipientPhone(formatPhone(e.target.value));
+                        }
+                      }}
                       className="bg-gray rounded-lg p-3 w-full"
-                      placeholder={
-                        formatPhone(currentCard?.card_number || "") ||
-                        "+7 (000) 000-00-00"
-                      }
+                      placeholder={"+7 (000) 000-00-00"}
                       type="tel"
                     />
                     <LoyalitiModal phone={phone} name={name} />
@@ -307,7 +433,14 @@ export default function OrderPage() {
                       onChange={(e) => setFloor(e.target.value)}
                       className="text-center outline-none rounded-lg p-3 bg-gray"
                     />
-                    <DatePicker />
+                    <DatePicker
+                      date={date}
+                      onDateChange={setDate}
+                      time={time}
+                      onTimeChange={setTime}
+                      preferSoon={deliveryPreferSoon}
+                      onPreferSoonChange={setDeliveryPreferSoon}
+                    />
                   </div>
                 </div>
               </div>

@@ -51,6 +51,23 @@ export const getMpProductById = async (
 export const getPicturesById = async (
   productId: number | string,
 ): Promise<Pictures | null> => {
+  const list = await getPicturesListById(productId);
+  const mainPicture =
+    list.find((item) => Boolean(item?.is_main)) ?? list[0] ?? null;
+
+  if (!mainPicture) return null;
+
+  // Some responses may miss entity_id; keep mapping stable.
+  if (!mainPicture.entity_id) {
+    return { ...mainPicture, entity_id: Number(productId) } as Pictures;
+  }
+
+  return mainPicture;
+};
+
+export const getPicturesListById = async (
+  productId: number | string,
+): Promise<Pictures[]> => {
   try {
     const response = await tableCrmApi.get("/pictures/", {
       params: {
@@ -72,21 +89,10 @@ export const getPicturesById = async (
       normalizedList = [data as Pictures];
     }
 
-    const mainPicture =
-      normalizedList.find((item) => Boolean(item?.is_main)) ??
-      normalizedList[0];
-
-    if (!mainPicture) return null;
-
-    // Some responses may miss entity_id; keep mapping stable.
-    if (!mainPicture.entity_id) {
-      return { ...mainPicture, entity_id: Number(productId) } as Pictures;
-    }
-
-    return mainPicture;
+    return normalizedList;
   } catch (error) {
     console.error("Failed to load product:", error);
-    return null;
+    return [];
   }
 };
 

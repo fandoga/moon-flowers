@@ -1,8 +1,12 @@
 "use client";
 import { motion } from "framer-motion";
 import { useParams } from "next/navigation";
-import { useMpProduct } from "@/entities/mp-product";
-import { useState } from "react";
+import {
+  MpProduct,
+  useEnrichedMpProducts,
+  useMpProduct,
+} from "@/entities/mp-product";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Logo from "@/components/ui/logo";
 import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
@@ -33,12 +37,25 @@ export default function ProductPage() {
     Array.isArray(id) ? id[0] : id,
   );
 
-  const [isTouchDevice, setIsTouchDevice] = useState(
-    typeof window !== "undefined" &&
-      window.matchMedia("(hover: none), (pointer: coarse)").matches,
-  );
+  const itemsToEnrich = useMemo(() => (product ? [product] : []), [product]);
+  const { enrichedItems, isEnrichmentFetching } =
+    useEnrichedMpProducts(itemsToEnrich);
 
-  if (isLoading) {
+  const enrichedProduct: MpProduct | null = enrichedItems[0] ?? product ?? null;
+  const productPhotos = useMemo(() => {
+    const p = enrichedProduct as
+      | (MpProduct & {
+          images?: string[];
+          photos?: string[] | null;
+        })
+      | null;
+
+    return p?.photos?.length ? p.photos : p?.images?.length ? p.images : [];
+  }, [enrichedProduct]);
+
+  // NOTE: isTouchDevice was unused; removed to avoid lint noise.
+
+  if (isLoading || isEnrichmentFetching) {
     return (
       <motion.main
         className="py-8 md:py-12 bg-background max-w-[1440px] m-auto min-h-[60vh] flex items-center justify-center"
@@ -51,7 +68,7 @@ export default function ProductPage() {
     );
   }
 
-  if (!product) {
+  if (!enrichedProduct) {
     return (
       <motion.main
         className="py-8 md:py-12 bg-background max-w-[1440px] m-auto min-h-[60vh] flex items-center justify-center"
@@ -80,8 +97,8 @@ export default function ProductPage() {
                 {/* Основное изображение */}
                 <div className="flex-1 relative aspect-square rounded-3xl overflow-hidden">
                   <Image
-                    src={product.photos?.[0] || ""}
-                    alt={product.name}
+                    src={productPhotos[activeImage] || productPhotos[0] || ""}
+                    alt={enrichedProduct.name}
                     fill
                     className="object-cover"
                     priority
@@ -89,7 +106,7 @@ export default function ProductPage() {
                 </div>
                 {/* Галерея миниатюр */}
                 <div className="hidden md:flex flex-col gap-3">
-                  {product.photos?.map((img, index) => (
+                  {productPhotos.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setActiveImage(index)}
@@ -115,32 +132,30 @@ export default function ProductPage() {
             >
               <div>
                 <h1 className="h text-4xl md:text-5xl font-medium">
-                  {product.name}
+                  {enrichedProduct?.name}
                 </h1>
 
                 <div className="h !text-3xl !my-6">
-                  {product.prices[0].price} ₽
+                  {enrichedProduct?.price} ₽
                 </div>
 
                 <div
                   onClick={() => {
-                    // ✅ НАШ UI С СВОИМ ДИЗАЙНОМ И SVG
                     // При клике сразу меняем состояние на нашей кнопке
                     setCartClicked(true);
 
-                    // ✅ А ВНУТРИ ПОЛНОСТЬЮ ИСПОЛЬЗУЕМ ЛОГИКУ AddToCartButton
                     // Напрямую вызываем логику добавления в корзину как это делает внутренняя кнопка
                     const cart = JSON.parse(
                       localStorage.getItem("cart_local") || '{"items":{}}',
                     );
-                    const key = String(product.id);
+                    const key = String(enrichedProduct.id);
 
                     if (!cart.items[key]) {
                       cart.items[key] = {
-                        id: product.id,
-                        price: product.prices[0].price,
-                        name: product.name,
-                        imageUrl: product.photos?.[0],
+                        id: enrichedProduct?.id,
+                        price: enrichedProduct?.price,
+                        name: enrichedProduct?.name,
+                        imageUrl: productPhotos?.[0],
                         quantity: 0,
                       };
                     }
@@ -175,17 +190,17 @@ export default function ProductPage() {
                   </div>
                   {/*  Скрытая кнопка остается для синхронизации состояния */}
                   <AddToCartButton
-                    productId={product.id}
-                    productName={product.name}
-                    imageUrl={product.photos?.[0]}
-                    price={product.prices[0].price}
+                    productId={enrichedProduct?.id}
+                    productName={enrichedProduct?.name}
+                    imageUrl={productPhotos?.[0]}
+                    price={enrichedProduct?.price}
                     hideControls
                     className="absolute w-60 opacity-0 pointer-events-none"
                   />
                 </div>
 
                 <div className="text-base leading-relaxed mb-8 pt-8 space-y-3">
-                  <p>{product.description_short}</p>
+                  <p>{enrichedProduct?.description_short}</p>
                 </div>
               </div>
             </motion.div>
@@ -205,7 +220,7 @@ export default function ProductPage() {
             </div>
             <div className="h-80 w-fit flex">
               <ProductsCatalog
-                category={product.global_category_id}
+                category={enrichedProduct.category}
                 displayInfo={false}
                 loadMore={false}
                 query=""
@@ -220,7 +235,7 @@ export default function ProductPage() {
             </div>
             <div className="w-full">
               <ProductsCatalog
-                category={product.global_category_id}
+                category={enrichedProduct.category}
                 loadMore={false}
                 query=""
                 size={2}

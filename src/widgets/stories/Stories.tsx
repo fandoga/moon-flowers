@@ -1,19 +1,14 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { StoryVideo, useMyVideos } from "@/entities/video";
-import Image from "next/image";
 import Videos from "../videos/Videos";
 import Logo from "@/components/ui/logo";
 
 const Stories = () => {
   const { data } = useMyVideos({ limit: 15 });
   const [currentPage, setCurrentPage] = useState(0);
-  const [activeVideo, setActiveVideo] = useState<StoryVideo | null>(null);
-  const [hoveredVideoId, setHoveredVideoId] = useState<number | null>(null);
-  const [activeProgress, setActiveProgress] = useState(0);
-  const activeVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(
     (typeof window !== "undefined" &&
       window.matchMedia("(hover: none), (pointer: coarse)").matches) ||

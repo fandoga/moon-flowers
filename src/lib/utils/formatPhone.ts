@@ -4,12 +4,14 @@ const toPhoneString = (value: unknown): string => {
   return "";
 };
 
-export const formatPhone = (value: unknown): string => {
+export const formatPhone = (value: string): string => {
   const raw = toPhoneString(value);
   // Оставляем только цифры
   const numbers = raw.replace(/\D/g, "");
   // Удаляем первую 7 или 8 если есть
   const clean = numbers.replace(/^[78]/, "").slice(0, 10);
+
+  if (clean.length === 0) return "";
 
   let result = "+7 ";
   if (clean.length > 0) result += `(${clean.slice(0, 3)}`;

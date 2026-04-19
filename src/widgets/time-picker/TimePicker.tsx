@@ -7,12 +7,49 @@ import {
 } from "@/components/ui/popover";
 import React, { useState } from "react";
 
-const TimePicker = () => {
+export type TimePickerProps = {
+  date?: Date;
+  onDateChange?: (value: Date | undefined) => void;
+  time?: string;
+  onTimeChange?: (value: string) => void;
+  preferSoon?: boolean;
+  onPreferSoonChange?: (value: boolean) => void;
+};
+
+const TimePicker = ({
+  date: dateProp,
+  onDateChange,
+  time: timeProp,
+  onTimeChange,
+  preferSoon: preferSoonProp,
+  onPreferSoonChange,
+}: TimePickerProps) => {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState<Date>();
-  const [time, setTime] = useState("10:30");
-  const [asSoon, setAsSoon] = useState(false);
-  const [selectTime, setSelectTime] = useState(false);
+  const [innerAsSoon, setInnerAsSoon] = useState(true);
+  const [innerSelectTime, setInnerSelectTime] = useState(false);
+  const [innerDate, setInnerDate] = useState<Date | undefined>();
+  const [innerTime, setInnerTime] = useState("10:30");
+
+  const preferSoon = preferSoonProp ?? innerAsSoon;
+  const setPreferSoon = (v: boolean) => {
+    onPreferSoonChange?.(v);
+    if (preferSoonProp === undefined) setInnerAsSoon(v);
+  };
+
+  const selectTime = innerSelectTime;
+  const setSelectTime = setInnerSelectTime;
+
+  const date = dateProp ?? innerDate;
+  const setDate = (v: Date | undefined) => {
+    onDateChange?.(v);
+    if (dateProp === undefined) setInnerDate(v);
+  };
+
+  const time = timeProp ?? innerTime;
+  const setTime = (v: string) => {
+    onTimeChange?.(v);
+    if (timeProp === undefined) setInnerTime(v);
+  };
 
   const formattedDate = date?.toLocaleDateString("ru-RU", {
     day: "2-digit",
@@ -70,7 +107,7 @@ const TimePicker = () => {
           type="button"
           className="col-span-3 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-gray p-2"
         >
-          {asSoon ? "Как можно скорее" : "Время"}
+          {preferSoon ? "Как можно скорее" : "Время"}
           <svg
             width="15"
             height="15"
@@ -88,8 +125,9 @@ const TimePicker = () => {
       <PopoverContent className="w-auto rounded-lg border-none p-0 shadow-none">
         <div className=" bg-gray flex flex-col gap-1 rounded-lg p-1 w-full">
           <button
+            type="button"
             onClick={() => {
-              setAsSoon(true);
+              setPreferSoon(true);
               setOpen(false);
             }}
             className="cursor-pointer p-2 bg-background rounded-md"
@@ -97,8 +135,9 @@ const TimePicker = () => {
             Как можно быстрее
           </button>
           <button
+            type="button"
             onClick={() => {
-              setAsSoon(false);
+              setPreferSoon(false);
               setSelectTime(true);
               setOpen(false);
             }}

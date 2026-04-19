@@ -25,9 +25,9 @@ const Hero = () => {
               height={500}
             />
           </div>
-          <div className="flex flex-col md:flex-row items-start md:items-center md:gap-40">
+          <div className="flex flex-col md:flex-row items-start md:items-center md:gap-20 xl:gap-40">
             <div className="py-4 md:pt-10">
-              <h1 className="h">
+              <h1 className="h min-w-90">
                 Свежие цветы <br /> каждый день
               </h1>
             </div>

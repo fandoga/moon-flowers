@@ -49,16 +49,16 @@ const AdressModal = () => {
       {isOpen && (
         <div
           onClick={() => setOpen(false)}
-          className="cursor-default px-10 fixed inset-0 z-50 bg-black/60 flex justify-center items-center"
+          className="cursor-default px-10 fixed  inset-0 z-50 bg-black/60 flex justify-center items-center"
         >
           <div
             onClick={(e) => {
               e.stopPropagation();
               setSuggOpen(false);
             }}
-            className="bg-background rounded-2xl py-6 xl:py-14 px-12 xl:px-22"
+            className="bg-background rounded-2xl max-w-180 max-h-160 lg:max-w-auto lg:max-h-auto py-6 xl:py-14 px-12 xl:px-22"
           >
-            <h2 className="h !text-4xl xl:!text-5xl !text-center">
+            <h2 className="h !text-3xl xl:!text-4xl !text-center">
               Куда везти цветы?
             </h2>
             <div className="grid grid-cols-3 gap-2">
@@ -140,7 +140,7 @@ const AdressModal = () => {
                   width="560"
                   height="400"
                   frameBorder="1"
-                  className="w-full md:h-80 lg:h-100 rounded-4xl"
+                  className="w-full h-70 md:max-h-80 lg:max-h-100 rounded-4xl"
                   allowFullScreen
                   style={{ position: "relative" }}
                 ></iframe>

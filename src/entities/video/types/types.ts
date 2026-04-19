@@ -9,6 +9,7 @@ export interface VideoItem {
   public_url?: string;
   preview_url?: string;
   channel_avatar?: string;
+  channel_username?: string;
 }
 
 export type StoryVideo = {
@@ -17,6 +18,7 @@ export type StoryVideo = {
   title: string;
   src: string;
   poster?: string;
+  user?: string;
 };
 
 export interface VideosMyResponse {

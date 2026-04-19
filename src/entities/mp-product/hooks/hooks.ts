@@ -4,6 +4,7 @@ import {
   getMpProducts,
   getMpProductById,
   getPicturesById,
+  getPicturesListById,
   getPricesById,
 } from "../api/api";
 import {
@@ -13,11 +14,16 @@ import {
   Pictures,
   Prices,
 } from "../types/types";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 
-export const useMpProducts = (params?: MpProductsQueryParams) => {
+export const useMpProducts = (
+  params?: MpProductsQueryParams,
+  options?: { enabled?: boolean },
+) => {
   return useQuery<MpProductsResponse>({
     queryKey: ["mp-products", params],
     queryFn: () => getMpProducts(params),
+    enabled: options?.enabled ?? true,
   });
 };
 
@@ -29,11 +35,24 @@ export const useMpProduct = (productId: number | string | null | undefined) => {
   });
 };
 
+import { useState, useEffect } from "react";
+
 export const usePictures = (productId: number | string | null | undefined) => {
+  const [debouncedProductId, setDebouncedProductId] = useState(productId);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedProductId(productId);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [productId]);
+
   return useQuery<Pictures | null>({
-    queryKey: ["mp-product-pictures", productId],
-    queryFn: () => (productId ? getPicturesById(productId) : null),
-    enabled: !!productId,
+    queryKey: ["mp-product-pictures", debouncedProductId],
+    queryFn: () =>
+      debouncedProductId ? getPicturesById(debouncedProductId) : null,
+    enabled: !!debouncedProductId,
   });
 };
 
@@ -58,20 +77,32 @@ export const useEnrichedMpProducts = (items: MpProduct[]) => {
   const picturesQueries = useQueries({
     queries: productIds.map((productId) => ({
       queryKey: ["mp-product-pictures", productId],
-      queryFn: () => getPicturesById(productId),
+      queryFn: () => getPicturesListById(productId),
       staleTime: 60_000,
     })),
   });
 
   const enrichedItems = useMemo(() => {
-    const pictureByProductId = new Map<number, string>();
+    const picturesByProductId = new Map<number, string[]>();
     for (const query of picturesQueries) {
-      const picture = query.data;
-      if (!picture) continue;
-      const productId = Number(picture.entity_id);
-      const url = picture.public_url || picture.url;
-      if (Number.isFinite(productId) && url) {
-        pictureByProductId.set(productId, url);
+      const pictures = query.data;
+      if (!pictures?.length) continue;
+
+      const productId = Number(pictures[0]?.entity_id);
+      if (!Number.isFinite(productId) || productId <= 0) continue;
+
+      const sorted = [...pictures].sort((a, b) => {
+        const am = a?.is_main ? 1 : 0;
+        const bm = b?.is_main ? 1 : 0;
+        return bm - am;
+      });
+
+      const urls = sorted
+        .map((p) => p.public_url || p.url)
+        .filter(Boolean) as string[];
+
+      if (urls.length) {
+        picturesByProductId.set(productId, urls);
       }
     }
 
@@ -101,7 +132,8 @@ export const useEnrichedMpProducts = (items: MpProduct[]) => {
 
       const fallbackImage =
         current.photos?.[0] || current.images?.[0] || "/placeholder.jpg";
-      const resolvedImage = pictureByProductId.get(productId) || fallbackImage;
+      const resolvedPhotos = picturesByProductId.get(productId);
+      const resolvedImage = resolvedPhotos?.[0] || fallbackImage;
       const fallbackPrice = Number(
         current.prices?.[0]?.price ?? current.price ?? 0,
       );
@@ -110,6 +142,7 @@ export const useEnrichedMpProducts = (items: MpProduct[]) => {
       return {
         ...current,
         images: [resolvedImage],
+        photos: resolvedPhotos?.length ? resolvedPhotos : current.photos,
         price: resolvedPrice,
       } as MpProduct;
     });

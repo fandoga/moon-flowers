@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { MpProduct } from "@/entities/mp-product";
 import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { formatPrice } from "@/lib/utils/formatPrice";
@@ -18,6 +19,20 @@ const ProductCard: React.FC<{
       .find((url) => Boolean(url)) || product.images[0];
   const price = Number(product.prices?.[0].price) || product.price || 0;
 
+  if (!imageUrl || imageUrl === "/placeholder.jpg") {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        className="relative rounded-xl overflow-hidden flex flex-col w-full md:h-full"
+      >
+        <div className="relative w-full aspect-[5/6] md:h-full">
+          <Skeleton className="absolute inset-0 w-full h-full bg-skeleton animate-pulse rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="relative rounded-xl overflow-hidden flex flex-col w-full md:h-full cursor-pointer hover:scale-[1.02] transition-transform duration-200 group"
@@ -32,7 +47,7 @@ const ProductCard: React.FC<{
         {/* Next Image не настроен на домен tablecrm, поэтому fallback через <img> */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={imageUrl || "/placeholder.jpg"}
+          src={imageUrl}
           alt={product.name ? String(product.name) : "Товар"}
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -53,7 +68,7 @@ const ProductCard: React.FC<{
           {formatPrice(price)}
         </div>
         <AddToCartButton
-          price={product.prices?.[0].price}
+          price={product.price}
           productId={productId}
           productName={product.name ? String(product.name) : undefined}
           imageUrl={imageUrl}
