@@ -24,10 +24,16 @@ import {
 interface VideosProps {
   data: VideosMyResponse;
   isReviews?: boolean;
+  currentPage?: number;
+  pageSize?: number;
 }
 
-const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
-  const [currentPage] = useState(0);
+const Videos: React.FC<VideosProps> = ({
+  data,
+  isReviews,
+  currentPage = 0,
+  pageSize = 4,
+}) => {
   const [activeVideo, setActiveVideo] = useState<StoryVideo | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredVideoId, setHoveredVideoId] = useState<number | null>(null);
@@ -112,7 +118,7 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
 
   const renderedVideos = isTouchDevice
     ? videos
-    : videos.slice(currentPage * 4, currentPage * 4 + 4);
+    : videos.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
 
   const closeModal = () => {
     setActiveVideo(null);

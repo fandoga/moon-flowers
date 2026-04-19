@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { StoryVideo, useMyVideos } from "@/entities/video";
 import Videos from "../videos/Videos";
@@ -14,7 +14,6 @@ const Stories = () => {
       window.matchMedia("(hover: none), (pointer: coarse)").matches) ||
       false,
   );
-  const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -56,38 +55,8 @@ const Stories = () => {
 
   const pageSize = 4;
   const totalPages = Math.ceil(videos.length / pageSize);
-  const visibleVideos = useMemo(
-    () =>
-      videos.slice(currentPage * pageSize, currentPage * pageSize + pageSize),
-    [videos, currentPage, pageSize],
-  );
-  const renderedVideos = isTouchDevice ? videos : visibleVideos;
-
-  useEffect(() => {
-    if (!isTouchDevice) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target as HTMLVideoElement;
-          if (entry.isIntersecting) {
-            video.play().catch(() => undefined);
-            return;
-          }
-          video.pause();
-          video.currentTime = 0;
-        });
-      },
-      { threshold: 0.65 },
-    );
-
-    renderedVideos.forEach((video) => {
-      const element = videoRefs.current[video.id];
-      if (element) observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, [isTouchDevice, renderedVideos]);
+  const safeCurrentPage =
+    totalPages > 0 ? Math.min(currentPage, totalPages - 1) : 0;
 
   return (
     <section className="pt-30 pb-5 pb-20  bg-background">
@@ -114,37 +83,47 @@ const Stories = () => {
           <section className="w-full flex items-center justify-center h-100">
             <Logo alwaysEnabled />
           </section>
-        ) : renderedVideos.length === 0 ? (
+        ) : videos.length === 0 ? (
           <div className="w-full py-16 text-center text-lg text-[#394426]">
             {data?.error || "Видео пока недоступны"}
           </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="-mx-4 flex sm:mx-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory pb-2 sm:pb-0"
-          >
-            <Videos data={data} />
-          </motion.div>
-        )}
+          <>
+            {!isTouchDevice && totalPages > 1 && (
+              <div className="mb-4 hidden md:flex items-center justify-end">
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: totalPages }).map((_, pageIndex) => (
+                    <button
+                      key={pageIndex}
+                      type="button"
+                      onClick={() => setCurrentPage(pageIndex)}
+                      className={`h-3 w-3 cursor-pointer rounded-full border transition-colors ${
+                        pageIndex === safeCurrentPage
+                          ? "border-black bg-black"
+                          : "border-skeleton bg-skeleton"
+                      }`}
+                      aria-label={`Перейти к странице видео ${pageIndex + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* {!isTouchDevice && totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2">
-            {Array.from({ length: totalPages }).map((_, pageIndex) => (
-              <button
-                key={pageIndex}
-                type="button"
-                onClick={() => setCurrentPage(pageIndex)}
-                className={`h-2.5 w-2.5 cursor-pointer rounded-full transition-colors ${
-                  pageIndex === currentPage ? "bg-[#394426]" : "bg-[#394426]/30"
-                }`}
-                aria-label={`Перейти на страницу ${pageIndex + 1}`}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="-mx-4 flex sm:mx-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory pb-2 sm:pb-0"
+            >
+              <Videos
+                data={data}
+                currentPage={safeCurrentPage}
+                pageSize={pageSize}
               />
-            ))}
-          </div>
-        )} */}
+            </motion.div>
+          </>
+        )}
       </div>
     </section>
   );
