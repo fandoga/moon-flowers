@@ -14,9 +14,10 @@ const ProductCard: React.FC<{
   const productId = Number(product.id);
 
   const imageUrl =
-    [3, 2, 1, 0]
+    product.images[0] ||
+    [1, 2, 3, 4]
       .map((index) => product.photos?.[index])
-      .find((url) => Boolean(url)) || product.images[0];
+      .find((url) => Boolean(url));
   const price = Number(product.prices?.[0].price) || product.price || 0;
 
   if (!imageUrl || imageUrl === "/placeholder.jpg") {
