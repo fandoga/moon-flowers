@@ -13,6 +13,9 @@ import Logo from "@/components/ui/logo";
 import CatalogReels from "@/widgets/catalog-reels/CatalogReels";
 import Categories from "@/widgets/categories/Categories";
 import { useCategories } from "@/entities/category";
+import InitialLoader, {
+  FullScreenLoader,
+} from "@/widgets/initial-loader.tsx/InitialLoader";
 
 export interface CatalogItemType {
   id: string | number;
@@ -153,19 +156,7 @@ export default function CatalogPage() {
   }, []);
 
   if (categoriesQuery.isLoading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <Logo alwaysEnabled />
-      </div>
-    );
-  }
-
-  if (isTouchDevice === undefined) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <Logo alwaysEnabled />
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   if (!isTouchDevice) {

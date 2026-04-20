@@ -181,7 +181,7 @@ const Header = () => {
             </div>
 
             {/* Mobile top bar */}
-            <div className="flex md:hidden md:relative top-0 z-1000 w-full items-center justify-between px-4 py-3 relative">
+            <div className="flex md:hidden md:relative top-0 z-1000 w-full items-center justify-between md:px-4 py-3 relative">
               <Link href={"/"} className="min-w-20 scale-90 md:scale-100">
                 <Logo />
               </Link>
@@ -191,7 +191,7 @@ const Header = () => {
               >
                 Написать в Max
               </Link>
-              <div className="min-w-20 flex gap-2 scale-90 scale-100 justify-end md:justify-between items-center">
+              <div className="min-w-20 flex scale-90 scale-100 justify-between items-center">
                 <Link href={"/order"}>
                   <svg
                     width="25"

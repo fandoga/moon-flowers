@@ -3,6 +3,14 @@
 import Logo from "@/components/ui/logo";
 import React, { useEffect, useState } from "react";
 
+export const FullScreenLoader = () => {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
+      <Logo alwaysEnabled />
+    </div>
+  );
+};
+
 const InitialLoader = ({ children }: { children: React.ReactNode }) => {
   const [show, setShow] = useState(true);
   useEffect(() => {
@@ -21,9 +29,7 @@ const InitialLoader = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
-        <Logo />
-      </div>
+      <FullScreenLoader />
       {children}
     </>
   );
