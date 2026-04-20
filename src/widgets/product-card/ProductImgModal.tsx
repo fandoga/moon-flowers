@@ -18,7 +18,7 @@ const ProductImgModal: React.FC<ProductImgModalProps> = ({
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="absolute z-1000 px-12 md:px-0 inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center"
+          className="fixed z-1000 px-12 md:px-0 inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center"
         >
           <div className="cursor-pointer absolute top-10 right-10">
             <X color="white" />

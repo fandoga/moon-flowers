@@ -104,13 +104,15 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
       {isOpen && (
         <div
           onClick={() => setOpen(false)}
-          className="cursor-default fixed inset-0 z-50 bg-black/60 flex justify-center items-center"
+          className="cursor-default fixed px-4 md:px-0 inset-0 z-50 bg-black/80 backdrop-blur-lg flex justify-center items-center"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-background rounded-2xl py-14 px-22"
+            className="bg-background rounded-2xl py-4 px-12 md:py-14 md:px-22"
           >
-            <h2 className="h !text-center">Заполните анкету</h2>
+            <h2 className="h !text-3xl md:!text-4xl !text-center">
+              Заполните анкету
+            </h2>
             <p className="p !text-center">
               Оформите карту лояльности и получайте баллы для скидки.
             </p>

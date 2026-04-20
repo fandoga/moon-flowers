@@ -15,7 +15,7 @@ const SuccesOrderModal: React.FC<SuccesOrderModalProps> = ({
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="absolute px-4 md:px-0 inset-0 z-2500 flex items-center justify-center bg-black/80 backdrop-blur-lg"
+          className="fixed px-4 md:px-0 inset-0 z-2500 flex items-center justify-center bg-black/80 backdrop-blur-lg"
         >
           <div
             onClick={(e) => e.stopPropagation()}

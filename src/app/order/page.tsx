@@ -541,7 +541,7 @@ export default function OrderPage() {
                   {hasEscrow
                     ? "Баллы применены"
                     : points === 0
-                      ? "Нечего списывать"
+                      ? "Баллов нет"
                       : "Списать баллы"}
                 </button>
                 <div
