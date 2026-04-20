@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { MpProduct } from "@/entities/mp-product";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { Check } from "lucide-react";
@@ -21,6 +21,17 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
   const [activeImage, setActiveImage] = useState(0);
   const [cartClicked, setCartClicked] = useState(false);
   const [openImg, setOpenImg] = useState(false);
+  const [width, setWidth] = useState<number>(window.innerWidth);
+
+  function handleWindowSizeChange() {
+    setWidth(window.innerWidth);
+  }
+  useEffect(() => {
+    window.addEventListener("resize", handleWindowSizeChange);
+    return () => {
+      window.removeEventListener("resize", handleWindowSizeChange);
+    };
+  }, []);
 
   const productPhotos = useMemo(() => {
     const p = enrichedProduct as
@@ -76,14 +87,16 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
         {/* Блок с информацией */}
         <motion.div
           variants={itemVariants}
-          className="flex flex-col items-center md:items-start pt-4"
+          className="flex flex-col items-start md:items-center md:items-start"
         >
           <div>
             <h1 className="h text-4xl md:text-5xl font-medium">
               {enrichedProduct?.name}
             </h1>
 
-            <div className="h !text-3xl !my-6">{enrichedProduct?.price} ₽</div>
+            <div className="h !text-2xl md:!text-3xl md:!my-6">
+              {enrichedProduct?.price} ₽
+            </div>
 
             <div
               onClick={() => {
@@ -153,7 +166,7 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
       </div>
       <motion.div
         variants={itemVariants}
-        className="hidden xl:flex items-end w-full gap-12 h-150 pt-30 justify-between pt-4"
+        className="hidden lg:flex items-end w-full gap-12 h-150 pt-30 justify-between pt-4"
       >
         <div className="flex flex-col h-full justify-between">
           <h2 className="h">
@@ -164,20 +177,20 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
             оттенками, которые формируют композицию.
           </p>
         </div>
-        <div className="h-80 w-fit flex">
+        <div className="h-100 xl:h-60 2xl:h-100 w-fit flex">
           <ProductsCatalog
             category={enrichedProduct.category}
             displayInfo={false}
             loadMore={false}
             query=""
-            size={3}
+            size={width <= 1281 ? 1 : 3}
           />
         </div>
       </motion.div>
 
-      <motion.div variants={itemVariants} className="xl:hidden w-full pt-8">
+      <motion.div variants={itemVariants} className="lg:hidden w-full pt-8">
         <div className="mb-4">
-          <h2 className="h">Может заинтересовать</h2>
+          <h2 className="h !text-2xl md:!text-3xl">Может заинтересовать</h2>
         </div>
         <div className="w-full">
           <ProductsCatalog
