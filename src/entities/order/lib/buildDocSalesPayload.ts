@@ -33,7 +33,7 @@ export function buildDocSalesOrder(params: {
   deliveryPrice: number;
   escrowRub: number;
   loyalityCardId: number | null;
-  contragentId: number | null;
+  contragentId: number;
   organization: number;
   warehouse: number;
   defaultUnit: number;
@@ -102,7 +102,7 @@ export function buildDocSalesOrder(params: {
     settings,
     loyality_card_id: loyalityCardId || 0,
     warehouse,
-    contragent: contragentId || env.contragent,
+    contragent: contragentId,
     organization,
     status: true,
     paid_rubles: paidRubles,
@@ -125,12 +125,7 @@ export function resolveDeliveryUnix(params: {
   const hh = Number.parseInt(hhRaw ?? "10", 10);
   const mm = Number.parseInt(mmRaw ?? "30", 10);
   const d = new Date(base);
-  d.setHours(
-    Number.isFinite(hh) ? hh : 10,
-    Number.isFinite(mm) ? mm : 0,
-    0,
-    0,
-  );
+  d.setHours(Number.isFinite(hh) ? hh : 10, Number.isFinite(mm) ? mm : 0, 0, 0);
   return Math.floor(d.getTime() / 1000);
 }
 

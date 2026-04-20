@@ -47,6 +47,7 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   const search = query.trim().length > 0 ? query : undefined;
 
   const { data, isLoading, isFetching } = useMpProducts({
+    has_photos: true,
     category: category,
     limit: perPage,
     offset,

@@ -8,7 +8,10 @@ export const getMyVideos = async (
     const response = await api.get<VideosMyResponse>(
       "/videos/recommendations",
       {
-        params,
+        params: {
+          ...params,
+          user_chatting_nickname: params?.user_chatting_nickname ?? "ohystal",
+        },
       },
     );
     return response.data;
@@ -24,5 +27,3 @@ export const getMyVideos = async (
     };
   }
 };
-
-

@@ -5,6 +5,13 @@ import {
   useSavedAddressForm,
 } from "@/entities/address";
 
+interface AddressType {
+  address: string;
+  apartment: string;
+  entrance: string;
+  floor: string;
+}
+
 const AdressModal = () => {
   const [isOpen, setOpen] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
@@ -14,6 +21,7 @@ const AdressModal = () => {
   const { data } = useAddressSuggestions(addressQuery);
   const [suggOpen, setSuggOpen] = useState(false);
   const savedAddressForm = useSavedAddressForm();
+  const [localAddress, setLocalAddress] = useState<AddressType>();
 
   const suggestions = useMemo(
     () => data?.suggestions ?? [],
@@ -37,6 +45,18 @@ const AdressModal = () => {
     });
   }, [isOpen, savedAddressForm]);
 
+  useEffect(() => {
+    if (!window) return;
+    const raw = localStorage.getItem(ADDRESS_FORM_STORAGE_KEY);
+
+    if (!raw) return;
+    const data: AddressType = JSON.parse(raw);
+
+    setTimeout(() => {
+      setLocalAddress(data);
+    });
+  });
+
   return (
     <>
       <button
@@ -44,7 +64,9 @@ const AdressModal = () => {
         type="button"
         className="cursor-pointer rounded-lg p-3 bg-gray col-span-3"
       >
-        Выбрать адрес доставки
+        {localAddress
+          ? localAddress.address.slice(8, 25) + "..."
+          : "Выберите адрес доставки"}
       </button>
       {isOpen && (
         <div
@@ -111,7 +133,7 @@ const AdressModal = () => {
                 className="text-center outline-none rounded-lg p-3 bg-gray"
               />
             </div>
-            <div className="w-full overlflow-hidden py-8">
+            {/* <div className="w-full overlflow-hidden py-8">
               <div style={{ position: "relative", overflow: "hidden" }}>
                 <a
                   href="https://yandex.ru/maps/213/moscow/?utm_medium=mapframe&utm_source=maps"
@@ -145,7 +167,7 @@ const AdressModal = () => {
                   style={{ position: "relative" }}
                 ></iframe>
               </div>
-            </div>
+            </div> */}
             <button
               onClick={() => {
                 const payload = {
@@ -164,7 +186,7 @@ const AdressModal = () => {
                 } catch {}
                 setOpen(false);
               }}
-              className="cursor-pointer hover:bg-white hover:border-black hover:text-black transition-all border-1 border-black bg-black text-white w-full rounded-lg p-2"
+              className="cursor-pointer hover:bg-white hover:border-black hover:text-black duration-500 transition-all border-1 border-black bg-black text-white w-full rounded-lg mt-2 p-2"
             >
               Сохранить
             </button>

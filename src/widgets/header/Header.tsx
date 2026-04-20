@@ -122,7 +122,7 @@ const Header = () => {
                 </div>
               </div>
               <AdressModal />
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-end gap-4">
                 <div className="hidden xl:flex w-auto 2xl:w-150 gap-4 xl:gap-10 flex justify-end">
                   <p
                     className="cursor-pointer"
@@ -151,7 +151,9 @@ const Header = () => {
                   <Link href={"/catalog"}>Каталог</Link>
                 </div>
                 <div className="flex min-w-30 gap-6 items-center justify-end">
-                  {total > 0 && <p>{formatPrice(total)}</p>}
+                  <div className="bg-gray rounded-lg p-2">
+                    {total > 0 && <p>{formatPrice(total)}</p>}
+                  </div>
                   <Link href={"/order"}>
                     <svg
                       width="25"

@@ -17,11 +17,13 @@ import {
   buildDocSalesOrder,
   getOrderEnvDefaults,
   resolveDeliveryUnix,
+  useCreateContragent,
   useCreateOrder,
+  useFindContragentByPhone,
   useSendDeliveryInfo,
 } from "@/entities/order";
-import { useRouter } from "next/router";
 import Link from "next/link";
+import SuccesOrderModal from "@/widgets/succes-order-modal/SuccesOrderModal";
 
 const CART_LOCAL_KEY = "cart_local";
 const CART_EVENT_NAME = "cart-local-updated";
@@ -69,10 +71,13 @@ export default function OrderPage() {
   const [deliveryPreferSoon, setDeliveryPreferSoon] = useState(true);
   const [apartment, setApartment] = useState("");
   const [entrance, setEntrance] = useState("");
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [floor, setFloor] = useState("");
   const { data } = useAddressSuggestions(addressQuery);
   const [suggOpen, setSuggOpen] = useState(false);
   const createOrder = useCreateOrder();
+  const createContragent = useCreateContragent();
+  const findContragentByPhone = useFindContragentByPhone();
   const sendDelivery = useSendDeliveryInfo();
   const { syncBalance, currentCard, points, escrow, balanceEscrow } =
     useLoyalityCardData();
@@ -133,7 +138,58 @@ export default function OrderPage() {
   };
 
   const handleEscrow = () => {
+    if (!currentCard) {
+      toast.error("Для списания бонусов подключите карту лояльности");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      toast.error("Корзина пуста");
+      return;
+    }
+
     balanceEscrow(total);
+  };
+
+  const handleContragent = async (): Promise<number | null> => {
+    const normalizedName = name.trim();
+    const normalizedPhone = phone.trim();
+
+    if (!normalizedName) {
+      toast.error("Введите имя отправителя");
+      return null;
+    }
+
+    if (normalizedPhone.replace(/\D/g, "").length < 10) {
+      toast.error("Введите корректный номер телефона отправителя");
+      return null;
+    }
+
+    try {
+      const existingContragentId = await findContragentByPhone.mutateAsync({
+        phone: normalizedPhone,
+      });
+      if (existingContragentId) {
+        return existingContragentId;
+      }
+
+      const result = await createContragent.mutateAsync({
+        name: normalizedName,
+        phone: normalizedPhone,
+      });
+      if (result.success && result.contragent_id) {
+        const createdId = Number(result.contragent_id);
+        return Number.isFinite(createdId) && createdId > 0 ? createdId : null;
+      }
+
+      toast.error(
+        result.error ?? "Не удалось создать контрагента, попробуйте позже",
+      );
+      return null;
+    } catch {
+      toast.error("Ошибка при создании контрагента");
+      return null;
+    }
   };
 
   const cartItems = Object.values(cart.items);
@@ -155,7 +211,22 @@ export default function OrderPage() {
 
     const phoneDigits = phone.replace(/\D/g, "");
     if (phoneDigits.length < 10) {
-      toast.error("Введите номер телефона");
+      toast.error("Введите номер телефона отправителя");
+      return;
+    }
+
+    if (recipientPhone.length < 8) {
+      toast.error("Введите номер телефона получателя");
+      return;
+    }
+
+    if (name.length === 0) {
+      toast.error("Введите имя отправителя");
+      return;
+    }
+
+    if (recipientName.length === 0) {
+      toast.error("Введите имя получателя");
       return;
     }
 
@@ -165,11 +236,18 @@ export default function OrderPage() {
     }
 
     const envDefaults = getOrderEnvDefaults();
-    const contragentId = currentCard
-      ? currentCard.contragent_id > 0
+    let contragentId: number | null =
+      currentCard && currentCard.contragent_id > 0
         ? currentCard.contragent_id
-        : envDefaults.contragent
-      : null;
+        : null;
+
+    if (!contragentId) {
+      contragentId = await handleContragent();
+      if (!contragentId) {
+        toast.error("Контрагент не создан, оформление заказа остановлено");
+        return;
+      }
+    }
 
     const document = buildDocSalesOrder({
       cartLines: cartItems,
@@ -246,6 +324,7 @@ export default function OrderPage() {
         );
       } else {
         toast.success(`Заказ №${result.order_id} оформлен`);
+        setModalOpen(true);
       }
 
       writeCart({ items: {} });
@@ -281,12 +360,14 @@ export default function OrderPage() {
 
                   const price = item.price || 0;
                   return (
-                    <Link
-                      href={`/catalog/${item.id}`}
+                    <div
                       key={item.id}
                       className="cursor-pointer grid grid-cols-1 md:grid-cols-[1fr_210px_210px] gap-4 px-4 py-4 border-b border-[#E7E7E7]"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <Link
+                        href={`/catalog${item.id}`}
+                        className="flex items-center gap-3 min-w-0"
+                      >
                         <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-100 shrink-0">
                           <Image
                             src={imageUrl || "/placeholder.jpg"}
@@ -298,7 +379,7 @@ export default function OrderPage() {
                         <p className="text-base font-medium truncate">
                           {item.name || `Товар #${item.id}`}
                         </p>
-                      </div>
+                      </Link>
 
                       <div className="flex items-center gap-3">
                         <AddToCartButton
@@ -321,7 +402,7 @@ export default function OrderPage() {
                       <div className="flex items-center text-xl font-semibold">
                         {formatPrice(price * item.quantity)}
                       </div>
-                    </Link>
+                    </div>
                   );
                 })
               )}
@@ -360,7 +441,7 @@ export default function OrderPage() {
                         }
                       }}
                       className="bg-gray rounded-lg p-3 w-full"
-                      placeholder={currentCard?.contragent || "Имя"}
+                      placeholder={"Имя"}
                       type="text"
                     />
                     <input
@@ -508,6 +589,7 @@ export default function OrderPage() {
           </aside>
         </form>
       </div>
+      <SuccesOrderModal setOpen={setModalOpen} open={modalOpen} />
     </main>
   );
 }

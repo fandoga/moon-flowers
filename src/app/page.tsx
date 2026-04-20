@@ -7,12 +7,10 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Moon Flowers - цветы",
-  description:
-    "Собственный питомник саженцев, крупномеров, хвойных и лиственных растений в Казани. Доставка, посадка, гарантия приживаемости.",
+  description: "Самые разные букеты на любой вкус. Moon Flowers",
   openGraph: {
-    title: "Питомник растений Клевер Казань — крупномеры и саженцы",
-    description:
-      "Более 5000 сортов акклиматизированных растений. Доставка по Татарстану и посадка под ключ.",
+    title: "Moon Flowers - цветы",
+    description: "Самые разные букеты на любой вкус. Moon Flowers",
     images: [
       {
         url: "/og-home.jpg",

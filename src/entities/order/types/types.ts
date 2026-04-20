@@ -112,3 +112,43 @@ export interface DeliveryInfoResponse {
   success: boolean;
   error?: string;
 }
+
+// Создание контрагента
+
+export interface CreateContragentRequest {
+  name?: string;
+  phone?: string;
+  inn?: string;
+  description?: string;
+  contragent_type?: string;
+  birth_date?: string;
+  gender?: string;
+  type?: string;
+  additional_phones?: string;
+  external_id?: string;
+  tags_id?: number[];
+}
+
+export interface CreateContragentResponse {
+  success: boolean;
+  contragent_id: string;
+  error?: string;
+}
+
+export interface ContragentItem {
+  id?: number;
+  phone?: string;
+  additional_phones?: string;
+}
+
+export interface GetContragentsParams {
+  phone?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface GetContragentsResponse {
+  result: ContragentItem[];
+  count?: number;
+  error?: string;
+}

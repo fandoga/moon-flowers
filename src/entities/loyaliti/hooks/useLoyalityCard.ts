@@ -11,6 +11,7 @@ import {
   writeLogoPoints,
 } from "@/entities/loyaliti/lib/pointsStorage";
 import {
+  LOYALITY_CARD_KEY,
   readStoredLoyalityCard,
   subscribeLoyalityCard,
   writeStoredLoyalityCard,
@@ -67,6 +68,7 @@ export const useLoyalityCardData = () => {
 
   // Сохраняем карту в localStorage при изменении
   useEffect(() => {
+    if (!currentCard) return;
     writeStoredLoyalityCard(currentCard);
   }, [currentCard]);
 
@@ -79,6 +81,7 @@ export const useLoyalityCardData = () => {
       setTimeout(() => setCurrentCard(actualCard));
     } else {
       setTimeout(() => setCurrentCard(null));
+      window.localStorage.removeItem(LOYALITY_CARD_KEY);
     }
   }, [data, currentCard]);
 

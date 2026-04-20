@@ -1,9 +1,14 @@
 import { tableCrmApi } from "@/shared/api/clients";
 import type {
+  ContragentItem,
+  CreateContragentRequest,
+  CreateContragentResponse,
   CreateOrderResponse,
   DeliveryInfoPayload,
   DeliveryInfoResponse,
   DocSalesCreateItem,
+  GetContragentsParams,
+  GetContragentsResponse,
 } from "../types/types";
 
 function normalizeCreateOrderResponse(data: unknown): CreateOrderResponse {
@@ -81,6 +86,115 @@ export const patchDeliveryInfo = async (
       error: message,
     };
   }
+};
+
+export const createContragent = async (
+  params: CreateContragentRequest,
+): Promise<CreateContragentResponse> => {
+  try {
+    const response = await tableCrmApi.post<unknown>(
+      "/contragents/",
+      {
+        name: params.name,
+        phone: params.phone,
+        contragent_type: "Покупатель",
+      },
+    );
+    const data = response.data as unknown;
+    if (data && typeof data === "object") {
+      const o = data as Record<string, unknown>;
+      const directId = o.contragent_id ?? o.id;
+      if (directId != null) {
+        return { success: true, contragent_id: String(directId) };
+      }
+      const result = o.result as { id?: number; contragent_id?: number } | undefined;
+      const nestedId = result?.contragent_id ?? result?.id;
+      if (nestedId != null) {
+        return { success: true, contragent_id: String(nestedId) };
+      }
+      if (typeof o.success === "boolean" && typeof o.contragent_id === "string") {
+        return {
+          success: o.success,
+          contragent_id: o.contragent_id,
+          error: typeof o.error === "string" ? o.error : undefined,
+        };
+      }
+    }
+    return { success: true, contragent_id: "" };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Не удалось создать заказ";
+
+    return {
+      success: false,
+      contragent_id: "",
+      error: message,
+    };
+  }
+};
+
+const normalizePhone = (phone: string) => phone.replace(/\D/g, "");
+
+const extractContragents = (data: unknown): ContragentItem[] => {
+  if (Array.isArray(data)) return data as ContragentItem[];
+  if (data && typeof data === "object") {
+    const result = (data as { result?: unknown }).result;
+    if (Array.isArray(result)) return result as ContragentItem[];
+  }
+  return [];
+};
+
+export const getContragents = async (
+  params: GetContragentsParams,
+): Promise<GetContragentsResponse> => {
+  try {
+    const response = await tableCrmApi.get<unknown>("/contragents/", {
+      params,
+    });
+    const result = extractContragents(response.data);
+    return {
+      result,
+      count: result.length,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Не удалось получить контрагентов";
+    return {
+      result: [],
+      count: 0,
+      error: message,
+    };
+  }
+};
+
+export const findContragentByPhone = async (
+  phone: string,
+): Promise<number | null> => {
+  const target = normalizePhone(phone);
+  if (!target) return null;
+
+  const listResponse = await getContragents({ phone: target, limit: 100 });
+  const candidates = listResponse.result;
+
+  for (const item of candidates) {
+    const id = Number(item.id);
+    if (!Number.isFinite(id) || id <= 0) continue;
+
+    const primary = item.phone ? normalizePhone(item.phone) : "";
+    if (primary === target) return id;
+
+    if (item.additional_phones) {
+      const extra = item.additional_phones
+        .split(/[;,]/)
+        .map((p) => normalizePhone(p.trim()))
+        .filter(Boolean);
+      if (extra.includes(target)) return id;
+    }
+  }
+
+  return null;
 };
 
 /** @deprecated используйте patchDeliveryInfo */

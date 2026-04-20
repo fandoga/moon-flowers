@@ -1,7 +1,7 @@
 import type { LoyalityCard } from "@/entities/loyaliti";
 
-const LOYALITY_CARD_KEY = "loyality_card_data";
-const LOYALITY_CARD_EVENT = "loyality-card-updated";
+export const LOYALITY_CARD_KEY = "loyality_card_data";
+export const LOYALITY_CARD_EVENT = "loyality-card-updated";
 
 const parseCard = (raw: string | null): LoyalityCard | null => {
   if (!raw) return null;
@@ -65,4 +65,3 @@ export const subscribeLoyalityCard = (
     window.removeEventListener("storage", onStorageEvent);
   };
 };
-

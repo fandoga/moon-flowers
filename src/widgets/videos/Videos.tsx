@@ -100,22 +100,6 @@ const Videos: React.FC<VideosProps> = ({
     }, []);
   }, [data]);
 
-  const handleMouseEnter = (id: number) => {
-    if (isTouchDevice) return;
-    setHoveredVideoId(id);
-    const element = videoRefs.current[id];
-    element?.play().catch(() => undefined);
-  };
-
-  const handleMouseLeave = (id: number) => {
-    if (isTouchDevice) return;
-    setHoveredVideoId((current) => (current === id ? null : current));
-    const element = videoRefs.current[id];
-    if (!element) return;
-    element.pause();
-    element.currentTime = 0;
-  };
-
   const renderedVideos = isTouchDevice
     ? videos
     : videos.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
@@ -280,8 +264,6 @@ const Videos: React.FC<VideosProps> = ({
             setActiveIndex(index);
             setActiveVideo(video);
           }}
-          onMouseEnter={() => handleMouseEnter(video.id)}
-          onMouseLeave={() => handleMouseLeave(video.id)}
           className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14] pt-10" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:w-auto sm:max-w-none`}
           aria-label={`Открыть видео: ${video.title}`}
         >
@@ -326,6 +308,7 @@ const Videos: React.FC<VideosProps> = ({
               poster={video.poster}
               muted
               loop
+              autoPlay
               playsInline
               onLoadedData={() => markGridVideoReady(video.id)}
               onCanPlay={() => markGridVideoReady(video.id)}

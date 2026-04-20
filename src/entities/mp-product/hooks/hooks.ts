@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import {
@@ -14,7 +16,6 @@ import {
   Pictures,
   Prices,
 } from "../types/types";
-import { useDebounce } from "@/shared/hooks/useDebounce";
 
 export const useMpProducts = (
   params?: MpProductsQueryParams,

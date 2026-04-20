@@ -4,7 +4,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MpProduct } from "@/entities/mp-product";
 import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { formatPrice } from "@/lib/utils/formatPrice";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import ProductImgModal from "./ProductImgModal";
 
 const ProductCard: React.FC<{
   product: MpProduct;
@@ -46,8 +48,9 @@ const ProductCard: React.FC<{
     >
       <div className="relative w-full aspect-[5/6] md:h-full">
         {/* Next Image не настроен на домен tablecrm, поэтому fallback через <img> */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
+          fill
+          loading="eager"
           src={imageUrl}
           alt={product.name ? String(product.name) : "Товар"}
           className="absolute inset-0 w-full h-full object-cover"

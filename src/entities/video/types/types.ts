@@ -30,6 +30,7 @@ export interface VideosMyResponse {
 }
 
 export interface VideosMyQueryParams {
+  user_chatting_nickname?: string;
   limit?: number;
   offset?: number;
 }

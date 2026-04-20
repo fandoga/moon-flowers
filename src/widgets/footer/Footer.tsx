@@ -79,7 +79,7 @@ const Footer = () => {
           </div>
           <ActionButton
             src="https://tablecrm.com/"
-            text="Работать на базе TableCRM.com"
+            text="Работает на базе TableCRM.com"
           />
         </div>
       </motion.footer>

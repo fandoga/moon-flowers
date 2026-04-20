@@ -121,6 +121,7 @@ export interface MpProductsResponse {
 }
 
 export interface MpProductsQueryParams {
+  has_photos?: boolean;
   global_category_name?: string;
   limit?: number;
   offset?: number;
