@@ -1,6 +1,5 @@
 import { useLoyalityCardData } from "@/entities/loyaliti/hooks/useLoyalityCard";
 import { formatPhone, getCleanPhone } from "@/lib/utils/formatPhone";
-import { spawn } from "child_process";
 import { Check, Loader } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -19,9 +18,8 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
   const [modalPhone, setPhone] = useState("");
   const [modalName, setName] = useState("");
   const [inputError, setInputError] = useState("");
-  const { currentCard } = useLoyalityCardData();
-
-  const { createOrGetCard, error, isLoading } = useLoyalityCardData();
+  const { currentCard, createOrGetCard, error, isLoading } =
+    useLoyalityCardData();
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -36,9 +34,9 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
       setName(name || "");
       setInputError("");
     });
-  }, [isOpen]);
+  }, [isOpen, name, phone]);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     const cleanPhone = getCleanPhone(modalPhone);
 
     if (cleanPhone.length !== 11 || modalName.length === 0) {
@@ -46,17 +44,17 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
       return;
     }
 
-    createOrGetCard({
-      phone_number: cleanPhone,
-      contragent_name: modalName,
-    });
-
-    if (error) {
-      setInputError(error.message);
-      return;
+    try {
+      await createOrGetCard({
+        phone_number: cleanPhone,
+        contragent_name: modalName,
+      });
+      setOpen(false);
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : "Не удалось создать карту лояльности";
+      setInputError(message);
     }
-
-    setOpen(false);
   };
 
   return (
@@ -66,19 +64,19 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
           if (currentCard) return;
           setOpen(true);
         }}
-        className={`${currentCard && "!text-muted-foreground !bg-gray !border-none"} ${simple ? "bg-gray" : "group hover:bg-background hover:border-black hover:text-black transition-all border-1 border-black bg-black  text-white"} cursor-pointer h-12  flex justify-between items-center  pl-4 rounded-lg p-1 w-full`}
+        className={`${currentCard && "!text-muted-foreground cursor-default !bg-gray !border-none"} ${simple ? "bg-gray" : "group hover:bg-background hover:border-black hover:text-black transition-all border-1 border-black bg-black  text-white"} cursor-pointer h-12 duration-400 flex justify-between items-center  pl-4 rounded-lg p-1 w-full`}
       >
         {" "}
         {hydrated && currentCard
           ? simple
-            ? "Баллы применены"
+            ? "Карта подключена"
             : "Карта лояльности включена"
           : simple
             ? "Применить баллы"
             : "Подключить карту лояльности"}
         {!simple && (
           <div
-            className={`flex justify-center ${currentCard ? "!text-muted-foreground !bg-gray" : "group-hover:bg-black group-hover:text-white"} items-center text-black bg-white w-10 h-10 rounded-lg`}
+            className={`flex justify-center ${currentCard ? "!text-muted-foreground !bg-gray" : "group-hover:bg-black group-hover:text-white"} items-center duration-400 text-black bg-white w-10 h-10 rounded-lg`}
           >
             {currentCard ? (
               <Check />
@@ -106,13 +104,15 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
       {isOpen && (
         <div
           onClick={() => setOpen(false)}
-          className="cursor-default fixed inset-0 z-50 bg-black/60 flex justify-center items-center"
+          className="cursor-default fixed px-4 md:px-0 inset-0 z-50 bg-black/80 backdrop-blur-lg flex justify-center items-center"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-background rounded-2xl py-14 px-22"
+            className="bg-background rounded-2xl py-4 px-12 md:py-14 md:px-22"
           >
-            <h2 className="h !text-center">Заполните анкету</h2>
+            <h2 className="h !text-3xl md:!text-4xl !text-center">
+              Заполните анкету
+            </h2>
             <p className="p !text-center">
               Оформите карту лояльности и получайте баллы для скидки.
             </p>

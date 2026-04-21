@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Store } from "lucide-react";
+import { Menu, Store, X } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import AdressModal from "../adress-modal/AdressModal";
 import LoyalitiModal from "../loyaliti-modal/LoyalitiModal";
-import { LocalCart } from "@/app/order/page";
+import { LocalCart } from "@/entities/order/hooks/useCart";
 import { formatPrice } from "@/lib/utils/formatPrice";
 
 import { useBonusCounter } from "@/components/ui/bonus-counter/useBonusCounter";
@@ -14,6 +14,8 @@ const CART_LOCAL_KEY = "cart_local";
 const CART_EVENT_NAME = "cart-local-updated";
 
 import RollingDigit from "@/components/ui/bonus-counter/RollingDigit";
+import { AnimatePresence, motion } from "framer-motion";
+import { usePathname, useRouter } from "next/navigation";
 
 const readCart = (): LocalCart => {
   try {
@@ -29,15 +31,11 @@ const readCart = (): LocalCart => {
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isContactsOpen, setIsContactsOpen] = useState(false);
-  const {
-    points: logoPoints,
-    isReady: isPointsReady,
-    pointDigits,
-  } = useBonusCounter();
-  // ✅ Инициализируем всегда пустой корзиной на сервере и первом клиентском рендере
+  const { isReady: isPointsReady, pointDigits } = useBonusCounter();
+  const router = useRouter();
+  const pathname = usePathname();
+  // Инициализируем всегда пустой корзиной на сервере и первом клиентском рендере
   const [cart, setCart] = useState<LocalCart>({ items: {} });
-  // ✅ Флаг что компонент уже смонтировался на клиенте
 
   useEffect(() => {
     //  Только после монтирования читаем реальную корзину из localStorage
@@ -86,16 +84,26 @@ const Header = () => {
     exit: { opacity: 0, x: -50, transition: { duration: 0.2 } },
   };
 
-  const handleLinkClick = () => {
-    setIsMobileMenuOpen(false);
+  const handleToggleClick = () => {
+    setIsMobileMenuOpen((prev) => !prev);
   };
 
+  const scrollToSection = (sectionId: string) => {
+    if (pathname !== "/") {
+      router.replace("/");
+    }
+    setIsMobileMenuOpen(false);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
   return (
     <>
       {/* ── Main header bar ── */}
       <div className="relative bg-transparent top-0">
         <header className="px-0 lg:px-12 max-w-[1740px] mx-auto overscroll-y-contain">
-          <div className=" container mx-auto">
+          <div className=" container mx-auto px-4 lg:px-0">
             {/* Desktop layout */}
             <div className="hidden md:flex items-center py-8 justify-between">
               <Link href="/" className="flex items-center scale-115 ">
@@ -114,18 +122,40 @@ const Header = () => {
                 </div>
               </div>
               <AdressModal />
-              <div className="flex items-center justify-end">
-                <div className="flex w-auto 2xl:w-150 flex justify-end">
-                  <Link className="bg-gray rounded-lg p-3" href="/catalog">
-                    Каталог
-                  </Link>
-                  {/* <Link href="/about-us">О нас</Link>
-                <Link href="/blog">Блог</Link>
-                <Link href="/contants">Контакты</Link>
-                <Link href="/work">Сотрудничество</Link> */}
+              <div className="flex items-center justify-end gap-4">
+                <div className="hidden xl:flex w-auto 2xl:w-150 gap-4 xl:gap-10 flex justify-end">
+                  <p
+                    className="cursor-pointer"
+                    onClick={() => scrollToSection("stories")}
+                  >
+                    Сторис
+                  </p>
+                  <p
+                    className="cursor-pointer"
+                    onClick={() => scrollToSection("recommendations")}
+                  >
+                    Рекомендации
+                  </p>
+                  <p
+                    className="cursor-pointer"
+                    onClick={() => scrollToSection("reviews")}
+                  >
+                    Отзывы
+                  </p>
+                  <p
+                    className="cursor-pointer"
+                    onClick={() => scrollToSection("contacts")}
+                  >
+                    Контакты
+                  </p>
+                  <Link href={"/catalog"}>Каталог</Link>
                 </div>
-                <div className="flex min-w-30 gap-2 items-center justify-end">
-                  {total > 0 && <p>{formatPrice(total)}</p>}
+                <div className="flex min-w-30 gap-6 items-center justify-end">
+                  {total > 0 && (
+                    <div className="bg-gray rounded-lg p-2">
+                      <p>{formatPrice(total)}</p>
+                    </div>
+                  )}
                   <Link href={"/order"}>
                     <svg
                       width="25"
@@ -142,22 +172,28 @@ const Header = () => {
                       />
                     </svg>
                   </Link>
+                  <div
+                    onClick={() => handleToggleClick()}
+                    className="block xl:hidden text-white cursor-pointer pt-1"
+                  >
+                    <Menu color="black" size={30} />
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Mobile top bar */}
-            <div className="flex md:hidden md:relative top-0 z-1000 w-full items-center justify-between px-4 py-3 relative">
-              <Link href={"/"} className="min-w-20">
+            <div className="flex md:hidden md:relative top-0 z-1000 w-full items-center justify-between md:px-4 py-3 relative">
+              <Link href={"/"} className="min-w-20 scale-90 md:scale-100">
                 <Logo />
               </Link>
               <Link
-                className="bg-gray px-6 py-2 rounded-lg"
+                className="bg-gray px-2 md:px-6 py-2 rounded-lg"
                 href={"https://max"}
               >
                 Написать в Max
               </Link>
-              <div className="min-w-20 flex justify-between items-center">
+              <div className="min-w-20 flex scale-90 scale-100 justify-between items-center">
                 <Link href={"/order"}>
                   <svg
                     width="25"
@@ -174,19 +210,19 @@ const Header = () => {
                     />
                   </svg>
                 </Link>
-                <Link
-                  href={"/catalog"}
+                <div
+                  onClick={() => handleToggleClick()}
                   className="text-white cursor-pointer pt-1"
                 >
-                  <Store color="black" size={30} />
-                </Link>
+                  <Menu color="black" size={30} />
+                </div>
               </div>
             </div>
           </div>
         </header>
 
         {/* Mobile slide-out menu */}
-        {/* <AnimatePresence>
+        <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
               key="mobile-menu"
@@ -194,7 +230,7 @@ const Header = () => {
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="fixed inset-0 z-1200 bg-background z-60 md:hidden overscroll-y-contain"
+              className="fixed inset-0 z-1200 bg-background z-60 xl:hidden overscroll-y-contain"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <div
@@ -220,48 +256,44 @@ const Header = () => {
                       exit="exit"
                     >
                       <div className="mx-2 py-2">
-                        <Link
-                          href="/catalog"
-                          className=" text-right text-4xl font-semibold text-black"
-                          onClick={handleLinkClick}
+                        <p
+                          className="text-4xl font-semibold text-black cursor-pointer"
+                          onClick={() => scrollToSection("stories")}
                         >
-                          Каталог
-                        </Link>
+                          Сторис
+                        </p>
                       </div>
                       <div className="mx-2 py-2">
-                        <Link
-                          href="/actions"
-                          className="text-right text-4xl font-semibold text-black"
-                          onClick={handleLinkClick}
+                        <p
+                          className="text-4xl font-semibold text-black cursor-pointer"
+                          onClick={() => scrollToSection("recommendations")}
                         >
-                          О нас
-                        </Link>
+                          Рекомендации
+                        </p>
                       </div>
                       <div className="mx-2 py-2">
-                        <Link
-                          href="/actions"
-                          className="text-right text-4xl font-semibold text-black"
-                          onClick={handleLinkClick}
+                        <p
+                          className="text-4xl font-semibold text-black cursor-pointer"
+                          onClick={() => scrollToSection("reviews")}
                         >
-                          Блог
-                        </Link>
+                          Отзывы
+                        </p>
                       </div>
                       <div className="mx-2 py-2">
-                        <Link
-                          href="/actions"
-                          className=" text-right text-4xl font-semibold text-black"
-                          onClick={handleLinkClick}
+                        <p
+                          className="text-4xl font-semibold text-black cursor-pointer"
+                          onClick={() => scrollToSection("contacts")}
                         >
                           Контакты
-                        </Link>
+                        </p>
                       </div>
                       <div className="mx-2 py-2">
                         <Link
-                          href="/actions"
-                          className=" text-right text-4xl font-semibold text-black"
-                          onClick={handleLinkClick}
+                          href={"/catalog"}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="text-4xl font-semibold text-black cursor-pointer"
                         >
-                          Сотрудничество
+                          Каталог
                         </Link>
                       </div>
                     </motion.div>
@@ -270,7 +302,7 @@ const Header = () => {
               </div>
             </motion.div>
           )}
-        </AnimatePresence> */}
+        </AnimatePresence>
       </div>
     </>
   );

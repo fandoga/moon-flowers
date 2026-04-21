@@ -1,35 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
+import React from "react";
 import { motion } from "framer-motion";
 import FooterIcons from "./FooterIcons";
 import ActionButton from "@/components/ui/action-button";
 
 const Footer = () => {
-  const [isContactsOpen, setIsContactsOpen] = useState(false);
-
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
-  };
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
-  const navLinks = [
-    { href: "/catalog", label: "Каталог" },
-    { href: "/blog", label: "Блог" },
-    { href: "/actions", label: "Акции" },
-    { href: "/partners", label: "Партнёрам" },
-    { href: "/company", label: "О компании" },
-  ];
-
   return (
     <div>
       <motion.footer
+        id="contacts"
         initial="hidden"
         animate="visible"
         viewport={{ once: true, amount: 0.1 }}
@@ -47,17 +32,17 @@ const Footer = () => {
               </p>
             </div>
             <div className="flex flex-col items-center">
-              <p className="p py-2 font-semibold">
+              <p className="p py-2 ">
                 г. Москва, ул. Большая <br /> Переяславская 52/1
               </p>
-              <p className="p py-2 font-semibold">8 (897) 326-88-88</p>
-              <p className="p py-2 font-semibold">flowers@shop.com</p>
+              <p className="p py-2 ">8 (897) 326-88-88</p>
+              <p className="p py-2 ">flowers@shop.com</p>
               <FooterIcons />
             </div>
           </div>
         </div>
-        <div className="w-full flex flex-col items-center pb-12">
-          <div className="w-full pb-8">
+        <div className="w-full flex flex-col items-center pb-4">
+          <div className="w-full pb-4">
             <div style={{ position: "relative", overflow: "hidden" }}>
               <a
                 href="https://yandex.ru/maps/213/moscow/?utm_medium=mapframe&utm_source=maps"
@@ -94,7 +79,7 @@ const Footer = () => {
           </div>
           <ActionButton
             src="https://tablecrm.com/"
-            text="Работать на базе TableCRM.com"
+            text="Работает на базе TableCRM.com"
           />
         </div>
       </motion.footer>

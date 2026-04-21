@@ -10,8 +10,12 @@ import {
   subscribeLogoPoints,
   writeLogoPoints,
 } from "@/entities/loyaliti/lib/pointsStorage";
-
-const LOCAL_STORAGE_KEY = "loyality_card_data";
+import {
+  LOYALITY_CARD_KEY,
+  readStoredLoyalityCard,
+  subscribeLoyalityCard,
+  writeStoredLoyalityCard,
+} from "@/entities/loyaliti/lib/cardStorage";
 
 /**
  * Хук для работы с картой лояльности
@@ -29,8 +33,10 @@ export const useLoyalityCardData = () => {
 
   // Загружаем локальные бонусы при инициализации
   useEffect(() => {
-    setEscrow(0);
-    setPoints(readLogoPoints());
+    setTimeout(() => {
+      setEscrow(0);
+      setPoints(readLogoPoints());
+    });
 
     const unsubscribe = subscribeLogoPoints((nextPoints) => {
       setPoints(nextPoints);
@@ -43,29 +49,27 @@ export const useLoyalityCardData = () => {
 
   // Загружаем карту из localStorage при инициализации
   useEffect(() => {
-    try {
-      const timer = setTimeout(() => {
-        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (saved) {
-          setCurrentCard(JSON.parse(saved));
-        }
-      });
-
-      return () => clearTimeout(timer);
-    } catch {
-      console.error("Failed to load loyalty card from localStorage");
-    } finally {
+    setTimeout(() => {
+      setCurrentCard(readStoredLoyalityCard());
       setIsInitialized(true);
-    }
+    });
+  }, []);
+
+  // Подписываемся на изменения карты между компонентами/вкладками
+  useEffect(() => {
+    const unsubscribe = subscribeLoyalityCard((nextCard) => {
+      setCurrentCard(nextCard);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Сохраняем карту в localStorage при изменении
   useEffect(() => {
-    if (currentCard) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentCard));
-    } else {
-      // localStorage.removeItem(LOCAL_STORAGE_KEY);
-    }
+    if (!currentCard) return;
+    writeStoredLoyalityCard(currentCard);
   }, [currentCard]);
 
   // Обновляем данные когда приходят карты с сервера
@@ -74,7 +78,10 @@ export const useLoyalityCardData = () => {
 
     const actualCard = data.result.find((item) => item.id === currentCard.id);
     if (actualCard) {
-      setCurrentCard(actualCard);
+      setTimeout(() => setCurrentCard(actualCard));
+    } else {
+      setTimeout(() => setCurrentCard(null));
+      window.localStorage.removeItem(LOYALITY_CARD_KEY);
     }
   }, [data, currentCard]);
 
@@ -86,31 +93,6 @@ export const useLoyalityCardData = () => {
       return data?.result?.find((item) => item.card_number === phone);
     },
     [data],
-  );
-
-  /**
-   * Создать новую карту или вернуть существующую
-   */
-  const createOrGetCard = useCallback(
-    async (params: { phone_number: string; contragent_name: string }) => {
-      const existingCard = findExistingCard(parseInt(params.phone_number));
-
-      if (existingCard) {
-        setCurrentCard(existingCard);
-        return existingCard;
-      }
-
-      const result = await createCardMutation.mutateAsync(params);
-
-      if (result && !result.error) {
-        const newCard = Array.isArray(result) ? result[0] : result;
-        setCurrentCard(newCard);
-        return newCard;
-      }
-
-      throw new Error(result?.error || "Ошибка при создании карты лояльности");
-    },
-    [findExistingCard, createCardMutation],
   );
 
   /**
@@ -135,6 +117,32 @@ export const useLoyalityCardData = () => {
       });
     }
   }, [currentCard, points, createBalanceMutation]);
+
+  /**
+   * Создать новую карту или вернуть существующую
+   */
+  const createOrGetCard = useCallback(
+    async (params: { phone_number: string; contragent_name: string }) => {
+      const existingCard = findExistingCard(parseInt(params.phone_number));
+
+      if (existingCard) {
+        setCurrentCard(existingCard);
+        return existingCard;
+      }
+
+      const result = await createCardMutation.mutateAsync(params);
+
+      if (result && !result.error) {
+        const newCard = Array.isArray(result) ? result[0] : result;
+        setCurrentCard(newCard);
+        return newCard;
+      }
+      syncBalance();
+
+      throw new Error(result?.error || "Ошибка при создании карты лояльности");
+    },
+    [findExistingCard, createCardMutation, syncBalance],
+  );
 
   const balanceEscrow = useCallback(
     (cartBalance: number) => {
@@ -175,6 +183,7 @@ export const useLoyalityCardData = () => {
    */
   const logout = useCallback(() => {
     setCurrentCard(null);
+    writeStoredLoyalityCard(null);
   }, []);
 
   return {
@@ -200,14 +209,15 @@ export const useSavedLoyaltyCard = () => {
   const [card, setCard] = useState<LoyalityCard | null>(null);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        setTimeout(() => setCard(JSON.parse(saved)));
-      }
-    } catch {
-      console.error("Failed to load loyalty card");
-    }
+    setTimeout(() => setCard(readStoredLoyalityCard()));
+
+    const unsubscribe = subscribeLoyalityCard((nextCard) => {
+      setCard(nextCard);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return card;

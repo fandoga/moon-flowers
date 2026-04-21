@@ -5,6 +5,13 @@ import {
   useSavedAddressForm,
 } from "@/entities/address";
 
+interface AddressType {
+  address: string;
+  apartment: string;
+  entrance: string;
+  floor: string;
+}
+
 const AdressModal = () => {
   const [isOpen, setOpen] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
@@ -14,6 +21,7 @@ const AdressModal = () => {
   const { data } = useAddressSuggestions(addressQuery);
   const [suggOpen, setSuggOpen] = useState(false);
   const savedAddressForm = useSavedAddressForm();
+  const [localAddress, setLocalAddress] = useState<AddressType>();
 
   const suggestions = useMemo(
     () => data?.suggestions ?? [],
@@ -37,6 +45,18 @@ const AdressModal = () => {
     });
   }, [isOpen, savedAddressForm]);
 
+  useEffect(() => {
+    if (!window) return;
+    const raw = localStorage.getItem(ADDRESS_FORM_STORAGE_KEY);
+
+    if (!raw) return;
+    const data: AddressType = JSON.parse(raw);
+
+    setTimeout(() => {
+      setLocalAddress(data);
+    });
+  });
+
   return (
     <>
       <button
@@ -44,21 +64,25 @@ const AdressModal = () => {
         type="button"
         className="cursor-pointer rounded-lg p-3 bg-gray col-span-3"
       >
-        Выбрать адрес доставки
+        {localAddress
+          ? localAddress.address.slice(8, 25) + "..."
+          : "Выберите адрес доставки"}
       </button>
       {isOpen && (
         <div
           onClick={() => setOpen(false)}
-          className="cursor-default fixed inset-0 z-50 bg-black/60 flex justify-center items-center"
+          className="cursor-default px-10 fixed  inset-0 z-50 bg-black/60 flex justify-center items-center"
         >
           <div
             onClick={(e) => {
               e.stopPropagation();
               setSuggOpen(false);
             }}
-            className="bg-background rounded-2xl py-14 px-22"
+            className="bg-background rounded-2xl max-w-180 max-h-160 lg:max-w-auto lg:max-h-auto py-6 xl:py-14 px-12 xl:px-22"
           >
-            <h2 className="h !text-center">Куда везти цветы?</h2>
+            <h2 className="h !text-3xl xl:!text-4xl !text-center">
+              Куда везти цветы?
+            </h2>
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-3 relative">
                 <input
@@ -109,7 +133,7 @@ const AdressModal = () => {
                 className="text-center outline-none rounded-lg p-3 bg-gray"
               />
             </div>
-            <div className="w-full overlflow-hidden py-8">
+            {/* <div className="w-full overlflow-hidden py-8">
               <div style={{ position: "relative", overflow: "hidden" }}>
                 <a
                   href="https://yandex.ru/maps/213/moscow/?utm_medium=mapframe&utm_source=maps"
@@ -138,12 +162,12 @@ const AdressModal = () => {
                   width="560"
                   height="400"
                   frameBorder="1"
-                  className="w-full md:h-80 lg:h-100 rounded-4xl"
+                  className="w-full h-70 md:max-h-80 lg:max-h-100 rounded-4xl"
                   allowFullScreen
                   style={{ position: "relative" }}
                 ></iframe>
               </div>
-            </div>
+            </div> */}
             <button
               onClick={() => {
                 const payload = {
@@ -162,7 +186,7 @@ const AdressModal = () => {
                 } catch {}
                 setOpen(false);
               }}
-              className="cursor-pointer hover:bg-white hover:border-black hover:text-black transition-all border-1 border-black bg-black text-white w-full rounded-lg p-2"
+              className="cursor-pointer hover:bg-white hover:border-black hover:text-black duration-500 transition-all border-1 border-black bg-black text-white w-full rounded-lg mt-2 p-2"
             >
               Сохранить
             </button>

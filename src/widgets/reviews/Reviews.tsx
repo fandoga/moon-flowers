@@ -29,9 +29,15 @@ const Reviews = () => {
         </p>
       </motion.div>
 
-      <div className="-mx-4 grid md:grid-cols-2 xl:grid-cols-4 gap-2">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="-mx-4 flex sm:mx-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory pb-2 sm:pb-0"
+      >
         <Videos isReviews data={data} />
-      </div>
+      </motion.div>
     </div>
   );
 };

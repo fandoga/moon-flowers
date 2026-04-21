@@ -6,6 +6,7 @@ import Footer from "@/widgets/footer/Footer";
 import { Providers } from "./providers";
 import { Toaster } from "react-hot-toast";
 import localFont from "next/font/local";
+import InitialLoader from "@/widgets/initial-loader.tsx/InitialLoader";
 
 const inter = Inter({
   subsets: ["cyrillic", "latin"],
@@ -29,20 +30,19 @@ export const metadata: Metadata = {
     default: "Moon Flowers - цветы",
     template: "%s | Moon Flowers - цветы",
   },
-  description:
-    "Крупномеры, саженцы, посадочный материал из собственного питомника в Казани. Доставка, посадка, гарантия качества.",
+  description: "Самые разные букеты на любой вкус. Moon Flowers.",
   keywords: [
-    "питомник растений Казань",
-    "саженцы Казань",
-    "крупномеры",
-    "посадка деревьев",
-    "купить деревья Казань",
+    "купить букет",
+    "букеты Москва",
+    "заказать цветы",
+    "заказать цветы Москва",
+    "Купить цветы",
   ],
   openGraph: {
     type: "website",
     locale: "ru_RU",
-    url: "https://klever-plants.ru",
-    siteName: "Питомник Клевер",
+    url: "https://moon-flowers.ru",
+    siteName: "Moon Flowers",
     images: [
       {
         url: "/og-image.jpg",
@@ -54,13 +54,12 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Клевер — питомник растений и деревьев в Казани",
-    description:
-      "Собственный питомник крупномеров и саженцев в Казани. Доставка и посадка под ключ.",
+    title: "Moon Flowers - цветы.",
+    description: "Самые разные букеты на любой вкус. Moon Flowers.",
     images: ["/og-image.jpg"],
   },
   alternates: {
-    canonical: "https://klever-plants.ru",
+    canonical: "https://moon-flowers.ru",
   },
   robots: {
     index: true,
@@ -100,12 +99,13 @@ export default function RootLayout({
         `}
       >
         <Providers>
-          <Header />
-          <main className="flex-1 w-full max-w-[1640px] mx-auto px-4 sm:px-[40px]">
-            {children}
-          </main>
-          <Footer />
-          {/* <CartModal /> */}
+          <InitialLoader>
+            <Header />
+            <main className="flex-1 w-full max-w-[1640px] mx-auto px-4 sm:px-[40px]">
+              {children}
+            </main>
+            <Footer />
+          </InitialLoader>
         </Providers>
         <Toaster position="top-right" />
       </body>

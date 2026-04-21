@@ -1,61 +1,61 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import Image from "next/image";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
-import { Trash2 } from "lucide-react";
-import { formatPrice } from "@/lib/utils/formatPrice";
-import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
-import ActionButton from "@/components/ui/action-button";
-import LoyalitiModal from "@/widgets/loyaliti-modal/LoyalitiModal";
 import { useAddressSuggestions, useSavedAddressForm } from "@/entities/address";
-import DatePicker from "@/widgets/time-picker/TimePicker";
 import { useLoyalityCardData } from "@/entities/loyaliti";
-import { formatPhone } from "@/lib/utils/formatPhone";
+import {
+  buildDeliveryDoc,
+  buildDocSalesOrder,
+  getOrderEnvDefaults,
+  resolveDeliveryUnix,
+  useCreateContragent,
+  useCreateOrder,
+  useFindContragentByPhone,
+  useSendDeliveryInfo,
+} from "@/entities/order";
+import SuccesOrderModal from "@/widgets/order/SuccesOrderModal";
 
-const CART_LOCAL_KEY = "cart_local";
-const CART_EVENT_NAME = "cart-local-updated";
+// Вынесенные компоненты
+import { useCart } from "../../entities/order/hooks/useCart";
+import CartItemsList from "../../widgets/order/CartItemsList";
+import RecipientForm from "../../widgets/order/RecipientForm";
+import DeliveryForm from "../../widgets/order/DeliveryForm";
+import OrderSummary from "../../widgets/order/OrderSummary";
 
-export type LocalCartItem = {
-  price: number;
-  id: number;
-  name: string;
-  imageUrl?: string;
-  quantity: number;
-};
-
-export type LocalCart = {
-  items: Record<string, LocalCartItem>;
-};
-
-const readCart = (): LocalCart => {
-  try {
-    if (typeof window === "undefined") return { items: {} };
-    const raw = window.localStorage.getItem(CART_LOCAL_KEY);
-    if (!raw) return { items: {} };
-    const parsed = JSON.parse(raw) as Partial<LocalCart>;
-    return { items: parsed.items ?? {} };
-  } catch {
-    return { items: {} };
-  }
-};
-
-const writeCart = (next: LocalCart) => {
-  try {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(CART_LOCAL_KEY, JSON.stringify(next));
-    window.dispatchEvent(new Event(CART_EVENT_NAME));
-  } catch {}
-};
-
+/**
+ * Главная страница оформления заказа
+ * ✅ Все UI компоненты вынесены отдельно
+ * ✅ Здесь только главная бизнес логика и состояние
+ */
 export default function OrderPage() {
+  // Хук корзины
+  const { cartItems, total, removeItemFromCart, writeCart } = useCart();
+
+  // Форма
   const [name, setFirstName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
   const [addressQuery, setAddressQuery] = useState("");
+  const [date, setDate] = useState<Date>();
+  const [time, setTime] = useState("10:30");
+  const [deliveryPreferSoon, setDeliveryPreferSoon] = useState(true);
   const [apartment, setApartment] = useState("");
   const [entrance, setEntrance] = useState("");
   const [floor, setFloor] = useState("");
-  const { data } = useAddressSuggestions(addressQuery);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [suggOpen, setSuggOpen] = useState(false);
+  const [activeInput, setActiveInput] = useState<"From" | "To">("From");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Внешние хуки
+  const { data } = useAddressSuggestions(addressQuery);
+  const savedAddress = useSavedAddressForm();
+  const createOrder = useCreateOrder();
+  const createContragent = useCreateContragent();
+  const findContragentByPhone = useFindContragentByPhone();
+  const sendDelivery = useSendDeliveryInfo();
   const { syncBalance, currentCard, points, escrow, balanceEscrow } =
     useLoyalityCardData();
 
@@ -64,27 +64,17 @@ export default function OrderPage() {
     [data?.suggestions],
   );
 
-  const [phone, setPhone] = useState("");
-  const [deliveryMethod, setDeliveryMethod] = useState<"ToMe" | "ToOther">(
-    "ToMe",
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const savedAddress = useSavedAddressForm();
+  const balanceSyncDone = useRef(false);
 
-  // Keep initial SSR/CSR markup identical; hydrate cart from localStorage in effect.
-  const [cart, setCart] = useState<LocalCart>({ items: {} });
-  const balanceSyncDone = React.useRef(false);
-
+  // Синхронизация баланса один раз
   useEffect(() => {
-    // Гарантия 100% что выполнится только один раз
     if (balanceSyncDone.current) return;
     if (!currentCard || points === undefined) return;
-
     syncBalance();
-
     balanceSyncDone.current = true;
   }, [currentCard, points, syncBalance]);
 
+  // Подставка сохраненного адреса
   useEffect(() => {
     if (savedAddress) {
       setTimeout(() => {
@@ -96,53 +86,199 @@ export default function OrderPage() {
     }
   }, [savedAddress]);
 
-  useEffect(() => {
-    const syncCart = () => setCart(readCart());
-
-    syncCart();
-    window.addEventListener(CART_EVENT_NAME, syncCart);
-    window.addEventListener("storage", (e) => {
-      if (e.key === CART_LOCAL_KEY) syncCart();
-    });
-
-    return () => {
-      window.removeEventListener(CART_EVENT_NAME, syncCart);
-    };
-  }, []);
-
-  const removeItemFromCart = (productId: number) => {
-    const next = readCart();
-    delete next.items[String(productId)];
-    writeCart(next);
-    setCart(next);
-  };
-
+  // Списание баллов
   const handleEscrow = () => {
-    balanceEscrow(total);
-  };
-
-  const cartItems = Object.values(cart.items);
-
-  const total = cartItems.reduce(
-    (sum, item) => sum + (item?.price || 0) * item.quantity,
-    0,
-  );
-  const deliveryPrice = cartItems.length > 0 ? 897 : 0;
-  const grandTotal = total + deliveryPrice - (escrow || 0);
-  const hasEscrow = (escrow ?? 0) > 0;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phone) {
-      toast.error("Введите номер телефона");
+    if (!currentCard) {
+      toast.error("Для списания бонусов подключите карту лояльности");
       return;
     }
+
     if (cartItems.length === 0) {
       toast.error("Корзина пуста");
       return;
     }
 
+    balanceEscrow(total);
+  };
+
+  // Создание контрагента
+  const handleContragent = async (): Promise<number | null> => {
+    const normalizedName = name.trim();
+    const normalizedPhone = phone.trim();
+
+    if (!normalizedName) {
+      toast.error("Введите имя отправителя");
+      return null;
+    }
+
+    if (normalizedPhone.replace(/\D/g, "").length < 10) {
+      toast.error("Введите корректный номер телефона отправителя");
+      return null;
+    }
+
+    try {
+      const existingContragentId = await findContragentByPhone.mutateAsync({
+        phone: normalizedPhone,
+      });
+      if (existingContragentId) {
+        return existingContragentId;
+      }
+
+      const result = await createContragent.mutateAsync({
+        name: normalizedName,
+        phone: normalizedPhone,
+      });
+      if (result.success && result.contragent_id) {
+        const createdId = Number(result.contragent_id);
+        return Number.isFinite(createdId) && createdId > 0 ? createdId : null;
+      }
+
+      toast.error(
+        result.error ?? "Не удалось создать контрагента, попробуйте позже",
+      );
+      return null;
+    } catch {
+      toast.error("Ошибка при создании контрагента");
+      return null;
+    }
+  };
+
+  // Расчеты
+  const deliveryPrice = cartItems.length > 0 ? 897 : 0;
+  const grandTotal = total + deliveryPrice - (escrow ?? 0);
+  const hasEscrow = (escrow ?? 0) > 0;
+
+  // Отправка формы
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (cartItems.length === 0) {
+      toast.error("Корзина пуста");
+      return;
+    }
+
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10) {
+      toast.error("Введите номер телефона отправителя");
+      return;
+    }
+
+    if (recipientPhone.length < 8) {
+      toast.error("Введите номер телефона получателя");
+      return;
+    }
+
+    if (name.length === 0) {
+      toast.error("Введите имя отправителя");
+      return;
+    }
+
+    if (recipientName.length === 0) {
+      toast.error("Введите имя получателя");
+      return;
+    }
+
+    if (!addressQuery.trim()) {
+      toast.error("Укажите адрес доставки");
+      return;
+    }
+
+    const envDefaults = getOrderEnvDefaults();
+    let contragentId: number | null =
+      currentCard && currentCard.contragent_id > 0
+        ? currentCard.contragent_id
+        : null;
+
+    if (!contragentId) {
+      contragentId = await handleContragent();
+      if (!contragentId) {
+        toast.error("Контрагент не создан, оформление заказа остановлено");
+        return;
+      }
+    }
+
+    const document = buildDocSalesOrder({
+      cartLines: cartItems,
+      deliveryPrice,
+      escrowRub: escrow ?? 0,
+      loyalityCardId: currentCard ? currentCard.id : null,
+      contragentId,
+      organization: envDefaults.organization,
+      warehouse: envDefaults.warehouse,
+      defaultUnit: envDefaults.goodsUnit,
+      deliveryNomenclatureId: envDefaults.deliveryNomenclatureId,
+    });
+
+    const addressLine = [
+      addressQuery.trim(),
+      apartment.trim() && `кв. ${apartment.trim()}`,
+      entrance.trim() && `подъезд ${entrance.trim()}`,
+      floor.trim() && `эт. ${floor.trim()}`,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    const recipientNameRaw = currentCard?.contragent?.trim()
+      ? currentCard.contragent.trim()
+      : recipientName.trim() || currentCard?.contragent?.trim() || "Клиент";
+
+    const deliveryPayload = buildDeliveryDoc({
+      address: addressLine,
+      delivery_date: resolveDeliveryUnix({
+        preferSoon: deliveryPreferSoon,
+        date,
+        time,
+      }),
+      delivery_price: deliveryPrice,
+      recipient: {
+        name: recipientNameRaw,
+        phone: recipientPhone.trim(),
+      },
+      note: [
+        apartment.trim() && `кв. ${apartment.trim()}`,
+        entrance.trim() && `подъезд ${entrance.trim()}`,
+        floor.trim() && `этаж ${floor.trim()}`,
+      ]
+        .filter(Boolean)
+        .join(". "),
+    });
+
     setIsSubmitting(true);
+    try {
+      const result = await createOrder.mutateAsync([document]);
+      if (!result.success) {
+        toast.error(result.error ?? "Не удалось создать заказ");
+        return;
+      }
+
+      if (!result.order_id) {
+        toast.error(
+          "Заказ создан, но сервер не вернул номер — доставку сохранить нельзя",
+        );
+        writeCart({ items: {} });
+        return;
+      }
+
+      const deliveryResult = await sendDelivery.mutateAsync({
+        orderId: result.order_id,
+        ...deliveryPayload,
+      });
+
+      if (!deliveryResult.success) {
+        toast.error(
+          deliveryResult.error ??
+            "Заказ создан, но не удалось сохранить доставку",
+        );
+      } else {
+        toast.success(`Заказ №${result.order_id} оформлен`);
+        setModalOpen(true);
+      }
+
+      writeCart({ items: {} });
+    } catch {
+      toast.error("Не удалось создать заказ");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -155,226 +291,64 @@ export default function OrderPage() {
           className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8"
         >
           <div className="space-y-7">
-            <section>
-              <div className="hidden md:grid grid-cols-[1fr_210px_210px] px-4 py-3 text-sm border-b border-[#E7E7E7]">
-                <span>Продукт</span>
-                <span>Количество</span>
-                <span>Стоимость</span>
-              </div>
-              {cartItems.length === 0 ? (
-                <p className="text-gray-500 px-4 py-6">Корзина пуста</p>
-              ) : (
-                cartItems.map((item) => {
-                  const imageUrl = item.imageUrl;
+            {/* Список товаров */}
+            <CartItemsList
+              cartItems={cartItems}
+              removeItemFromCart={removeItemFromCart}
+            />
 
-                  const price = item.price || 0;
-                  return (
-                    <div
-                      key={item.id}
-                      className="grid grid-cols-1 md:grid-cols-[1fr_210px_210px] gap-4 px-4 py-4 border-b border-[#E7E7E7]"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-100 shrink-0">
-                          <Image
-                            src={imageUrl || "/placeholder.jpg"}
-                            alt={item.name || "Товар"}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <p className="text-base font-medium truncate">
-                          {item.name || `Товар #${item.id}`}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <AddToCartButton
-                          price={item.price}
-                          productId={item.id}
-                          productName={item.name}
-                          imageUrl={imageUrl}
-                          className="!w-[120px]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeItemFromCart(item.id)}
-                          className="p-2 rounded-md hover:bg-red-50 text-red-500 cursor-pointer"
-                          aria-label={`Удалить ${item.name}`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center text-xl font-semibold">
-                        {formatPrice(price * item.quantity)}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </section>
-
+            {/* Форма получателя и доставка */}
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div>
-                <h3 className="mb-3">Получатель</h3>
-                <div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="bg-gray w-full max-h-12 flex items-center justify-between rounded-lg p-1">
-                      <button
-                        onClick={() => setDeliveryMethod("ToMe")}
-                        type="button"
-                        className={`cursor-pointer w-1/2 rounded-lg p-2 ${deliveryMethod === "ToMe" && "bg-background"}`}
-                      >
-                        Я Получатель
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeliveryMethod("ToOther")}
-                        className={`cursor-pointer w-1/2 rounded-lg p-2 ${deliveryMethod === "ToOther" && "bg-background"}`}
-                      >
-                        Вручить не мнеы
-                      </button>
-                    </div>
-                    <input
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="bg-gray rounded-lg p-3 w-full"
-                      placeholder={currentCard?.contragent || "Имя"}
-                      type="text"
-                    />
-                    <input
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="bg-gray rounded-lg p-3 w-full"
-                      placeholder={
-                        formatPhone(currentCard?.card_number || "") ||
-                        "+7 (000) 000-00-00"
-                      }
-                      type="tel"
-                    />
-                    <LoyalitiModal phone={phone} name={name} />
-                  </div>
-                </div>
-              </div>
+              <RecipientForm
+                activeInput={activeInput}
+                setActiveInput={setActiveInput}
+                name={name}
+                setName={setFirstName}
+                phone={phone}
+                setPhone={setPhone}
+                recipientName={recipientName}
+                setRecipientName={setRecipientName}
+                recipientPhone={recipientPhone}
+                setRecipientPhone={setRecipientPhone}
+              />
 
-              <div>
-                <h3 className="mb-3">Доставка</h3>
-                <div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-3 relative">
-                      <input
-                        onInput={() => setSuggOpen(true)}
-                        className="text-center outline-none rounded-lg p-3 bg-gray col-span-3 w-full"
-                        placeholder="Начните вводить адрес"
-                        type="text"
-                        value={addressQuery}
-                        onChange={(e) => setAddressQuery(e.target.value)}
-                      />
-                      {suggestions.length > 0 && suggOpen && (
-                        <div className="absolute top-[calc(100%+8px)] left-0 right-0 rounded-lg bg-white shadow-lg border border-[#E5E5E5] overflow-hidden z-10">
-                          {suggestions.map((item, index) => {
-                            return (
-                              <button
-                                key={`${item}-${index}`}
-                                type="button"
-                                onClick={() => {
-                                  setAddressQuery(item);
-                                  setSuggOpen(false);
-                                }}
-                                className="block w-full text-left px-4 py-3 text-sm hover:bg-[#F5F5F5]"
-                              >
-                                {item}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                    <input
-                      placeholder="Квартира"
-                      value={apartment}
-                      onChange={(e) => setApartment(e.target.value)}
-                      className="c text-center outline-none rounded-lg p-3 bg-gray"
-                    />
-                    <input
-                      placeholder="Подьезд"
-                      value={entrance}
-                      onChange={(e) => setEntrance(e.target.value)}
-                      className=" text-center outline-none rounded-lg p-3 bg-gray"
-                    />
-
-                    <input
-                      placeholder="Этаж"
-                      value={floor}
-                      onChange={(e) => setFloor(e.target.value)}
-                      className="text-center outline-none rounded-lg p-3 bg-gray"
-                    />
-                    <DatePicker />
-                  </div>
-                </div>
-              </div>
+              <DeliveryForm
+                addressQuery={addressQuery}
+                setAddressQuery={setAddressQuery}
+                apartment={apartment}
+                setApartment={setApartment}
+                entrance={entrance}
+                setEntrance={setEntrance}
+                floor={floor}
+                setFloor={setFloor}
+                suggOpen={suggOpen}
+                setSuggOpen={setSuggOpen}
+                suggestions={suggestions}
+                date={date}
+                setDate={setDate}
+                time={time}
+                setTime={setTime}
+                deliveryPreferSoon={deliveryPreferSoon}
+                setDeliveryPreferSoon={setDeliveryPreferSoon}
+              />
             </section>
           </div>
-          <aside className="lg:sticky lg:top-24 h-fit">
-            <div className="rounded-xl bg-white/40 space-y-3">
-              <div
-                onClick={() => handleEscrow()}
-                className="flex items-center cursor-pointer"
-              >
-                <button
-                  disabled={points === 0}
-                  type="button"
-                  className={`${hasEscrow ? "!text-muted-foreground" : ""} cursor-pointer flex-1 h-12 rounded-xl bg-black text-white`}
-                >
-                  {hasEscrow
-                    ? "Баллы применены"
-                    : points === 0
-                      ? "Нечего списывать"
-                      : "Списать баллы"}
-                </button>
-                <div
-                  className={`${hasEscrow ? "!text-muted-foreground" : ""} min-w-10 h-12 px-2 rounded-xl bg-black flex text-white items-center justify-center font-semibold`}
-                >
-                  {points}
-                </div>
-              </div>
-              <div className="space-y-2 text-base">
-                <div className="flex items-center justify-between">
-                  <span>
-                    {cartItems.length > 0 && cartItems.length}
-                    {cartItems.length === 0
-                      ? "Товаров нет"
-                      : cartItems.length === 1
-                        ? " товар"
-                        : " товаров"}
-                  </span>
-                  <span>{formatPrice(total)}</span>
-                </div>
-                <div className="flex items-center pt-2 border-t border-[#DCDCDC] justify-between">
-                  <span>Доставка</span>
-                  <span>{formatPrice(deliveryPrice)}</span>
-                </div>
-                {hasEscrow && (
-                  <div className="flex items-center pt-2 border-t border-[#DCDCDC] justify-between">
-                    <span>Выгода</span>
-                    <span>-{formatPrice(escrow ?? 0)}</span>
-                  </div>
-                )}
-                <div className="flex items-center pt-2 border-t border-[#DCDCDC] justify-between">
-                  <span>Общая стоимость</span>
-                  <span>{formatPrice(grandTotal)}</span>
-                </div>
-              </div>
-              <ActionButton
-                text="Перейти к оплате"
-                type="submit"
-                fullWidth
-                loading={isSubmitting}
-                disabled={cartItems.length === 0}
-                className="px-4 py-2"
-              />
-            </div>
-          </aside>
+
+          {/* Итоги заказа */}
+          <OrderSummary
+            cartItemsCount={cartItems.length}
+            total={total}
+            deliveryPrice={deliveryPrice}
+            grandTotal={grandTotal}
+            points={points}
+            escrow={escrow}
+            hasEscrow={hasEscrow}
+            isSubmitting={isSubmitting}
+            handleEscrow={handleEscrow}
+          />
         </form>
       </div>
+      <SuccesOrderModal setOpen={setModalOpen} open={modalOpen} />
     </main>
   );
 }

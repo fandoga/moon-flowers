@@ -31,7 +31,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   const isDisabled = disabled || loading;
   const baseClasses = [
     "bg-black text-white border border-black rounded-xl",
-    "transition-all group inline-flex items-center justify-between",
+    "transition-all duration-500 group inline-flex items-center justify-between",
     "gap-4 py-2 px-4 whitespace-nowrap",
     "hover:bg-white hover:text-black hover:border-black",
     "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -45,7 +45,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
     <>
       <span>{loading ? "Оформление..." : text}</span>
       {showArrow && (
-        <span className="bg-white group-hover:bg-black transition-all flex items-center justify-center rounded-lg w-10 h-10">
+        <span className="bg-white group-hover:bg-black transition-all duration-500 flex items-center justify-center rounded-lg w-10 h-10">
           {loading ? (
             <LoaderCircle className="h-5 w-5 animate-spin text-black group-hover:text-white" />
           ) : (
@@ -54,7 +54,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
               height="12"
               viewBox="0 0 9 9"
               fill="none"
-              className="text-black group-hover:text-white transition-colors"
+              className="text-black group-hover:text-white duration-500 transition-colors"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path

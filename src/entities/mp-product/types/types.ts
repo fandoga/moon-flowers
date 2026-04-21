@@ -1,74 +1,130 @@
 export interface MpProduct {
-  id: 0;
   name: "string";
+  type: "product";
   description_short: "string";
   description_long: "string";
   code: "string";
+  unit: 0;
+  category: 0;
+  manufacturer: 0;
+  global_category_id: 0;
+  chatting_percent: 100;
+  cashback_type: "lcard_cashback";
+  cashback_value: 0;
+  external_id: "string";
+  tags: [];
+  seo_title: "string";
+  seo_description: "string";
+  seo_keywords: [];
+  production_time_min_from: 0;
+  production_time_min_to: 0;
+  address: "string";
+  latitude: 0;
+  longitude: 0;
+  video_link: "string";
+  id: 0;
   unit_name: "string";
-  cashbox_id: 0;
-  category_name: "string";
-  manufacturer_name: "string";
-  price: 0;
-  price_type: "string";
-  price_address: "string";
-  price_latitude: 0;
-  price_longitude: 0;
-  created_at: "2026-04-16T09:17:56.876Z";
-  updated_at: "2026-04-16T09:17:56.876Z";
-  images: string[];
-  videos: [];
   barcodes: ["string"];
-  type: "string";
-  distance: 0;
-  listing_pos: 0;
-  listing_page: 0;
-  is_ad_pos: false;
-  tags: ["string"];
-  current_amount: 0;
-  seller_name: "string";
-  seller_photo: "string";
-  seller_description: "string";
-  user_admin: [
+  price: 0;
+  prices: [
     {
-      recipient_id: "string";
-      username: "string";
+      price: 0;
+      price_type: "string";
     },
   ];
-  total_sold: 0;
-  rating: 0;
-  global_rating: 0;
-  reviews_count: 0;
-  button_text: "string";
-  button_logic: "string";
-  available_warehouses: [
+  balances: [
     {
-      warehouse_id: 0;
-      organization_id: 0;
       warehouse_name: "string";
-      warehouse_address: "string";
-      latitude: 0;
-      longitude: 0;
-      distance_to_client: 0;
       current_amount: 0;
     },
   ];
-  production_time_min_from: 0;
-  production_time_min_to: 0;
+  attributes: [
+    {
+      id: 0;
+      attribute_id: 0;
+      name: "string";
+      alias: "string";
+      value: "string";
+    },
+  ];
+  photos: [string] | null;
+  images: [string];
+  videos: [
+    {
+      id: 0;
+      nomenclature_id: 0;
+      url: "string";
+      description: "string";
+      tags: [];
+      created_at: "2026-04-18T12:14:46.942Z";
+      updated_at: "2026-04-18T12:14:46.942Z";
+    },
+  ];
+  group_id: 0;
+  group_name: "string";
+  is_main: true;
+  qr_hash: "string";
+  qr_url: "string";
+  updated_at: 0;
+  created_at: 0;
+}
+
+export interface Pictures {
+  id: 0;
+  entity: "string";
+  entity_id: 0;
+  is_main: true;
+  url: "string";
+  public_url: "string";
+  size: 0;
+  updated_at: 0;
+  created_at: 0;
+}
+
+export interface Prices {
+  result: {
+    id: 0;
+    nomenclature_id: 0;
+    nomenclature_name: "string";
+    type: "string";
+    warehouse_id: 0;
+    address: "string";
+    latitude: 0;
+    longitude: 0;
+    description_short: "string";
+    description_long: "string";
+    code: "string";
+    unit: 0;
+    unit_name: "string";
+    category: 0;
+    category_name: "string";
+    manufacturer: 0;
+    manufacturer_name: "string";
+    price: 0;
+    price_type: "string";
+    date_from: 0;
+    date_to: 0;
+    radius: 0;
+    hide_outside_radius: true;
+    photos: [];
+    updated_at: 0;
+    created_at: 0;
+  };
 }
 
 export interface MpProductsResponse {
   result: MpProduct[];
   count?: number;
-  size?: number;
-  page?: number;
+  limit?: number;
+  offset?: number;
   error?: string;
 }
 
 export interface MpProductsQueryParams {
-  category?: string;
-  seller_id?: number;
-  size?: number;
-  page?: number;
+  has_photos?: boolean;
+  global_category_name?: string;
+  limit?: number;
+  offset?: number;
   search?: string;
-  category_id?: number | string;
+  category?: number | string;
 }

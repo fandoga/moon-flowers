@@ -1,26 +1,26 @@
 export interface LoyalityCard {
-  id: 0;
-  card_number: 0;
+  id: number;
+  card_number: number;
   tags: string;
-  balance: 0;
-  income: 0;
-  outcome: 0;
-  contragent_id: 0;
-  organization_id: 0;
+  balance: number;
+  income: number;
+  outcome: number;
+  contragent_id: number;
+  organization_id: number;
   contragent: string;
   organization: string;
-  cashback_percent: 0;
-  minimal_checque_amount: 0;
-  max_withdraw_percentage: 0;
-  start_period: 0;
-  end_period: 0;
-  max_percentage: 0;
-  lifetime: 0;
+  cashback_percent: number;
+  minimal_checque_amount: number;
+  max_withdraw_percentage: number;
+  start_period: number;
+  end_period: number;
+  max_percentage: number;
+  lifetime: number;
   apple_wallet_advertisement: string;
-  status_card: true;
-  is_deleted: true;
-  created_at: 0;
-  updated_at: 0;
+  status_card: boolean;
+  is_deleted: boolean;
+  created_at: number;
+  updated_at: number;
 }
 
 export interface LoyalityCardsResponse {

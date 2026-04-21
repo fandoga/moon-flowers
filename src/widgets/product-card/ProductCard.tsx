@@ -1,21 +1,50 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { MpProduct } from "@/entities/mp-product";
 import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { formatPrice } from "@/lib/utils/formatPrice";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import ProductImgModal from "./ProductImgModal";
+import { useEffect, useState } from "react";
 
 const ProductCard: React.FC<{
   product: MpProduct;
   displayOnHover?: boolean;
 }> = ({ product, displayOnHover = false }) => {
+  const [ready, setReady] = useState<boolean>(false);
   const router = useRouter();
   const productId = Number(product.id);
 
-  const imageUrl = [3, 2, 1, 0]
-    .map((index) => product.images?.[index])
-    .find((url) => Boolean(url));
-  const price = Number(product.price) || 0;
+  const imageUrl =
+    product.images[0] ||
+    [1, 2, 3, 4]
+      .map((index) => product.photos?.[index])
+      .find((url) => Boolean(url));
+  const price = Number(product.prices?.[0].price) || product.price || 0;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setReady(imageUrl !== "/placeholder.jpg");
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [imageUrl]);
+
+  if (!ready || !imageUrl) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        className="relative rounded-xl overflow-hidden flex flex-col w-full md:h-full"
+      >
+        <div className="relative w-full aspect-[5/6] md:h-full">
+          <Skeleton className="absolute inset-0 w-full h-full bg-skeleton animate-pulse rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -29,9 +58,10 @@ const ProductCard: React.FC<{
     >
       <div className="relative w-full aspect-[5/6] md:h-full">
         {/* Next Image не настроен на домен tablecrm, поэтому fallback через <img> */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl || "/placeholder.jpg"}
+        <Image
+          fill
+          loading="eager"
+          src={imageUrl}
           alt={product.name ? String(product.name) : "Товар"}
           className="absolute inset-0 w-full h-full object-cover"
         />

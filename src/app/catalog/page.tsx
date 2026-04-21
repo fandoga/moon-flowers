@@ -1,18 +1,29 @@
 // app/catalog/page.tsx
 "use client";
 import { motion } from "framer-motion";
-import { Suspense, useEffect, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import ProductsCatalog from "@/widgets/products-catalog/ProductsCatalog";
-import { useMpProducts } from "@/entities/mp-product";
+import {
+  getMpProducts,
+  useEnrichedMpProducts,
+  type MpProduct,
+} from "@/entities/mp-product";
 import Logo from "@/components/ui/logo";
 import CatalogReels from "@/widgets/catalog-reels/CatalogReels";
+import Categories from "@/widgets/categories/Categories";
+import { useCategories } from "@/entities/category";
+import InitialLoader, {
+  FullScreenLoader,
+} from "@/widgets/initial-loader.tsx/InitialLoader";
 
 export interface CatalogItemType {
-  id: string;
+  id: string | number;
   name?: string | "";
   price?: number;
   image?: string | "";
   count?: number;
+  categoryId?: number;
 }
 
 const containerVariants = {
@@ -31,97 +42,137 @@ const itemVariants = {
 };
 
 export default function CatalogPage() {
-  const [category, setCategory] = useState<string | undefined>("");
+  const [category, setCategory] = useState<number | undefined>();
   const [isTouchDevice, setIsTouchDevice] = useState<boolean>();
+  const [visibleCategoryIds, setVisibleCategoryIds] = useState<Set<number>>(
+    () => new Set(),
+  );
 
-  // Загружаем товары для каждой категории отдельно
-  const monoProducts = useMpProducts({ category: "монобукеты", size: 1 });
-  const weddingProducts = useMpProducts({ category: "свадебные", size: 1 });
-  const autorProducts = useMpProducts({ category: "авторские", size: 1 });
-  const dryProducts = useMpProducts({ category: "сухоцветы", size: 1 });
-  const basketProducts = useMpProducts({ category: "корзины", size: 1 });
+  const categoriesQuery = useCategories();
+  const categories = categoriesQuery.data?.result;
 
-  const categoriesQueries = [
-    { id: "mono", name: "Моно-букеты", query: monoProducts },
-    { id: "wedding", name: "Свадебные", query: weddingProducts },
-    { id: "autor", name: "Авторские", query: autorProducts },
-    { id: "dry", name: "Сухоцветы", query: dryProducts },
-    { id: "basket", name: "Корзины", query: basketProducts },
-  ];
+  const effectiveVisibleCategoryIds = useMemo(() => {
+    if (!categories?.length || isTouchDevice !== true) return new Set<number>();
+    const validIds = new Set(categories.map((c) => c.id));
+    const next = new Set<number>();
+    for (const id of visibleCategoryIds) {
+      if (validIds.has(id)) next.add(id);
+    }
+    if (next.size === 0) {
+      next.add(categories[0].id);
+      if (categories[1]) next.add(categories[1].id);
+    }
+    return next;
+  }, [categories, isTouchDevice, visibleCategoryIds]);
 
-  const isLoading = categoriesQueries.some((q) => q.query.isLoading);
-
-  // Собираем категории с реальными данными
-  const mobileCategories = categoriesQueries.map((cat) => {
-    const products = cat.query.data?.result || [];
-    const firstProduct = products[0];
-
-    return {
-      id: cat.id,
-      name: cat.name,
-      price: firstProduct?.price || 0,
-      image: firstProduct?.images?.[0] || "",
-      count: cat.query.data?.count || 0,
-    };
+  const previewQueries = useQueries({
+    queries: (categories ?? []).map((cat) => ({
+      queryKey: ["mp-products", "category-preview", cat.id],
+      queryFn: () => getMpProducts({ limit: 1, category: String(cat.id) }),
+      enabled:
+        isTouchDevice === true &&
+        effectiveVisibleCategoryIds.has(cat.id) &&
+        !!cat.id,
+    })),
   });
 
-  // Фильтруем пустые
-  const filteredCategories: CatalogItemType[] = mobileCategories.filter(
-    (item) => item.count > 0,
+  const productsToEnrich = useMemo((): MpProduct[] => {
+    if (!categories?.length) return [];
+    const out: MpProduct[] = [];
+    for (let i = 0; i < categories.length; i++) {
+      const p = previewQueries[i]?.data?.result?.[0];
+      if (p) out.push(p);
+    }
+    return out;
+  }, [categories, previewQueries]);
+
+  const { enrichedItems } = useEnrichedMpProducts(productsToEnrich);
+
+  const enrichedByProductId = useMemo(() => {
+    const m = new Map<number, MpProduct>();
+    for (const p of enrichedItems) {
+      m.set(Number(p.id), p);
+    }
+    return m;
+  }, [enrichedItems]);
+
+  const mobileCategories: CatalogItemType[] = useMemo(() => {
+    if (!categories?.length) return [];
+    return categories.map((cat, i) => {
+      const q = previewQueries[i];
+      const raw = q?.data?.result?.[0];
+      const enriched = raw
+        ? enrichedByProductId.get(Number(raw.id))
+        : undefined;
+      const resolvedPrice = Number(
+        enriched?.price ?? enriched?.prices?.[0]?.price ?? 0,
+      );
+      const resolvedImage =
+        enriched?.images?.[0] || enriched?.photos?.[0] || "";
+
+      return {
+        id: cat.id,
+        name: cat.name,
+        price: Number.isFinite(resolvedPrice) ? resolvedPrice : 0,
+        image: resolvedImage,
+        count: q?.data?.count ?? 0,
+        categoryId: Number(enriched?.category ?? cat.id),
+      };
+    });
+  }, [categories, previewQueries, enrichedByProductId]);
+
+  const filteredCategories: CatalogItemType[] = useMemo(() => {
+    return mobileCategories.filter((item, i) => {
+      const q = previewQueries[i];
+      if (!q?.isFetched) return true;
+      return (item.count ?? 0) > 0;
+    });
+  }, [mobileCategories, previewQueries]);
+
+  const onCategoryVisible = useCallback(
+    (categoryId: number) => {
+      if (isTouchDevice !== true) return;
+      setVisibleCategoryIds((prev) => {
+        const next = new Set(prev);
+        next.add(categoryId);
+        const idx = categories?.findIndex((c) => c.id === categoryId) ?? -1;
+        if (idx >= 0 && categories && categories[idx + 1]) {
+          next.add(categories[idx + 1].id);
+        }
+        return next;
+      });
+    },
+    [categories, isTouchDevice],
   );
 
   useEffect(() => {
-    if (typeof window === undefined) return;
-    setTimeout(() => {
+    if (typeof window === "undefined") return;
+    const id = requestAnimationFrame(() => {
       setIsTouchDevice(
-        typeof window !== "undefined" &&
-          window.matchMedia("(hover: none), (pointer: coarse)").matches,
+        window.matchMedia("(hover: none), (pointer: coarse)").matches,
       );
     });
-  });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <Logo alwaysEnabled />
-      </div>
-    );
+  if (categoriesQuery.isLoading) {
+    return <FullScreenLoader />;
   }
 
   if (!isTouchDevice) {
     return (
       <motion.main
-        className="py-8 md:py-12 bg-background max-w-[1440px] m-auto"
+        className=" md:py-2 bg-background max-w-[1440px] m-auto"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         <div className="container mx-auto">
           <motion.div variants={itemVariants}></motion.div>
-          <motion.h1
-            variants={itemVariants}
-            className="h text-4xl md:text-5xl mb-2"
-          >
+          <motion.h1 variants={itemVariants} className="h !mb-0">
             Каталог
           </motion.h1>
-          <div className="flex items-center gap-2 overflow-x-auto py-8 md:py-12 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            <div
-              onClick={() => setCategory("")}
-              className="cursor-pointer w-40 md:w-60 h-15 shrink-0 pt-4.5 text-center p-2 bg-gray rounded-xl"
-              key="all"
-            >
-              Все
-            </div>
-            {filteredCategories.map((item) => (
-              <div
-                onClick={() => setCategory(item.name)}
-                className="cursor-pointer w-40 md:w-60 h-15 shrink-0 pt-4.5 text-center p-2 bg-gray rounded-xl"
-                key={item.id}
-              >
-                {item.name}
-              </div>
-            ))}
-          </div>
+          <Categories setter={setCategory} />
           <motion.div variants={itemVariants}>
             <Suspense
               fallback={
@@ -136,9 +187,11 @@ export default function CatalogPage() {
     );
   }
 
-  //  -------------МОБИЛЬНЫЙ ВАРИАНТ КАТАЛОГА----------------
-
-  if (isTouchDevice) {
-    return <CatalogReels isCategories items={filteredCategories} />;
-  }
+  return (
+    <CatalogReels
+      isCategories
+      items={filteredCategories}
+      onCategoryVisible={onCategoryVisible}
+    />
+  );
 }

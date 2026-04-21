@@ -6,30 +6,53 @@ import Image from "next/image";
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import StarsIcon from "@/components/ui/stars-icon";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import Logo from "@/components/ui/logo";
+import { cn } from "@/lib/utils";
+import {
+  GridVideoSkeleton,
+  ModalDesktopSlideFrame,
+  ModalDesktopSlideSkeleton,
+  ModalTouchVideoSkeleton,
+} from "@/widgets/videos/video-skeleton-ui";
 
 interface VideosProps {
   data: VideosMyResponse;
   isReviews?: boolean;
+  currentPage?: number;
+  pageSize?: number;
 }
 
-const SLIDE_HEIGHT = 70; // vh
-
-const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
-  const [currentPage] = useState(0);
+const Videos: React.FC<VideosProps> = ({
+  data,
+  isReviews,
+  currentPage = 0,
+  pageSize = 4,
+}) => {
   const [activeVideo, setActiveVideo] = useState<StoryVideo | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredVideoId, setHoveredVideoId] = useState<number | null>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
   const activeVideoRef = useRef<HTMLVideoElement | null>(null);
   const desktopModalVideoRefs = useRef<Array<HTMLVideoElement | null>>([]);
+  const desktopSlideRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [desktopSlideHeights, setDesktopSlideHeights] = useState<number[]>([]);
   const wheelLockedRef = useRef(false);
+
+  const [gridVideoReady, setGridVideoReady] = useState<Record<number, boolean>>(
+    {},
+  );
+  const [modalDesktopReady, setModalDesktopReady] = useState<
+    Record<number, boolean>
+  >({});
+  const [desktopVideoIntrinsic, setDesktopVideoIntrinsic] = useState<
+    Record<number, { w: number; h: number }>
+  >({});
 
   const [isTouchDevice, setIsTouchDevice] = useState(
     typeof window !== "undefined" &&
@@ -47,6 +70,18 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
     return () => media.removeEventListener("change", handleChange);
   }, []);
 
+  useEffect(() => {
+    if (!activeVideo) return;
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+    };
+  }, [activeVideo]);
+
   const videos = useMemo<StoryVideo[]>(() => {
     const raw = data?.items ?? [];
     return raw.reduce<StoryVideo[]>((acc, item) => {
@@ -59,32 +94,31 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
         src: item.seo_url,
         avatar: item.channel_avatar || "",
         poster: item.preview_url || item.post_image || undefined,
+        user: item.channel_username || "",
       });
       return acc;
     }, []);
   }, [data]);
 
-  const handleMouseEnter = (id: number) => {
-    if (isTouchDevice) return;
-    setHoveredVideoId(id);
-    const element = videoRefs.current[id];
-    element?.play().catch(() => undefined);
-  };
-
-  const handleMouseLeave = (id: number) => {
-    if (isTouchDevice) return;
-    setHoveredVideoId((current) => (current === id ? null : current));
-    const element = videoRefs.current[id];
-    if (!element) return;
-    element.pause();
-    element.currentTime = 0;
-  };
-
   const renderedVideos = isTouchDevice
     ? videos
-    : videos.slice(currentPage * 4, currentPage * 4 + 4);
+    : videos.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
 
-  const closeModal = () => setActiveVideo(null);
+  const closeModal = () => {
+    setActiveVideo(null);
+    setModalDesktopReady({});
+    setDesktopVideoIntrinsic({});
+  };
+
+  const markGridVideoReady = useCallback((id: number) => {
+    setGridVideoReady((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  }, []);
+
+  const markDesktopSlideReady = useCallback((index: number) => {
+    setModalDesktopReady((prev) =>
+      prev[index] ? prev : { ...prev, [index]: true },
+    );
+  }, []);
 
   /* =========================
      Desktop navigation
@@ -97,6 +131,49 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
   const goPrev = () => {
     setActiveIndex((prev) => Math.max(prev - 1, 0));
   };
+
+  const desktopScrollOffsetPx = useMemo(() => {
+    let sum = 0;
+    for (let i = 0; i < activeIndex; i++) {
+      sum += desktopSlideHeights[i] ?? 0;
+    }
+    return sum;
+  }, [activeIndex, desktopSlideHeights]);
+
+  useLayoutEffect(() => {
+    if (!activeVideo || isTouchDevice) {
+      return;
+    }
+
+    const measureSlides = () => {
+      const heights = videos.map((_, index) => {
+        const el = desktopSlideRefs.current[index];
+        if (!el) return 0;
+        return el.getBoundingClientRect().height;
+      });
+      setDesktopSlideHeights(heights);
+    };
+
+    measureSlides();
+
+    const observers: ResizeObserver[] = [];
+    for (let i = 0; i < videos.length; i++) {
+      const el = desktopSlideRefs.current[i];
+      if (!el) continue;
+      const ro = new ResizeObserver(() => {
+        measureSlides();
+      });
+      ro.observe(el);
+      observers.push(ro);
+    }
+
+    window.addEventListener("resize", measureSlides);
+    return () => {
+      window.removeEventListener("resize", measureSlides);
+      observers.forEach((o) => o.disconnect());
+      setDesktopSlideHeights([]);
+    };
+  }, [activeVideo, isTouchDevice, videos]);
 
   useEffect(() => {
     if (!isTouchDevice) return;
@@ -169,28 +246,30 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
     if (!activeVideo) return;
     setTimeout(() => {
       setActiveVideo(videos[activeIndex]);
-      setIsVideoLoading(true);
+      if (isTouchDevice) {
+        setIsVideoLoading(true);
+      }
     });
-  }, [activeIndex, activeVideo, videos]);
+  }, [activeIndex, activeVideo, videos, isTouchDevice]);
 
   return (
     <>
-      {renderedVideos.slice(2, 6).map((video) => (
+      {renderedVideos.map((video) => (
         <button
           key={video.id}
           onClick={() => {
             const index = videos.findIndex((v) => v.id === video.id);
+            setModalDesktopReady({});
+            setDesktopVideoIntrinsic({});
             setActiveIndex(index);
             setActiveVideo(video);
           }}
-          onMouseEnter={() => handleMouseEnter(video.id)}
-          onMouseLeave={() => handleMouseLeave(video.id)}
-          className={`group cursor-pointer relative overflow-hidden rounded-2xl bg-background w-screen sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14] pt-10" : "aspect-[9/14]"} text-left shrink-0 snap-start sm:w-auto sm:max-w-none`}
+          className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14] pt-10" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:w-auto sm:max-w-none`}
           aria-label={`Открыть видео: ${video.title}`}
         >
           {isReviews &&
             (isTouchDevice ? (
-              <div className="flex items-center justify-between w-full px-3 absolute top-6">
+              <div className="absolute top-6 z-20 flex w-full items-center justify-between px-3">
                 <div className="flex items-center gap-3">
                   <Image
                     width={10}
@@ -199,12 +278,12 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
                     src={video.avatar}
                     alt="avatar_img"
                   />
-                  <p className="font-sans text-white">Александра М.</p>
+                  <p className="font-sans text-white">{video.user}</p>
                 </div>
                 <StarsIcon color={"white"} />
               </div>
             ) : (
-              <div className="w-full flex justify-between items-center mb-2 px-3">
+              <div className="relative z-20 mb-2 flex w-full items-center justify-between px-3">
                 <div className="flex items-center gap-3">
                   <Image
                     width={10}
@@ -213,23 +292,32 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
                     src={video.avatar}
                     alt="avatar_img"
                   />
-                  <p className="font-sans">Александра М.</p>
+                  <p className="font-sans">{video.user}</p>
                 </div>
                 <StarsIcon />
               </div>
             ))}
 
-          <video
-            ref={(node) => {
-              videoRefs.current[video.id] = node;
-            }}
-            src={`https://interesnoitochka.ru/api/v1/videos/video/${video.id}/hls/playlist.m3u8`}
-            poster={video.poster}
-            muted
-            loop
-            playsInline
-            className="h-full w-full cursor-pointer object-cover"
-          />
+          <div className="relative min-h-0 w-full flex-1">
+            {!gridVideoReady[video.id] && <GridVideoSkeleton />}
+            <video
+              ref={(node) => {
+                videoRefs.current[video.id] = node;
+              }}
+              src={`https://interesnoitochka.ru/api/v1/videos/video/${video.id}/hls/playlist.m3u8`}
+              poster={video.poster}
+              muted
+              loop
+              autoPlay
+              playsInline
+              onLoadedData={() => markGridVideoReady(video.id)}
+              onCanPlay={() => markGridVideoReady(video.id)}
+              className={cn(
+                "relative z-[2] h-full w-full cursor-pointer object-cover transition-opacity duration-300",
+                gridVideoReady[video.id] ? "opacity-100" : "opacity-0",
+              )}
+            />
+          </div>
           <AnimatePresence>
             {hoveredVideoId === video.id && (
               <motion.div
@@ -237,9 +325,9 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 24 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="absolute bottom-10 flex items-center justify-center w-full"
+                className="absolute inset-x-0 bottom-10 z-[3] flex max-w-full items-center justify-center px-1"
               >
-                <div className="flex items-center justify-center w-[80%]">
+                <div className="flex w-[80%] max-w-full min-w-0 items-center justify-center">
                   <div className="min-w-0 flex-1 h-12 rounded-lg bg-black px-4 py-1 text-white">
                     <p className="pt-2 text-md leading-tight">{video.title}</p>
                   </div>
@@ -282,7 +370,7 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
           </button>
 
           <div
-            className="relative w-full h-[80%] flex items-center justify-center"
+            className="relative flex h-[80%] w-full items-center justify-center"
             onClick={(e) => {
               e.stopPropagation();
               // closeModal();
@@ -310,53 +398,87 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
 
             {/* REELS STACK */}
             {!isTouchDevice ? (
-              <div className="relative h-[70vh] w-full max-w-[420px]">
-                {/* Фиксированный лоадер по центру */}
-                {isVideoLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center z-50">
-                    <div className="animate-pulse">
-                      <Logo color="white" alwaysEnabled />
-                    </div>
-                  </div>
-                )}
-
+              <div className="relative flex h-full w-full min-h-0 max-w-[min(52vh,100vw)] flex-col items-center">
                 <motion.div
                   animate={{
-                    y: `-${activeIndex * SLIDE_HEIGHT}vh`,
+                    y: -desktopScrollOffsetPx,
                   }}
                   transition={{
                     type: "spring",
                     stiffness: 80,
                     damping: 20,
                   }}
-                  className="absolute top-0 left-0 w-full"
+                  className="absolute top-0 left-0 w-full flex flex-col items-stretch will-change-transform"
                 >
                   {videos.map((video, index) => (
                     <div
                       key={video.id}
-                      className="h-[70vh] w-full flex items-center justify-center py-6"
+                      ref={(node) => {
+                        desktopSlideRefs.current[index] = node;
+                      }}
+                      className="flex w-full shrink-0 justify-center px-2 pb-8 box-border"
                     >
-                      <video
-                        ref={(node) => {
-                          desktopModalVideoRefs.current[index] = node;
+                      <motion.div
+                        animate={{
+                          opacity: index === activeIndex ? 1 : 0.5,
+                          scale:
+                            index === activeIndex
+                              ? 1
+                              : modalDesktopReady[index]
+                                ? 0.95
+                                : 1,
                         }}
-                        src={`https://interesnoitochka.ru/api/v1/videos/video/${video.id}/hls/playlist.m3u8`}
-                        poster={video.poster}
-                        autoPlay={index === activeIndex}
-                        loop
-                        playsInline
-                        onLoadedData={() =>
-                          index === activeIndex && setIsVideoLoading(false)
-                        }
-                        onCanPlay={() =>
-                          index === activeIndex && setIsVideoLoading(false)
-                        }
-                        className={`rounded-2xl w-full object-contain transition-opacity duration-300 ${
-                          index === activeIndex
-                            ? "opacity-100"
-                            : "opacity-50 scale-[0.95]"
-                        }`}
-                      />
+                        transition={{
+                          duration: 0.4,
+                          ease: [0.33, 1, 0.68, 1],
+                        }}
+                        className="origin-center will-change-transform"
+                      >
+                        <ModalDesktopSlideFrame
+                          intrinsic={
+                            modalDesktopReady[index]
+                              ? (desktopVideoIntrinsic[index] ?? null)
+                              : null
+                          }
+                        >
+                          {!modalDesktopReady[index] && (
+                            <ModalDesktopSlideSkeleton />
+                          )}
+                          <video
+                            ref={(node) => {
+                              desktopModalVideoRefs.current[index] = node;
+                            }}
+                            src={`https://interesnoitochka.ru/api/v1/videos/video/${video.id}/hls/playlist.m3u8`}
+                            poster={video.poster}
+                            autoPlay={index === activeIndex}
+                            loop
+                            playsInline
+                            onLoadedMetadata={(e) => {
+                              const el = e.currentTarget;
+                              const w = el.videoWidth;
+                              const h = el.videoHeight;
+                              if (w > 0 && h > 0) {
+                                setDesktopVideoIntrinsic((prev) => ({
+                                  ...prev,
+                                  [index]: { w, h },
+                                }));
+                              }
+                            }}
+                            onLoadedData={() => {
+                              markDesktopSlideReady(index);
+                            }}
+                            onCanPlay={() => {
+                              markDesktopSlideReady(index);
+                            }}
+                            className={cn(
+                              "relative z-[2] h-full w-full object-cover transition-opacity duration-300",
+                              modalDesktopReady[index]
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                        </ModalDesktopSlideFrame>
+                      </motion.div>
                     </div>
                   ))}
                 </motion.div>
@@ -381,32 +503,30 @@ const Videos: React.FC<VideosProps> = ({ data, isReviews }) => {
                   className="absolute right-0 top-0 w-[30%] h-full z-20 bg-transparent"
                 />
 
-                <video
-                  key={activeVideo.id}
-                  ref={activeVideoRef}
-                  src={`https://interesnoitochka.ru/api/v1/videos/video/${activeVideo.id}/hls/playlist.m3u8`}
-                  poster={activeVideo.poster}
-                  autoPlay
-                  loop
-                  playsInline
-                  onLoadedData={() => setIsVideoLoading(false)}
-                  onCanPlay={() => setIsVideoLoading(false)}
-                  onWaiting={() => setIsVideoLoading(true)}
-                  onMouseDown={() => activeVideoRef.current?.pause()}
-                  onMouseUp={() => activeVideoRef.current?.play()}
-                  onMouseLeave={() => activeVideoRef.current?.play()}
-                  onTouchStart={() => activeVideoRef.current?.pause()}
-                  onTouchEnd={() => activeVideoRef.current?.play()}
-                  className="rounded-xl w-full object-contain select-none"
-                />
-
-                {isVideoLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <div className="animate-pulse">
-                      <Logo color="white" alwaysEnabled />
-                    </div>
-                  </div>
-                )}
+                <div className="relative w-full max-w-full">
+                  {isVideoLoading && <ModalTouchVideoSkeleton />}
+                  <video
+                    key={activeVideo.id}
+                    ref={activeVideoRef}
+                    src={`https://interesnoitochka.ru/api/v1/videos/video/${activeVideo.id}/hls/playlist.m3u8`}
+                    poster={activeVideo.poster}
+                    autoPlay
+                    loop
+                    playsInline
+                    onLoadedData={() => setIsVideoLoading(false)}
+                    onCanPlay={() => setIsVideoLoading(false)}
+                    onWaiting={() => setIsVideoLoading(true)}
+                    onMouseDown={() => activeVideoRef.current?.pause()}
+                    onMouseUp={() => activeVideoRef.current?.play()}
+                    onMouseLeave={() => activeVideoRef.current?.play()}
+                    onTouchStart={() => activeVideoRef.current?.pause()}
+                    onTouchEnd={() => activeVideoRef.current?.play()}
+                    className={cn(
+                      "relative z-[5] w-full rounded-xl object-contain select-none",
+                      isVideoLoading && "opacity-0",
+                    )}
+                  />
+                </div>
               </>
             )}
           </div>
