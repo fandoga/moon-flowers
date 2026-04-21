@@ -47,8 +47,9 @@ export const createLoyalityCard = async (
       [
         {
           tags: null,
+          card_number: params.phone_number,
           phone_number: params.phone_number,
-          contragent_id: 0,
+          contragent_id: params.contragent_id,
           contragent_name: params.contragent_name,
           organization_id,
           created_at: Math.floor(Date.now() / 1000),

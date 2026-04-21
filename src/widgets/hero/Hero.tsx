@@ -8,7 +8,7 @@ import ActionButton from "@/components/ui/action-button";
 
 const Hero = () => {
   return (
-    <section className="relative">
+    <section className="relative overflow-hidden">
       <div className="bg-background relative">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

@@ -51,6 +51,24 @@ export default function CatalogPage() {
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data?.result;
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !categories) return;
+
+    const baseTitle = "Moon Flowers - каталог";
+
+    if (!category) {
+      document.title = baseTitle;
+      return;
+    }
+
+    const selectedCategory = categories.find((c) => c.id === category);
+    if (selectedCategory) {
+      document.title = `${selectedCategory.name} - Moon Flowers`;
+    } else {
+      document.title = baseTitle;
+    }
+  }, [category, categories]);
+
   const effectiveVisibleCategoryIds = useMemo(() => {
     if (!categories?.length || isTouchDevice !== true) return new Set<number>();
     const validIds = new Set(categories.map((c) => c.id));

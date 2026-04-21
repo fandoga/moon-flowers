@@ -123,7 +123,7 @@ const Header = () => {
               </div>
               <AdressModal />
               <div className="flex items-center justify-end gap-4">
-                <div className="hidden xl:flex w-auto 2xl:w-150 gap-4 xl:gap-10 flex justify-end">
+                <div className="hidden xl:flex w-auto 2xl:w-140 gap-4 xl:gap-10 flex justify-between">
                   <p
                     className="cursor-pointer"
                     onClick={() => scrollToSection("stories")}
@@ -152,9 +152,9 @@ const Header = () => {
                 </div>
                 <div className="flex min-w-30 gap-6 items-center justify-end">
                   {total > 0 && (
-                    <div className="bg-gray rounded-lg p-2">
+                    <Link href={"/order"} className="bg-gray rounded-lg p-2">
                       <p>{formatPrice(total)}</p>
-                    </div>
+                    </Link>
                   )}
                   <Link href={"/order"}>
                     <svg

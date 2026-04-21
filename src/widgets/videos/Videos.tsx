@@ -12,7 +12,7 @@ import React, {
   useState,
 } from "react";
 import StarsIcon from "@/components/ui/stars-icon";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   GridVideoSkeleton,
@@ -53,6 +53,9 @@ const Videos: React.FC<VideosProps> = ({
   const [desktopVideoIntrinsic, setDesktopVideoIntrinsic] = useState<
     Record<number, { w: number; h: number }>
   >({});
+
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [isTouchDevice, setIsTouchDevice] = useState(
     typeof window !== "undefined" &&
@@ -178,6 +181,24 @@ const Videos: React.FC<VideosProps> = ({
   useEffect(() => {
     if (!isTouchDevice) return;
 
+    const scrollObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const hasAction = localStorage.getItem("video_swiped_hint");
+            if (!hasAction) {
+              setShowSwipeHint(true);
+            }
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+
+    if (containerRef.current) {
+      scrollObserver.observe(containerRef.current);
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -204,6 +225,7 @@ const Videos: React.FC<VideosProps> = ({
 
     return () => {
       observer.disconnect();
+      scrollObserver.disconnect();
     };
   }, [isTouchDevice, renderedVideos]);
 
@@ -252,17 +274,51 @@ const Videos: React.FC<VideosProps> = ({
     });
   }, [activeIndex, activeVideo, videos, isTouchDevice]);
 
+  const handleUserAction = () => {
+    if (showSwipeHint) {
+      setShowSwipeHint(false);
+      localStorage.setItem("video_swiped_hint", "true");
+    }
+  };
+
   return (
     <>
+      <div
+        ref={containerRef}
+        className="pointer-events-none absolute top-0 left-0 h-full w-full"
+      >
+        <AnimatePresence>
+          {isTouchDevice && showSwipeHint && (
+            <motion.div
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 50, opacity: 0 }}
+              transition={{
+                type: "spring",
+                damping: 20,
+                stiffness: 100,
+                delay: 0.5,
+              }}
+              className="pointer-events-none fixed right-6 top-1/2 z-[3000] -translate-y-1/2 rounded-full bg-white/20 p-2 backdrop-blur-md"
+            >
+              <ChevronRight className="h-10 w-10 text-white" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       {renderedVideos.map((video) => (
         <button
           key={video.id}
+          onScroll={handleUserAction}
+          onTouchMove={handleUserAction}
           onClick={() => {
             const index = videos.findIndex((v) => v.id === video.id);
             setModalDesktopReady({});
             setDesktopVideoIntrinsic({});
             setActiveIndex(index);
             setActiveVideo(video);
+            handleUserAction();
           }}
           className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14] pt-10" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:w-auto sm:max-w-none`}
           aria-label={`Открыть видео: ${video.title}`}
@@ -319,7 +375,7 @@ const Videos: React.FC<VideosProps> = ({
             />
           </div>
           <AnimatePresence>
-            {hoveredVideoId === video.id && (
+            {(isTouchDevice || hoveredVideoId === video.id) && (
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -359,7 +415,7 @@ const Videos: React.FC<VideosProps> = ({
 
       {activeVideo && (
         <div
-          className="fixed inset-0 z-2000 bg-black/90 backdrop-blur-xl flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[2000] bg-black/90 backdrop-blur-xl flex items-center justify-center overflow-hidden"
           onClick={closeModal}
         >
           <button

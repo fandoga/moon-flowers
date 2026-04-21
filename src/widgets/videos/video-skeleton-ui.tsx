@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import Logo from "@/components/ui/logo";
 
 /** Скелетон под область превью в сетке (внутри кнопки-карточки). */
 export function GridVideoSkeleton({ className }: { className?: string }) {
@@ -65,19 +66,16 @@ export function ModalDesktopSlideFrame({
   );
 }
 
-/** Скелетон в тач-модалке до готовности потока (серый блок по центру). */
+/** Скелетон в тач-модалке до готовности потока (логотип по центру). */
 export function ModalTouchVideoSkeleton({ className }: { className?: string }) {
   return (
     <div
       className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4"
       aria-hidden
     >
-      <Skeleton
-        className={cn(
-          "aspect-video w-full max-w-lg max-h-[min(80vh,90dvh)] rounded-xl bg-skeleton",
-          className,
-        )}
-      />
+      <div className={cn("scale-150 opacity-50", className)}>
+        <Logo color="white" alwaysEnabled />
+      </div>
     </div>
   );
 }

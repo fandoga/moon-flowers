@@ -64,7 +64,7 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
           if (currentCard) return;
           setOpen(true);
         }}
-        className={`${currentCard && "!text-muted-foreground cursor-default !bg-gray !border-none"} ${simple ? "bg-gray" : "group hover:bg-background hover:border-black hover:text-black transition-all border-1 border-black bg-black  text-white"} cursor-pointer h-12 duration-400 flex justify-between items-center  pl-4 rounded-lg p-1 w-full`}
+        className={`${currentCard && "!text-muted-foreground cursor-default !bg-gray !border-none"} ${simple ? "bg-gray" : "group hover:bg-background hover:border-black hover:text-black transition-all border-1 border-black bg-black  text-white"} cursor-pointer h-12 duration-400 flex justify-between items-center px-4 rounded-lg p-1 w-full`}
       >
         {" "}
         {hydrated && currentCard
