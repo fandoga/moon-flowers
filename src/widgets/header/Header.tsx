@@ -109,10 +109,30 @@ const Header = () => {
               <Link href="/" className="flex items-center scale-115 ">
                 <Logo />
               </Link>
-              <div className="flex items-center cursor-pointer">
-                <LoyalitiModal simple />
-                <div className="min-w-14 px-2 text-center font-semibold h-12 bg-gray rounded-lg overflow-hidden">
-                  <div className="relative h-full flex items-center justify-center gap-[1px]">
+              <div className="flex items-center cursor-pointer relative bg-gray rounded-lg overflow-hidden h-12">
+                {/* Прогресс бар */}
+                <motion.div
+                  className="absolute inset-0 bg-red-200 origin-left"
+                  initial={{ scaleX: 0 }}
+                  animate={{
+                    scaleX: Math.min(
+                      (parseInt(pointDigits.join("")) || 0) / 500,
+                      1,
+                    ),
+                  }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  style={{
+                    opacity: 0.6,
+                    transformOrigin: "left",
+                  }}
+                />
+
+                {/* Контент поверх прогресс бара */}
+                <div className="relative flex items-center z-1000 h-full">
+                  <div>
+                    <LoyalitiModal simple />
+                  </div>
+                  <div className="text-center rounded-lg font-semibold flex px-3 h-12 items-center justify-center gap-[1px]">
                     {!isPointsReady
                       ? "0"
                       : pointDigits.map((digit, index) => (
@@ -193,7 +213,31 @@ const Header = () => {
               >
                 Написать в Max
               </Link>
-              <div className="min-w-20 flex scale-90 scale-100 justify-between items-center">
+              <div className="min-w-20 flex scale-90 scale-100 justify-between items-center gap-2">
+                <div className="min-w-20 px-2 text-center font-semibold h-8 bg-gray rounded-lg overflow-hidden relative">
+                  <motion.div
+                    className="absolute inset-0 bg-green-400 origin-left"
+                    initial={{ scaleX: 0 }}
+                    animate={{
+                      scaleX: Math.min(
+                        (parseInt(pointDigits.join("")) || 0) / 500,
+                        1,
+                      ),
+                    }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    style={{
+                      opacity: 0.5,
+                      transformOrigin: "left",
+                    }}
+                  />
+                  <div className="relative h-full flex items-center justify-center z-10 text-sm">
+                    {!isPointsReady
+                      ? "0"
+                      : pointDigits.map((digit, index) => (
+                          <RollingDigit key={index} digit={digit} />
+                        ))}
+                  </div>
+                </div>
                 <Link href={"/order"}>
                   <svg
                     width="25"

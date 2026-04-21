@@ -165,3 +165,9 @@ input[type="search"] {
 .p {
   @apply sm:text-lg sm:w-full md:text-xl text-left lg:text-2xl;
 }
+
+@media (min-width: 86rem) {
+  .lxl\:max-w-70 {
+    max-width: calc(var(--spacing) * 70);
+  }
+}
