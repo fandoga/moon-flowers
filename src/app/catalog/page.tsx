@@ -45,11 +45,12 @@ const itemVariants = {
 export default function CatalogPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [category, setCategory] = useState<number | undefined>(() => {
+  const category = useMemo(() => {
     const v = searchParams.get("category");
     return v ? Number(v) : undefined;
-  });
-  const [isTouchDevice, setIsTouchDevice] = useState<boolean>();
+  }, [searchParams]);
+
+  const [isTouchDevice, setIsTouchDevice] = useState<boolean | undefined>(undefined);
   const [visibleCategoryIds, setVisibleCategoryIds] = useState<Set<number>>(
     () => new Set(),
   );
@@ -58,22 +59,12 @@ export default function CatalogPage() {
   const categories = categoriesQuery.data?.result;
 
   useEffect(() => {
-    if (typeof window === "undefined" || !categories) return;
-
+    if (!categories) return;
     const baseTitle = "Moon Flowers - каталог";
-
-    if (!category) {
-      document.title = baseTitle;
-      return;
-    }
-
-    const selectedCategory = categories.find((c) => c.id === category);
-    if (selectedCategory) {
-      document.title = `${selectedCategory.name} - Moon Flowers`;
-    } else {
-      document.title = baseTitle;
-    }
-  }, [category, categories]);
+    if (!category) { document.title = baseTitle; return; }
+    const cat = categories.find((c) => c.id === category);
+    document.title = cat ? `${cat.name} - Moon Flowers` : baseTitle;
+  }, [category, categories, searchParams]);
 
   const effectiveVisibleCategoryIds = useMemo(() => {
     if (!categories?.length || isTouchDevice !== true) return new Set<number>();
@@ -179,7 +170,7 @@ export default function CatalogPage() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  if (categoriesQuery.isLoading) {
+  if (categoriesQuery.isLoading || isTouchDevice === undefined) {
     return <FullScreenLoader />;
   }
 
@@ -196,7 +187,20 @@ export default function CatalogPage() {
           <motion.h1 variants={itemVariants} className="h !mb-0">
             Каталог
           </motion.h1>
-          <Categories setter={(id) => { setCategory(id); const params = new URLSearchParams(searchParams.toString()); if (id) params.set("category", String(id)); else params.delete("category"); router.replace(`/catalog?${params.toString()}`, { scroll: false }); }} />
+          <Categories
+            setter={(id) => {
+              const params = new URLSearchParams(searchParams.toString());
+              if (id) params.set("category", String(id));
+              else params.delete("category");
+              router.replace(`/catalog?${params.toString()}`, { scroll: false });
+              const cat = categories?.find((c) => c.id === id);
+              setTimeout(() => {
+                document.title = cat
+                  ? `${cat.name} - Moon Flowers`
+                  : "Moon Flowers - каталог";
+              });
+            }}
+          />
           <motion.div variants={itemVariants}>
             <Suspense
               fallback={

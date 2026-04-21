@@ -70,7 +70,7 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
       setItems([]);
       setCanLoadMore(true);
     }, 0);
-  }, [query, perPage]);
+  }, [query, perPage, category]);
 
   useEffect(() => {
     if (!received.length) {

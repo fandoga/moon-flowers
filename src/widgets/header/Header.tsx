@@ -31,7 +31,7 @@ const readCart = (): LocalCart => {
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isReady: isPointsReady, pointDigits } = useBonusCounter();
+  const { isReady: isPointsReady, pointDigits, isMaxed } = useBonusCounter();
   const router = useRouter();
   const pathname = usePathname();
   // Инициализируем всегда пустой корзиной на сервере и первом клиентском рендере
@@ -101,7 +101,9 @@ const Header = () => {
   return (
     <>
       {/* ── Main header bar ── */}
-      <div className="relative bg-transparent top-0">
+      <div
+        className="relative bg-transparent top-0"
+      >
         <header className="px-0 lg:px-12 max-w-[1740px] mx-auto overscroll-y-contain">
           <div className=" container mx-auto px-4 lg:px-0">
             {/* Desktop layout */}
