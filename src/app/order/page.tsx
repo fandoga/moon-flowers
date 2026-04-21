@@ -22,6 +22,7 @@ import CartItemsList from "../../widgets/order/CartItemsList";
 import RecipientForm from "../../widgets/order/RecipientForm";
 import DeliveryForm from "../../widgets/order/DeliveryForm";
 import OrderSummary from "../../widgets/order/OrderSummary";
+import LoyalitiModal from "@/widgets/loyaliti-modal/LoyalitiModal";
 
 /**
  * Главная страница оформления заказа
@@ -298,7 +299,7 @@ export default function OrderPage() {
             />
 
             {/* Форма получателя и доставка */}
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-x-4 gap-y-2">
               <RecipientForm
                 activeInput={activeInput}
                 setActiveInput={setActiveInput}
@@ -331,6 +332,7 @@ export default function OrderPage() {
                 deliveryPreferSoon={deliveryPreferSoon}
                 setDeliveryPreferSoon={setDeliveryPreferSoon}
               />
+              <LoyalitiModal phone={phone} name={name} />
             </section>
           </div>
 

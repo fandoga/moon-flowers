@@ -30,6 +30,8 @@ export const useLoyalityCardData = () => {
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
   const [searchPhone, setSearchPhone] = useState<string | undefined>(undefined);
 
+  const MAX_POINTS = 500;
+
   const { data, isLoading } = useLoyalityCards(searchPhone);
   const createCardMutation = useCreateLoyalityCard();
   const createBalanceMutation = useAddLoyalityTransactionAccrual();
@@ -38,11 +40,11 @@ export const useLoyalityCardData = () => {
   useEffect(() => {
     setTimeout(() => {
       setEscrow(0);
-      setPoints(readLogoPoints());
+      setPoints(Math.min(readLogoPoints(), MAX_POINTS));
     });
 
     const unsubscribe = subscribeLogoPoints((nextPoints) => {
-      setPoints(nextPoints);
+      setPoints(Math.min(nextPoints, MAX_POINTS));
     });
 
     return () => {
@@ -103,7 +105,6 @@ export const useLoyalityCardData = () => {
     },
     [data],
   );
-
   /**
    * Синхронизировать баланс карты с локальными баллами!
    */
@@ -186,7 +187,7 @@ export const useLoyalityCardData = () => {
 
       throw new Error(result?.error || "Ошибка при создании карты лояльности");
     },
-    [findExistingCard, createCardMutation, syncBalance, data, isLoading],
+    [createCardMutation, syncBalance],
   );
 
   const balanceEscrow = useCallback(

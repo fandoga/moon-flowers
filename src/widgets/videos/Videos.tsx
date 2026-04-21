@@ -369,7 +369,7 @@ const Videos: React.FC<VideosProps> = ({
               onLoadedData={() => markGridVideoReady(video.id)}
               onCanPlay={() => markGridVideoReady(video.id)}
               className={cn(
-                "relative z-[2] h-full w-full cursor-pointer object-cover transition-opacity duration-300",
+                "relative z-[2] h-full w-full cursor-pointer rounded-2xl object-cover transition-opacity duration-300",
                 gridVideoReady[video.id] ? "opacity-100" : "opacity-0",
               )}
             />

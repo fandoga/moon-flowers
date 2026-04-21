@@ -43,8 +43,8 @@ const Logo: React.FC<LogoProps> = ({
     }
 
     const timer = window.setInterval(() => {
-      const next = readLogoPoints() + POINTS_PER_TICK;
-      writeLogoPoints(next);
+      const currentPoints = readLogoPoints();
+      writeLogoPoints(currentPoints + POINTS_PER_TICK);
     }, TICK_MS);
 
     return () => {

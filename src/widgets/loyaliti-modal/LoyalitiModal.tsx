@@ -64,7 +64,7 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
           if (currentCard) return;
           setOpen(true);
         }}
-        className={`${currentCard && "!text-muted-foreground cursor-default !bg-gray !border-none"} ${simple ? "bg-gray" : "group hover:bg-background hover:border-black hover:text-black transition-all border-1 border-black bg-black  text-white"} cursor-pointer h-12 duration-400 flex justify-between items-center px-4 rounded-lg p-1 w-full`}
+        className={`${currentCard && "!text-muted-foreground !cursor-default !bg-gray !border-none"} ${simple ? "bg-gray py-1" : "group hover:bg-background col-span-2 hover:border-black hover:text-black transition-all border-1 border-black bg-black text-white py-8"} cursor-pointer h-12 duration-400 flex justify-between items-center pl-4 pr-1 rounded-lg w-full`}
       >
         {" "}
         {hydrated && currentCard
@@ -76,10 +76,10 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
             : "Подключить карту лояльности"}
         {!simple && (
           <div
-            className={`flex justify-center ${currentCard ? "!text-muted-foreground !bg-gray" : "group-hover:bg-black group-hover:text-white"} items-center duration-400 text-black bg-white w-10 h-10 rounded-lg`}
+            className={`flex justify-center items-center ${currentCard ? "!text-muted-foreground !bg-gray" : "group-hover:bg-black group-hover:text-white"} duration-400 text-black bg-white w-14 h-14 rounded-lg`}
           >
             {currentCard ? (
-              <Check />
+              <Check size={24} />
             ) : (
               <svg
                 width="14"

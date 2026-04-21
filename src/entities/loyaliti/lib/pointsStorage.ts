@@ -1,5 +1,7 @@
 const LOGO_POINTS_KEY = "logo_points";
+const LOGO_POINTS_SIGN_KEY = "logo_points_sign";
 const LOGO_POINTS_EVENT = "logo-points-updated";
+const SECRET_SALT = "moon_flowers_secret_2026";
 
 const normalizePoints = (value: unknown): number => {
   const numeric = typeof value === "number" ? value : Number(value);
@@ -7,22 +9,58 @@ const normalizePoints = (value: unknown): number => {
   return Math.max(0, Math.floor(numeric));
 };
 
+// Простая подпись данных
+const generateSignature = (points: number): string => {
+  // Используем простой хеш, не требуем криптостойкость, достаточно чтобы нельзя было просто изменить руками
+  let hash = 0;
+  const str = `${points}${SECRET_SALT}`;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return String(hash);
+};
+
+const verifyPoints = (points: number, signature: string): boolean => {
+  return generateSignature(points) === signature;
+};
+
 export const readLogoPoints = (): number => {
   if (typeof window === "undefined") return 0;
-  const raw = window.localStorage.getItem(LOGO_POINTS_KEY);
-  return normalizePoints(raw);
+  
+  const rawPoints = window.localStorage.getItem(LOGO_POINTS_KEY);
+  const rawSign = window.localStorage.getItem(LOGO_POINTS_SIGN_KEY);
+  
+  const points = normalizePoints(rawPoints);
+
+  // Если подписи нет или не совпадает - сбрасываем на 0
+  if (!rawSign || !verifyPoints(points, rawSign)) {
+    writeLogoPoints(0);
+    return 0;
+  }
+
+  return points;
 };
 
 export const writeLogoPoints = (nextPoints: number): number => {
   const normalized = normalizePoints(nextPoints);
-  if (typeof window === "undefined") return normalized;
+  
+  // Ограничение на максимальные 500 баллов
+  const clamped = Math.min(normalized, 500);
 
-  window.localStorage.setItem(LOGO_POINTS_KEY, String(normalized));
+  if (typeof window === "undefined") return clamped;
+
+  const signature = generateSignature(clamped);
+
+  window.localStorage.setItem(LOGO_POINTS_KEY, String(clamped));
+  window.localStorage.setItem(LOGO_POINTS_SIGN_KEY, signature);
+
   window.dispatchEvent(
-    new CustomEvent(LOGO_POINTS_EVENT, { detail: { points: normalized } }),
+    new CustomEvent(LOGO_POINTS_EVENT, { detail: { points: clamped } }),
   );
 
-  return normalized;
+  return clamped;
 };
 
 export const subscribeLogoPoints = (
