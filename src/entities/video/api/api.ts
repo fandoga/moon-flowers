@@ -10,7 +10,7 @@ export const getMyVideos = async (
       {
         params: {
           ...params,
-          user_chatting_nickname: params?.user_chatting_nickname ?? "ohystal",
+          user_chatting_nickname: params?.user_chatting_nickname,
         },
       },
     );

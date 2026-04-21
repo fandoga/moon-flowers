@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useQueries } from "@tanstack/react-query";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ProductsCatalog from "@/widgets/products-catalog/ProductsCatalog";
 import {
   getMpProducts,
@@ -42,7 +43,12 @@ const itemVariants = {
 };
 
 export default function CatalogPage() {
-  const [category, setCategory] = useState<number | undefined>();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [category, setCategory] = useState<number | undefined>(() => {
+    const v = searchParams.get("category");
+    return v ? Number(v) : undefined;
+  });
   const [isTouchDevice, setIsTouchDevice] = useState<boolean>();
   const [visibleCategoryIds, setVisibleCategoryIds] = useState<Set<number>>(
     () => new Set(),
@@ -190,7 +196,7 @@ export default function CatalogPage() {
           <motion.h1 variants={itemVariants} className="h !mb-0">
             Каталог
           </motion.h1>
-          <Categories setter={setCategory} />
+          <Categories setter={(id) => { setCategory(id); const params = new URLSearchParams(searchParams.toString()); if (id) params.set("category", String(id)); else params.delete("category"); router.replace(`/catalog?${params.toString()}`, { scroll: false }); }} />
           <motion.div variants={itemVariants}>
             <Suspense
               fallback={

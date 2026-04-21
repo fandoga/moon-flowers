@@ -45,6 +45,7 @@ export default function OrderPage() {
   const [apartment, setApartment] = useState("");
   const [entrance, setEntrance] = useState("");
   const [floor, setFloor] = useState("");
+  const [comment, setComment] = useState("");
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [suggOpen, setSuggOpen] = useState(false);
   const [activeInput, setActiveInput] = useState<"From" | "To">("From");
@@ -238,6 +239,7 @@ export default function OrderPage() {
         apartment.trim() && `кв. ${apartment.trim()}`,
         entrance.trim() && `подъезд ${entrance.trim()}`,
         floor.trim() && `этаж ${floor.trim()}`,
+        comment.trim(),
       ]
         .filter(Boolean)
         .join(". "),
@@ -328,11 +330,12 @@ export default function OrderPage() {
                 date={date}
                 setDate={setDate}
                 time={time}
+                setComment={setComment}
+                comment={comment}
                 setTime={setTime}
                 deliveryPreferSoon={deliveryPreferSoon}
                 setDeliveryPreferSoon={setDeliveryPreferSoon}
               />
-              <LoyalitiModal phone={phone} name={name} />
             </section>
           </div>
 

@@ -79,6 +79,7 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
             placeholder={"+7 (000) 000-00-00"}
             type="tel"
           />
+          <LoyalitiModal phone={phone} name={name} />
         </div>
       </div>
     </div>
