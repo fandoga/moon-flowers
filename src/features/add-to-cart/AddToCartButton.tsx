@@ -185,7 +185,7 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     <div
       className={`flex items-center h-[40px] sm:h-[48px] w-[100px] sm:w-[140px] ${className}`}
     >
-      <div className="flex w-full h-full items-center justify-between rounded-sm overflow-hidden">
+      <div className="flex w-full h-full items-center justify-between rounded-sm ">
         <button
           type="button"
           onClick={handleDecrement}
