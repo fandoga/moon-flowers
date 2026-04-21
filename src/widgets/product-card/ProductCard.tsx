@@ -7,11 +7,13 @@ import { formatPrice } from "@/lib/utils/formatPrice";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import ProductImgModal from "./ProductImgModal";
+import { useEffect, useState } from "react";
 
 const ProductCard: React.FC<{
   product: MpProduct;
   displayOnHover?: boolean;
 }> = ({ product, displayOnHover = false }) => {
+  const [ready, setReady] = useState<boolean>(false);
   const router = useRouter();
   const productId = Number(product.id);
 
@@ -22,7 +24,15 @@ const ProductCard: React.FC<{
       .find((url) => Boolean(url));
   const price = Number(product.prices?.[0].price) || product.price || 0;
 
-  if (!imageUrl || imageUrl === "/placeholder.jpg") {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setReady(imageUrl !== "/placeholder.jpg");
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [imageUrl]);
+
+  if (!ready || !imageUrl) {
     return (
       <div
         role="button"

@@ -6,7 +6,7 @@ import { Menu, Store, X } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import AdressModal from "../adress-modal/AdressModal";
 import LoyalitiModal from "../loyaliti-modal/LoyalitiModal";
-import { LocalCart } from "@/app/order/page";
+import { LocalCart } from "@/entities/order/hooks/useCart";
 import { formatPrice } from "@/lib/utils/formatPrice";
 
 import { useBonusCounter } from "@/components/ui/bonus-counter/useBonusCounter";
@@ -151,9 +151,11 @@ const Header = () => {
                   <Link href={"/catalog"}>Каталог</Link>
                 </div>
                 <div className="flex min-w-30 gap-6 items-center justify-end">
-                  <div className="bg-gray rounded-lg p-2">
-                    {total > 0 && <p>{formatPrice(total)}</p>}
-                  </div>
+                  {total > 0 && (
+                    <div className="bg-gray rounded-lg p-2">
+                      <p>{formatPrice(total)}</p>
+                    </div>
+                  )}
                   <Link href={"/order"}>
                     <svg
                       width="25"

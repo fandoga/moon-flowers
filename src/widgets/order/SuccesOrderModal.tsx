@@ -27,6 +27,7 @@ const SuccesOrderModal: React.FC<SuccesOrderModalProps> = ({
             </p>
             <ActionButton
               onClick={() => setOpen(false)}
+              src="/"
               className="cursor-pointer"
               text="Вернутся к покупкам"
             />
