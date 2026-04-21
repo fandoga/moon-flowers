@@ -13,11 +13,11 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-interface ProductPageProps {
+interface ProductProps {
   enrichedProduct: MpProduct;
 }
 
-export default function ProductPage({ enrichedProduct }: ProductPageProps) {
+export default function Product({ enrichedProduct }: ProductProps) {
   const [activeImage, setActiveImage] = useState(0);
   const [cartClicked, setCartClicked] = useState(false);
   const [openImg, setOpenImg] = useState(false);
@@ -90,7 +90,7 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
           className="flex flex-col items-start md:items-center md:items-start"
         >
           <div>
-            <h1 className="h text-4xl md:text-5xl font-medium">
+            <h1 className="h text-4xl md:text-5xl max-w-80 font-medium">
               {enrichedProduct?.name}
             </h1>
 
@@ -147,15 +147,6 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
                   </svg>
                 )}
               </div>
-              {/*  Скрытая кнопка остается для синхронизации состояния */}
-              <AddToCartButton
-                productId={enrichedProduct?.id}
-                productName={enrichedProduct?.name}
-                imageUrl={productPhotos?.[0]}
-                price={enrichedProduct?.price}
-                hideControls
-                className="absolute w-60 opacity-0 pointer-events-none"
-              />
             </div>
 
             <div className="text-base leading-relaxed mb-8 pt-8 space-y-3">

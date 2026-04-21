@@ -150,7 +150,7 @@ const Header = () => {
                   </p>
                   <Link href={"/catalog"}>Каталог</Link>
                 </div>
-                <div className="flex min-w-30 gap-6 items-center justify-end">
+                <div className="flex z-100 min-w-30 gap-6 items-center justify-end">
                   {total > 0 && (
                     <Link href={"/order"} className="bg-gray rounded-lg p-2">
                       <p>{formatPrice(total)}</p>

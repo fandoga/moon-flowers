@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import DesktopProductPage from "@/widgets/product-page/ProductPage";
+import Product from "@/widgets/product/Product";
 import {
   getMpProductById,
   getPicturesListById,
@@ -92,7 +92,7 @@ export default async function ProductPage({ params }: PageProps) {
   return (
     <main className="md:py-10 bg-background min-h-screen">
       <main className="md:py-12 bg-background max-w-[1440px] m-auto">
-        <DesktopProductPage enrichedProduct={enrichedProduct} />
+        <Product enrichedProduct={enrichedProduct} />
       </main>
     </main>
   );
