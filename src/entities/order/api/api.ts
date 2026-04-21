@@ -135,6 +135,34 @@ export const createContragent = async (
   }
 };
 
+export const createOrGetContragent = async (
+  params: CreateContragentRequest,
+): Promise<CreateContragentResponse> => {
+  if (!params.phone) {
+    return {
+      success: false,
+      contragent_id: "",
+      error: "Некорректный номер телефона",
+    };
+  }
+
+  const targetPhone = normalizePhone(params.phone);
+  if (!targetPhone) {
+    return {
+      success: false,
+      contragent_id: "",
+      error: "Некорректный номер телефона",
+    };
+  }
+
+  const existingId = await findContragentByPhone(targetPhone);
+  if (existingId) {
+    return { success: true, contragent_id: String(existingId) };
+  }
+
+  return createContragent(params);
+};
+
 const normalizePhone = (phone: string) => phone.replace(/\D/g, "");
 
 const extractContragents = (data: unknown): ContragentItem[] => {

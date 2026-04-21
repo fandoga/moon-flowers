@@ -16,7 +16,7 @@ import {
   subscribeLoyalityCard,
   writeStoredLoyalityCard,
 } from "@/entities/loyaliti/lib/cardStorage";
-import { createContragent } from "@/entities/order/api/api";
+import { createOrGetContragent } from "@/entities/order/api/api";
 
 /**
  * Хук для работы с картой лояльности
@@ -28,8 +28,9 @@ export const useLoyalityCardData = () => {
   const [points, setPoints] = useState<number>();
   const [escrow, setEscrow] = useState<number>();
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
+  const [searchPhone, setSearchPhone] = useState<string | undefined>(undefined);
 
-  const { data, isLoading } = useLoyalityCards();
+  const { data, isLoading } = useLoyalityCards(searchPhone);
   const createCardMutation = useCreateLoyalityCard();
   const createBalanceMutation = useAddLoyalityTransactionAccrual();
 
@@ -70,23 +71,21 @@ export const useLoyalityCardData = () => {
 
   // Обновляем данные когда приходят карты с сервера
   useEffect(() => {
-    if (!data?.result || !currentCard) return;
+    if (!data?.result || !currentCard || pendingCardId) return;
 
     const actualCard = data.result.find((item) => item.id === currentCard.id);
+
     if (actualCard) {
-      setTimeout(() => {
-        setCurrentCard(actualCard);
-        setPendingCardId(null);
-      });
+      // Обновляем карту только если есть реальные изменения
+      if (JSON.stringify(actualCard) !== JSON.stringify(currentCard)) {
+        setTimeout(() => {
+          setCurrentCard(actualCard);
+        });
+      }
       return;
     }
 
-    if (pendingCardId && pendingCardId === currentCard.id) {
-      return;
-    }
-
-    setTimeout(() => setCurrentCard(null));
-    window.localStorage.removeItem(LOYALITY_CARD_KEY);
+    // НИКОГДА НЕ СБРАСЫВАЕМ КАРТУ! Никогда
   }, [data, currentCard, pendingCardId]);
 
   // Сохраняем карту в localStorage при изменении
@@ -138,34 +137,47 @@ export const useLoyalityCardData = () => {
    */
   const createOrGetCard = useCallback(
     async (params: { phone_number: string; contragent_name: string }) => {
-      const existingCard = findExistingCard(parseInt(params.phone_number));
+      // Прямой запрос карты по номеру без ожидания состояния
+      const directResponse = await fetch(
+        `/api/loyality/loyality_cards?phone_number=${encodeURIComponent(params.phone_number)}`,
+      );
+      const directData = await directResponse.json();
 
-      if (existingCard) {
-        console.log("exist");
-        setCurrentCard(existingCard);
-        return existingCard;
+      if (directData?.result && Array.isArray(directData.result)) {
+        const existingCard = directData.result.find(
+          (item: LoyalityCard) =>
+            item.card_number === parseInt(params.phone_number),
+        );
+
+        if (existingCard) {
+          setCurrentCard(existingCard);
+          return existingCard;
+        }
       }
 
-      let contragentId: string | undefined;
+      // Если карта не найдена - создаем новую
 
-      const contragentResp = await createContragent({
+      const contragentResp = await createOrGetContragent({
         name: params.contragent_name,
         phone: params.phone_number,
       });
 
-      if (contragentResp.success && contragentResp.contragent_id) {
-        contragentId = contragentResp.contragent_id;
+      if (!contragentResp.success || !contragentResp.contragent_id) {
+        throw new Error(
+          contragentResp.error || "Не удалось создать контрагента",
+        );
       }
 
       const result = await createCardMutation.mutateAsync({
         ...params,
-        contragent_id: contragentId,
+        contragent_id: parseInt(contragentResp.contragent_id),
         contragent_name: params.contragent_name,
         phone_number: params.phone_number,
       });
 
       if (result && !result.error) {
         const newCard = Array.isArray(result) ? result[0] : result;
+        console.log(result);
         setPendingCardId(newCard.id);
         setCurrentCard(newCard);
         syncBalance(newCard);
@@ -174,7 +186,7 @@ export const useLoyalityCardData = () => {
 
       throw new Error(result?.error || "Ошибка при создании карты лояльности");
     },
-    [findExistingCard, createCardMutation, syncBalance],
+    [findExistingCard, createCardMutation, syncBalance, data, isLoading],
   );
 
   const balanceEscrow = useCallback(

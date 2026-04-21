@@ -32,7 +32,7 @@ export interface LoyalityCardsResponse {
 export interface CreateLoyalityCardRequest {
   contragent_name: string;
   phone_number: string;
-  contragent_id?: string;
+  contragent_id?: number;
 }
 
 export interface CreateLoyalityCardResponse {

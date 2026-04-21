@@ -12,10 +12,10 @@ import {
   LoyalityTransactionsResponse,
 } from "../types/types";
 
-export const useLoyalityCards = () => {
+export const useLoyalityCards = (phone_number?: string) => {
   return useQuery<LoyalityCardsResponse>({
-    queryKey: ["loyality-cards"],
-    queryFn: getLoyalityCards,
+    queryKey: ["loyality-cards", phone_number],
+    queryFn: () => getLoyalityCards(phone_number),
   });
 };
 

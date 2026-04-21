@@ -16,11 +16,13 @@ import {
 } from "../types/types";
 import { tableCrmApi } from "@/shared/api/clients";
 
-export const getLoyalityCards = async (): Promise<LoyalityCardsResponse> => {
+export const getLoyalityCards = async (
+  phone_number?: string,
+): Promise<LoyalityCardsResponse> => {
   try {
     const response = await loyalitiApi.get<LoyalityCardsResponse>(
       "/loyality_cards/",
-      { params: {} },
+      { params: { phone_number } },
     );
 
     return response.data;
