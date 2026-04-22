@@ -16,6 +16,7 @@ interface RecipientFormProps {
   setRecipientName: (value: string) => void;
   recipientPhone: string;
   setRecipientPhone: (value: string) => void;
+  errors?: { name?: boolean; phone?: boolean };
 }
 
 /**
@@ -32,6 +33,7 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
   setRecipientName,
   recipientPhone,
   setRecipientPhone,
+  errors = {},
 }) => {
   const { currentCard } = useLoyalityCardData();
 
@@ -72,7 +74,7 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
                 setRecipientName(e.target.value);
               }
             }}
-            className="bg-gray rounded-lg p-3 w-full"
+            className={`bg-gray rounded-lg p-3 w-full ${activeInput === "From" && errors.name ? "ring-2 ring-red-400" : ""}`}
             placeholder={"Имя"}
             type="text"
           />
@@ -85,7 +87,7 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
                 setRecipientPhone(formatPhone(e.target.value));
               }
             }}
-            className="bg-gray rounded-lg p-3 w-full"
+            className={`bg-gray rounded-lg p-3 w-full ${activeInput === "From" && errors.phone ? "ring-2 ring-red-400" : ""}`}
             placeholder={"+7 (000) 000-00-00"}
             type="tel"
           />

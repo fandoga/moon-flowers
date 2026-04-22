@@ -4,11 +4,13 @@ import React from "react";
 interface SuccesOrderModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  orderId: string;
 }
 
 const SuccesOrderModal: React.FC<SuccesOrderModalProps> = ({
   open,
   setOpen,
+  orderId,
 }) => {
   return (
     <>
@@ -22,7 +24,8 @@ const SuccesOrderModal: React.FC<SuccesOrderModalProps> = ({
             className="bg-background flex flex-col items-center rounded-2xl p-6 md:p-12"
           >
             <h2 className="h !text-center">Спасибо за заказ</h2>
-            <p className="p mb-6">
+            <p className="h !text-center !text-xl">Номер заказа - {orderId}</p>
+            <p className="p my-6">
               Возвращайтесь к нам почаще и дарите близким радость!
             </p>
             <ActionButton
