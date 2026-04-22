@@ -2,17 +2,20 @@ import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/ui/logo";
+import { Loader2 } from "lucide-react";
 
 /** Скелетон под область превью в сетке (внутри кнопки-карточки). */
 export function GridVideoSkeleton({ className }: { className?: string }) {
   return (
     <Skeleton
       className={cn(
-        "pointer-events-none absolute inset-0 z-[1] rounded-2xl bg-skeleton",
+        "pointer-events-none absolute flex items-center justify-center inset-0 z-[1] rounded-2xl bg-skeleton",
         className,
       )}
       aria-hidden
-    />
+    >
+      <Loader2 className="animate-spin" />
+    </Skeleton>
   );
 }
 
@@ -25,11 +28,13 @@ export function ModalDesktopSlideSkeleton({
   return (
     <Skeleton
       className={cn(
-        "pointer-events-none absolute inset-0 z-[1] rounded-[inherit] bg-skeleton",
+        "pointer-events-none absolute inset-0 z-[1] flex items-center justify-center rounded-[inherit] bg-skeleton",
         className,
       )}
       aria-hidden
-    />
+    >
+      <Loader2 className="animate-spin" />
+    </Skeleton>
   );
 }
 

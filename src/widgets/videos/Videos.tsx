@@ -332,7 +332,7 @@ const Videos: React.FC<VideosProps> = ({
             handleUserAction();
           }}
           style={{ display: isVideoVisible(videoIndex) ? undefined : "none" }}
-          className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14] pt-10" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:w-auto sm:max-w-none`}
+          className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14]" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:w-auto sm:max-w-none`}
           aria-label={`Открыть видео: ${video.title}`}
         >
           {isReviews &&
