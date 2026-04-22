@@ -101,9 +101,7 @@ const Header = () => {
   return (
     <>
       {/* ── Main header bar ── */}
-      <div
-        className="relative bg-transparent top-0"
-      >
+      <div className="relative bg-transparent top-0">
         <header className="px-0 lg:px-12 max-w-[1740px] mx-auto overscroll-y-contain">
           <div className=" container mx-auto px-4 lg:px-0">
             {/* Desktop layout */}
@@ -111,30 +109,44 @@ const Header = () => {
               <Link href="/" className="flex items-center scale-115 ">
                 <Logo />
               </Link>
-              <div className="flex items-center cursor-pointer relative bg-gray rounded-lg overflow-hidden h-12">
-                {/* Прогресс бар */}
-                <motion.div
-                  className="absolute inset-0 bg-red-200 origin-left"
-                  initial={{ scaleX: 0 }}
-                  animate={{
-                    scaleX: Math.min(
-                      (parseInt(pointDigits.join("")) || 0) / 500,
-                      1,
-                    ),
-                  }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  style={{
-                    opacity: 0.6,
-                    transformOrigin: "left",
-                  }}
-                />
-
-                {/* Контент поверх прогресс бара */}
-                <div className="relative flex items-center z-1000 h-full">
-                  <div>
+              <div className="flex items-center cursor-pointer h-12">
+                {/* LoyalitiModal с собственным прогресс-баром */}
+                <div className="relative rounded-lg bg-gray overflow-hidden h-12">
+                  <motion.div
+                    className="absolute inset-0 bg-red-200 origin-left"
+                    initial={{ scaleX: 0 }}
+                    animate={{
+                      scaleX: Math.min(
+                        (parseInt(pointDigits.join("")) || 0) / 375,
+                        1,
+                      ),
+                    }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    style={{ opacity: 0.6, transformOrigin: "left" }}
+                  />
+                  <div className="relative z-10 h-full flex items-center">
                     <LoyalitiModal simple />
                   </div>
-                  <div className="text-center rounded-lg font-semibold flex px-3 h-12 items-center justify-center gap-[1px]">
+                </div>
+
+                {/* Счётчик с собственным прогресс-баром */}
+                <div className="relative rounded-lg bg-gray overflow-hidden h-12">
+                  <motion.div
+                    className="absolute inset-0 bg-red-200 origin-left"
+                    initial={{ scaleX: 0 }}
+                    animate={{
+                      scaleX: Math.max(
+                        0,
+                        Math.min(
+                          (parseInt(pointDigits.join("")) || 0) - 375,
+                          125,
+                        ) / 125,
+                      ),
+                    }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    style={{ opacity: 0.6, transformOrigin: "left" }}
+                  />
+                  <div className="relative z-10 text-center font-semibold flex px-3 h-12 items-center justify-center gap-[1px]">
                     {!isPointsReady
                       ? "0"
                       : pointDigits.map((digit, index) => (
@@ -172,7 +184,10 @@ const Header = () => {
                   </p>
                   <Link href={"/catalog"}>Каталог</Link>
                 </div>
-                <div className="flex z-100 min-w-30 gap-6 items-center justify-end">
+                <div
+                  id="cart"
+                  className="flex z-100 min-w-30 gap-6 items-center justify-end"
+                >
                   {total > 0 && (
                     <Link href={"/order"} className="bg-gray rounded-lg p-2">
                       <p>{formatPrice(total)}</p>

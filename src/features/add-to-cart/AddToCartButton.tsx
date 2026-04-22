@@ -58,25 +58,23 @@ const getQuantity = (productId: number) => {
   return cart.items[String(productId)]?.quantity ?? 0;
 };
 
+const getCartPosition = (): { x: number; y: number } => {
+  const el = document.getElementById("cart");
+  if (!el) return { x: window.innerWidth - 50, y: 50 };
+  const rect = el.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+};
+
 // Компонент с летающей иконкой корзины
 const FlyingCartIcon = ({
   isAnimating,
   flyPosition,
+  cartPosition,
 }: {
   isAnimating: boolean;
   flyPosition: { x: number; y: number };
+  cartPosition: { x: number; y: number };
 }) => {
-  const [size, setSize] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    function onResize() {
-      setSize({ width: window.innerWidth, height: window.innerHeight });
-    }
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
   if (typeof window === "undefined" || !isAnimating) return null;
 
   return createPortal(
@@ -90,17 +88,17 @@ const FlyingCartIcon = ({
           opacity: 1,
         }}
         animate={{
-          x: window.innerWidth - (size.width <= 1280 ? 210 : 90),
-          y: window.innerHeight - 1250,
+          x: cartPosition.x + 30,
+          y: cartPosition.y - 12,
           scale: 0.5,
           opacity: 0.8,
           rotate: 360,
         }}
         transition={{
           type: "spring",
-          stiffness: 100,
-          damping: 24,
-          duration: 1.8,
+          stiffness: 140,
+          damping: 30,
+          duration: 2,
           ease: "easeInOut",
         }}
         className="fixed pointer-events-none z-50"
@@ -131,6 +129,7 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
   const [hasClicked, setClicked] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [flyPosition, setFlyPosition] = useState({ x: 0, y: 0 });
+  const [cartPosition, setCartPosition] = useState({ x: 0, y: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const syncFromStorage = useCallback(() => {
@@ -198,10 +197,11 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
           x: buttonRect.left + buttonRect.width / 2,
           y: buttonRect.top + buttonRect.height / 2,
         });
+        setCartPosition(getCartPosition());
         setIsAnimating(true);
       }
 
-      setTimeout(() => setIsAnimating(false), 1000);
+      setTimeout(() => setIsAnimating(false), 2000);
     },
     [quantity, updateQuantity],
   );
@@ -231,7 +231,11 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
         disabled={isUpdating || hasClicked || quantity >= MAX_QUANTITY}
         className={`${className} cursor-pointer bg-gray rounded-lg p-2 w-12 h-12 flex items-center justify-center relative overflow-visible`}
       >
-        <FlyingCartIcon isAnimating={isAnimating} flyPosition={flyPosition} />
+        <FlyingCartIcon
+          isAnimating={isAnimating}
+          flyPosition={flyPosition}
+          cartPosition={cartPosition}
+        />
 
         <div
           className={`absolute z-10 ${hasClicked ? "opacity-100" : "opacity-0"} duration-300 transition-all`}

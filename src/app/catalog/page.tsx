@@ -42,7 +42,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-export default function CatalogPage() {
+function CatalogPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const category = useMemo(() => {
@@ -50,7 +50,9 @@ export default function CatalogPage() {
     return v ? Number(v) : undefined;
   }, [searchParams]);
 
-  const [isTouchDevice, setIsTouchDevice] = useState<boolean | undefined>(undefined);
+  const [isTouchDevice, setIsTouchDevice] = useState<boolean | undefined>(
+    undefined,
+  );
   const [visibleCategoryIds, setVisibleCategoryIds] = useState<Set<number>>(
     () => new Set(),
   );
@@ -61,7 +63,10 @@ export default function CatalogPage() {
   useEffect(() => {
     if (!categories) return;
     const baseTitle = "Moon Flowers - каталог";
-    if (!category) { document.title = baseTitle; return; }
+    if (!category) {
+      document.title = baseTitle;
+      return;
+    }
     const cat = categories.find((c) => c.id === category);
     document.title = cat ? `${cat.name} - Moon Flowers` : baseTitle;
   }, [category, categories, searchParams]);
@@ -192,7 +197,9 @@ export default function CatalogPage() {
               const params = new URLSearchParams(searchParams.toString());
               if (id) params.set("category", String(id));
               else params.delete("category");
-              router.replace(`/catalog?${params.toString()}`, { scroll: false });
+              router.replace(`/catalog?${params.toString()}`, {
+                scroll: false,
+              });
               const cat = categories?.find((c) => c.id === id);
               setTimeout(() => {
                 document.title = cat
@@ -221,5 +228,13 @@ export default function CatalogPage() {
       items={filteredCategories}
       onCategoryVisible={onCategoryVisible}
     />
+  );
+}
+
+export default function CatalogPage() {
+  return (
+    <Suspense fallback={<FullScreenLoader />}>
+      <CatalogPageInner />
+    </Suspense>
   );
 }
