@@ -21,6 +21,8 @@ export default function Product({ enrichedProduct }: ProductProps) {
   const [cartClicked, setCartClicked] = useState(false);
   const [openImg, setOpenImg] = useState(false);
   const [width, setWidth] = useState<number>();
+  const [mainLoaded, setMainLoaded] = useState(false);
+  const [thumbLoaded, setThumbLoaded] = useState<Record<number, boolean>>({});
 
   function handleWindowSizeChange() {
     setWidth(window.innerWidth);
@@ -33,6 +35,10 @@ export default function Product({ enrichedProduct }: ProductProps) {
       window.removeEventListener("resize", handleWindowSizeChange);
     };
   }, []);
+
+  useEffect(() => {
+    setMainLoaded(false);
+  }, [activeImage]);
 
   const productPhotos = useMemo(() => {
     const p = enrichedProduct as
@@ -54,14 +60,18 @@ export default function Product({ enrichedProduct }: ProductProps) {
             {/* Основное изображение */}
             <div
               onClick={() => setOpenImg(true)}
-              className="flex-1 relative aspect-square rounded-3xl overflow-hidden"
+              className="flex-1 relative aspect-square rounded-3xl overflow-hidden bg-skeleton"
             >
+              {!mainLoaded && (
+                <div className="absolute inset-0 bg-skeleton animate-pulse rounded-3xl z-10" />
+              )}
               <Image
                 src={productPhotos[activeImage] || productPhotos[0] || ""}
                 alt={enrichedProduct.name}
                 fill
-                className="cursor-pointer object-cover"
+                className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
                 priority
+                onLoad={() => setMainLoaded(true)}
               />
             </div>
             {/* Галерея миниатюр */}
@@ -70,14 +80,20 @@ export default function Product({ enrichedProduct }: ProductProps) {
                 <button
                   key={index}
                   onClick={() => setActiveImage(index)}
-                  className={`w-16 h-16 rounded-xl overflow-hidden transition-all border-transparent opacity-70 hover:opacity-100`}
+                  className="relative w-16 h-16 rounded-xl overflow-hidden transition-all border-transparent opacity-70 hover:opacity-100 bg-skeleton"
                 >
+                  {!thumbLoaded[index] && (
+                    <div className="absolute inset-0 bg-skeleton animate-pulse rounded-xl z-10" />
+                  )}
                   <Image
                     src={img}
                     alt={`Фото ${index + 1}`}
                     width={64}
                     height={64}
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover transition-opacity duration-300 ${thumbLoaded[index] ? "opacity-100" : "opacity-0"}`}
+                    onLoad={() =>
+                      setThumbLoaded((prev) => ({ ...prev, [index]: true }))
+                    }
                   />
                 </button>
               ))}
@@ -101,10 +117,8 @@ export default function Product({ enrichedProduct }: ProductProps) {
 
             <div
               onClick={() => {
-                // При клике сразу меняем состояние на нашей кнопке
                 setCartClicked(true);
 
-                // Напрямую вызываем логику добавления в корзину как это делает внутренняя кнопка
                 const cart = JSON.parse(
                   localStorage.getItem("cart_local") || '{"items":{}}',
                 );

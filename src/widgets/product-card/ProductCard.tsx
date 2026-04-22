@@ -6,33 +6,18 @@ import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { formatPrice } from "@/lib/utils/formatPrice";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import ProductImgModal from "../product/ProductImgModal";
-import { useEffect, useState } from "react";
 
 const ProductCard: React.FC<{
   product: MpProduct;
   displayOnHover?: boolean;
 }> = ({ product, displayOnHover = false }) => {
-  const [ready, setReady] = useState<boolean>(false);
   const router = useRouter();
   const productId = Number(product.id);
 
-  const imageUrl =
-    product.images[0] ||
-    [1, 2, 3, 4]
-      .map((index) => product.photos?.[index])
-      .find((url) => Boolean(url));
-  const price = Number(product.prices?.[0].price) || product.price || 0;
+  const imageUrl = product.images?.[0] || product.photos?.find(Boolean);
+  const price = Number(product.prices?.[0]?.price) || product.price || 0;
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setReady(imageUrl !== "/placeholder.jpg");
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [imageUrl]);
-
-  if (!ready || !imageUrl) {
+  if (!imageUrl || imageUrl === "/placeholder.jpg") {
     return (
       <div
         role="button"
@@ -56,21 +41,21 @@ const ProductCard: React.FC<{
         router.push(`/catalog/${productId}`);
       }}
     >
-      <div className="relative w-full aspect-[5/6] md:h-full">
-        {/* Next Image не настроен на домен tablecrm, поэтому fallback через <img> */}
+      <div className="relative w-full aspect-[5/6] md:h-full bg-skeleton">
         <Image
           fill
-          loading="eager"
+          loading="lazy"
           src={imageUrl}
           alt={product.name ? String(product.name) : "Товар"}
           className="absolute inset-0 w-full h-full object-cover"
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
       </div>
 
       <div
         className={`absolute z-20 p-3 flex flex-col flex-1 transition-all duration-300 ${displayOnHover ? "opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0" : ""}`}
       >
-        <h3 className="bg-gray p-2 rounded-lg mb-3 ">
+        <h3 className="bg-gray p-2 rounded-lg mb-3">
           {product.name ? String(product.name) : "Товар"}
         </h3>
       </div>

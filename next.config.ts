@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
+  compress: true,
   images: {
     remotePatterns: [
       {
@@ -18,7 +18,25 @@ const nextConfig: NextConfig = {
         pathname: "/api/v1/**",
       },
     ],
-    qualities: [25, 50, 75, 80, 85, 90],
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 3600,
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/fonts/(.*)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+    ];
   },
 };
 

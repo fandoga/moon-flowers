@@ -47,7 +47,7 @@ const Logo: React.FC<LogoProps> = ({
   useEffect(() => {
     if (isMaxed && !prevMaxed.current) {
       setTimeout(() => setBurst(true));
-      setTimeout(() => setBurst(false), 2000);
+      setTimeout(() => setBurst(false), 2300);
     }
     prevMaxed.current = isMaxed;
   }, [isMaxed]);

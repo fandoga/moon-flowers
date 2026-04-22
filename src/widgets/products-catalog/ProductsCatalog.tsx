@@ -10,7 +10,6 @@ import {
 } from "@/entities/mp-product";
 import ProductCard from "../product-card/ProductCard";
 import Logo from "@/components/ui/logo";
-import { normalizeCategory } from "@/lib/utils/normalizeCategory";
 
 type ProductsCatalogProps = {
   query: string;
@@ -48,7 +47,7 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
 
   const { data, isLoading, isFetching } = useMpProducts({
     has_photos: true,
-    category: category,
+    category,
     limit: perPage,
     offset,
     search,
@@ -57,84 +56,58 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   const totalCount = data?.count;
   const received = useMemo(() => data?.result ?? [], [data?.result]);
   const visibleItems = loadMore ? items : received;
-  const { enrichedItems, isEnrichmentFetching } =
-    useEnrichedMpProducts(visibleItems);
+  const { enrichedItems, isEnrichmentFetching } = useEnrichedMpProducts(visibleItems);
 
-  const hasMoreByCount =
-    typeof totalCount === "number" ? items.length < totalCount : true;
+  const hasMoreByCount = typeof totalCount === "number" ? items.length < totalCount : true;
   const hasMore = loadMore ? canLoadMore && hasMoreByCount : false;
 
   useEffect(() => {
-    setTimeout(() => {
-      setOffset(0);
-      setItems([]);
-      setCanLoadMore(true);
-    }, 0);
+    setOffset(0);
+    setItems([]);
+    setCanLoadMore(true);
   }, [query, perPage, category]);
 
   useEffect(() => {
     if (!received.length) {
       if (isLoading || isFetching) return;
-
-      if (offset === 0) {
-        setTimeout(() => {
-          setItems([]);
-        });
-      }
-      if (loadMore && offset > 0) {
-        setTimeout(() => setCanLoadMore(false), 0);
-      }
+      if (offset === 0) setItems([]);
+      if (loadMore && offset > 0) setCanLoadMore(false);
       return;
     }
-    setTimeout(() => {
-      setItems((prev) => {
-        if (offset === 0) {
-          if (loadMore) setCanLoadMore(true);
-          return received;
-        }
 
-        const map = new Map<string, MpProduct>();
-        for (const p of prev) map.set(String(p.id), p);
-        const before = map.size;
-        for (const p of received) map.set(String(p.id), p);
-        const next = Array.from(map.values());
-        const appendedUnique = map.size - before;
-
-        if (loadMore && appendedUnique <= 0) {
-          setCanLoadMore(false);
-        }
-
-        return next;
-      });
-    }, 0);
+    setItems((prev) => {
+      if (offset === 0) {
+        if (loadMore) setCanLoadMore(true);
+        return received;
+      }
+      const map = new Map<string, MpProduct>();
+      for (const p of prev) map.set(String(p.id), p);
+      const before = map.size;
+      for (const p of received) map.set(String(p.id), p);
+      const next = Array.from(map.values());
+      if (loadMore && map.size - before <= 0) setCanLoadMore(false);
+      return next;
+    });
   }, [received, offset, loadMore, perPage, isLoading, isFetching]);
 
   useEffect(() => {
-    if (!loadMore) return;
-    if (!inView) return;
-    if (!hasMore) return;
-    if (isLoading || isFetching) return;
-    setTimeout(() => {
-      setOffset((prev) => prev + perPage);
-    }, 0);
+    if (!loadMore || !inView || !hasMore || isLoading || isFetching) return;
+    setOffset((prev) => prev + perPage);
   }, [inView, hasMore, loadMore, perPage, isLoading, isFetching]);
 
   const showLoader = (isLoading || isFetching) && visibleItems.length === 0;
   const showEmptyState = !showLoader && visibleItems.length === 0;
   const desktopCols = perPage < 4 ? perPage : 4;
   const lgColsClass =
-    desktopCols === 1
-      ? "lg:grid-cols-1"
-      : desktopCols === 2
-        ? "lg:grid-cols-2"
-        : desktopCols === 3
-          ? "lg:grid-cols-3"
-          : "lg:grid-cols-4";
+    desktopCols === 1 ? "lg:grid-cols-1"
+    : desktopCols === 2 ? "lg:grid-cols-2"
+    : desktopCols === 3 ? "lg:grid-cols-3"
+    : "lg:grid-cols-4";
 
   return (
     <>
       {showLoader ? (
-        <div className="py-12 bg-baclground h-200 flex justify-center">
+        <div className="py-12 bg-background h-200 flex justify-center">
           <Logo alwaysEnabled />
         </div>
       ) : (
@@ -153,7 +126,7 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
       )}
 
       {loadMore && hasMore && (
-        <div ref={sentinelRef} className="flex justify-center py-10"></div>
+        <div ref={sentinelRef} className="flex justify-center py-10" />
       )}
       {isFetching && visibleItems.length > 0 && loadMore && (
         <div className="w-full flex justify-center h-10 py-10">
@@ -165,12 +138,9 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
           <Logo alwaysEnabled />
         </div>
       )}
-
       {showEmptyState && (
         <div className="w-full min-h-[220px] rounded-xl border border-[#E7E7E7] flex items-center justify-center px-4 text-center">
-          <p
-            className={`text-sm ${data?.error ? "text-red-500" : "text-muted-foreground"}`}
-          >
+          <p className={`text-sm ${data?.error ? "text-red-500" : "text-muted-foreground"}`}>
             {data?.error || "Товары не найдены"}
           </p>
         </div>

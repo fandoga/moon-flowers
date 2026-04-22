@@ -231,30 +231,6 @@ const Header = () => {
                 Написать в Max
               </Link>
               <div className="min-w-20 flex scale-90 scale-100 justify-between items-center gap-2">
-                <div className="min-w-20 px-2 text-center font-semibold h-8 bg-gray rounded-lg overflow-hidden relative">
-                  <motion.div
-                    className="absolute inset-0 bg-green-400 origin-left"
-                    initial={{ scaleX: 0 }}
-                    animate={{
-                      scaleX: Math.min(
-                        (parseInt(pointDigits.join("")) || 0) / 500,
-                        1,
-                      ),
-                    }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    style={{
-                      opacity: 0.5,
-                      transformOrigin: "left",
-                    }}
-                  />
-                  <div className="relative h-full flex items-center justify-center z-10 text-sm">
-                    {!isPointsReady
-                      ? "0"
-                      : pointDigits.map((digit, index) => (
-                          <RollingDigit key={index} digit={digit} />
-                        ))}
-                  </div>
-                </div>
                 <Link href={"/order"}>
                   <svg
                     width="25"

@@ -101,7 +101,7 @@ const CatalogReels: React.FC<CatalogReelsProps> = ({
         >
           <div className="absolute inset-0 w-full h-full">
             <Image
-              className="w-full h-full rounded-2xl object-cover bg-center bg-cover bg-neutral-800"
+              className="w-full h-full rounded-2xl object-cover bg-center bg-cover bg-skeleton"
               fill
               src={item.image || ""}
               alt={item.name || ""}

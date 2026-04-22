@@ -36,24 +36,12 @@ export const useMpProduct = (productId: number | string | null | undefined) => {
   });
 };
 
-import { useState, useEffect } from "react";
 
 export const usePictures = (productId: number | string | null | undefined) => {
-  const [debouncedProductId, setDebouncedProductId] = useState(productId);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedProductId(productId);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [productId]);
-
   return useQuery<Pictures | null>({
-    queryKey: ["mp-product-pictures", debouncedProductId],
-    queryFn: () =>
-      debouncedProductId ? getPicturesById(debouncedProductId) : null,
-    enabled: !!debouncedProductId,
+    queryKey: ["mp-product-pictures", productId],
+    queryFn: () => productId ? getPicturesById(productId) : null,
+    enabled: !!productId,
   });
 };
 

@@ -7,7 +7,7 @@ import { Providers } from "./providers";
 import { Toaster } from "react-hot-toast";
 import localFont from "next/font/local";
 import InitialLoader from "@/widgets/initial-loader.tsx/InitialLoader";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["cyrillic", "latin"],
@@ -27,6 +27,7 @@ const sans = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://moon-flowers.ru"),
   title: {
     default: "Moon Flowers - цветы",
     template: "%s | Moon Flowers - цветы",
@@ -73,10 +74,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  other: {
-    "http-equiv": "Content-Security-Policy",
-    content: "script-src 'self' ...",
-  },
 };
 
 export const viewport: Viewport = {
@@ -100,7 +97,7 @@ export default function RootLayout({
         `}
       >
         <Providers>
-          <SpeedInsights/>
+          <SpeedInsights />
           <InitialLoader>
             <Header />
             <main className="flex-1 w-full max-w-[1640px] mx-auto px-4 sm:px-[40px]">
