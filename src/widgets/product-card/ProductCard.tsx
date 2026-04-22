@@ -6,7 +6,7 @@ import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { formatPrice } from "@/lib/utils/formatPrice";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import ProductImgModal from "./ProductImgModal";
+import ProductImgModal from "../product/ProductImgModal";
 import { useEffect, useState } from "react";
 
 const ProductCard: React.FC<{

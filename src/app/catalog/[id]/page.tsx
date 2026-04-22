@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Product from "@/widgets/product/Product";
 import {
@@ -6,6 +7,7 @@ import {
   getPricesById,
   type MpProduct,
 } from "@/entities/mp-product";
+import { FullScreenLoader } from "@/widgets/initial-loader.tsx/InitialLoader";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -52,11 +54,18 @@ const enrichProduct = async (
   } as MpProduct;
 };
 
-const getEnrichedProduct = async (id: string): Promise<MpProduct | null> => {
+async function EnrichedProduct({ id }: { id: string }) {
   const base = await getMpProductById(id);
-  if (!base) return null;
-  return enrichProduct(id, base);
-};
+  if (!base) {
+    return (
+      <div className="text-xl flex items-center justify-center min-h-[60vh]">
+        Товар не найден
+      </div>
+    );
+  }
+  const enriched = await enrichProduct(id, base);
+  return <Product enrichedProduct={enriched} />;
+}
 
 export async function generateMetadata({
   params,
@@ -79,21 +88,14 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: PageProps) {
   const { id } = await params;
-  const enrichedProduct = await getEnrichedProduct(id);
-
-  if (!enrichedProduct) {
-    return (
-      <main className="py-8 md:py-12 bg-background max-w-[1440px] m-auto min-h-[60vh] flex items-center justify-center">
-        <div className="text-xl">Товар не найден</div>
-      </main>
-    );
-  }
 
   return (
-    <main className="md:py-10 bg-background min-h-screen">
-      <main className="md:py-12 bg-background max-w-[1440px] m-auto">
-        <Product enrichedProduct={enrichedProduct} />
-      </main>
+    <main className="bg-background min-h-screen">
+      <div className="md:py-12 bg-background max-w-[1440px] m-auto">
+        <Suspense fallback={<FullScreenLoader />}>
+          <EnrichedProduct id={id} />
+        </Suspense>
+      </div>
     </main>
   );
 }

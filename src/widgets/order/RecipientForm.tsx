@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import LoyalitiModal from "@/widgets/loyaliti-modal/LoyalitiModal";
 import { formatPhone } from "@/lib/utils/formatPhone";
+import { useLoyalityCardData } from "@/entities/loyaliti";
 
 interface RecipientFormProps {
   activeInput: "From" | "To";
@@ -32,6 +33,15 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
   recipientPhone,
   setRecipientPhone,
 }) => {
+  const { currentCard } = useLoyalityCardData();
+
+  useEffect(() => {
+    if (!currentCard) return;
+    if (!name) setName(currentCard.contragent ?? "");
+    if (!phone) setPhone(formatPhone(String(currentCard.card_number)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCard]);
+
   return (
     <div>
       <h3 className="mb-3">Получатель</h3>

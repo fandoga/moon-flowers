@@ -103,9 +103,18 @@ const Videos: React.FC<VideosProps> = ({
     }, []);
   }, [data]);
 
-  const renderedVideos = isTouchDevice
-    ? videos
-    : videos.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
+  const renderedVideos = videos;
+
+  const isVideoVisible = useCallback(
+    (index: number) => {
+      if (isTouchDevice) return true;
+      return (
+        index >= currentPage * pageSize &&
+        index < currentPage * pageSize + pageSize
+      );
+    },
+    [isTouchDevice, currentPage, pageSize],
+  );
 
   const closeModal = () => {
     setActiveVideo(null);
@@ -227,7 +236,7 @@ const Videos: React.FC<VideosProps> = ({
       observer.disconnect();
       scrollObserver.disconnect();
     };
-  }, [isTouchDevice, renderedVideos]);
+  }, [isTouchDevice, videos]);
 
   useEffect(() => {
     if (!activeVideo || isTouchDevice) return;
@@ -307,11 +316,13 @@ const Videos: React.FC<VideosProps> = ({
         </AnimatePresence>
       </div>
 
-      {renderedVideos.map((video) => (
+      {renderedVideos.map((video, videoIndex) => (
         <button
           key={video.id}
           onScroll={handleUserAction}
           onTouchMove={handleUserAction}
+          onMouseEnter={() => !isTouchDevice && setHoveredVideoId(video.id)}
+          onMouseLeave={() => !isTouchDevice && setHoveredVideoId(null)}
           onClick={() => {
             const index = videos.findIndex((v) => v.id === video.id);
             setModalDesktopReady({});
@@ -320,6 +331,7 @@ const Videos: React.FC<VideosProps> = ({
             setActiveVideo(video);
             handleUserAction();
           }}
+          style={{ display: isVideoVisible(videoIndex) ? undefined : "none" }}
           className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14] pt-10" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:w-auto sm:max-w-none`}
           aria-label={`Открыть видео: ${video.title}`}
         >

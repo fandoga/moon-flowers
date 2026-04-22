@@ -1,12 +1,11 @@
 "use client";
 import { motion } from "framer-motion";
 import { MpProduct } from "@/entities/mp-product";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { Check } from "lucide-react";
 import ProductsCatalog from "@/widgets/products-catalog/ProductsCatalog";
-import ProductImgModal from "../product-card/ProductImgModal";
+import ProductImgModal from "./ProductImgModal";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -21,12 +20,14 @@ export default function Product({ enrichedProduct }: ProductProps) {
   const [activeImage, setActiveImage] = useState(0);
   const [cartClicked, setCartClicked] = useState(false);
   const [openImg, setOpenImg] = useState(false);
-  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [width, setWidth] = useState<number>();
 
   function handleWindowSizeChange() {
     setWidth(window.innerWidth);
   }
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!window) return;
+    setTimeout(() => setWidth(window.innerWidth));
     window.addEventListener("resize", handleWindowSizeChange);
     return () => {
       window.removeEventListener("resize", handleWindowSizeChange);
@@ -69,7 +70,7 @@ export default function Product({ enrichedProduct }: ProductProps) {
                 <button
                   key={index}
                   onClick={() => setActiveImage(index)}
-                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${activeImage === index ? "border-black" : "border-transparent opacity-70 hover:opacity-100"}`}
+                  className={`w-16 h-16 rounded-xl overflow-hidden transition-all border-transparent opacity-70 hover:opacity-100`}
                 >
                   <Image
                     src={img}
@@ -123,10 +124,10 @@ export default function Product({ enrichedProduct }: ProductProps) {
                 localStorage.setItem("cart_local", JSON.stringify(cart));
                 window.dispatchEvent(new Event("cart-local-updated"));
               }}
-              className="cursor-pointer bg-black border-1 border-black text-white p-2 pl-6 h-12 rounded-lg w-fit flex items-center gap-3 group hover:bg-white hover:text-black transition-colors"
+              className="cursor-pointer bg-black border-1 border-black text-white p-2 pl-6 h-12 rounded-lg w-fit flex items-center gap-3 group hover:bg-white hover:text-black duration-400 transition-colors"
             >
               <p className="max-w-40">Добавить в корзину</p>
-              <div className="bg-white rounded-lg group-hover:bg-black group-hover:text-white p-3 text-black flex items-center justify-center">
+              <div className="bg-white rounded-lg group-hover:bg-black group-hover:text-white p-3 text-black flex duration-400 items-center justify-center">
                 {cartClicked ? (
                   <Check size={12} />
                 ) : (
@@ -174,7 +175,7 @@ export default function Product({ enrichedProduct }: ProductProps) {
             displayInfo={false}
             loadMore={false}
             query=""
-            size={width <= 1281 ? 1 : 3}
+            size={(width ?? 0) <= 1281 ? 1 : 3}
           />
         </div>
       </motion.div>
