@@ -35,7 +35,7 @@ export default function Product({ enrichedProduct }: ProductProps) {
       window.removeEventListener("resize", handleWindowSizeChange);
     };
   }, []);
-
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setMainLoaded(false);
   }, [activeImage]);
@@ -66,15 +66,13 @@ export default function Product({ enrichedProduct }: ProductProps) {
                 <div className="absolute inset-0 bg-skeleton animate-pulse rounded-3xl z-10" />
               )}
               <Image
+                key={productPhotos[activeImage] || productPhotos[0]}
                 src={productPhotos[activeImage] || productPhotos[0]}
                 alt={enrichedProduct.name}
                 fill
                 className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
                 priority
                 onLoad={() => setMainLoaded(true)}
-                ref={(el) => {
-                  if (el?.complete) setMainLoaded(true);
-                }}
               />
             </div>
             {/* Галерея миниатюр */}
