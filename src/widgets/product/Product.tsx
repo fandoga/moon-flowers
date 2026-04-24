@@ -66,12 +66,15 @@ export default function Product({ enrichedProduct }: ProductProps) {
                 <div className="absolute inset-0 bg-skeleton animate-pulse rounded-3xl z-10" />
               )}
               <Image
-                src={productPhotos[activeImage] || productPhotos[0] || ""}
+                src={productPhotos[activeImage] || productPhotos[0]}
                 alt={enrichedProduct.name}
                 fill
                 className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
                 priority
                 onLoad={() => setMainLoaded(true)}
+                ref={(el) => {
+                  if (el?.complete) setMainLoaded(true);
+                }}
               />
             </div>
             {/* Галерея миниатюр */}
@@ -80,7 +83,7 @@ export default function Product({ enrichedProduct }: ProductProps) {
                 <button
                   key={index}
                   onClick={() => setActiveImage(index)}
-                  className="relative w-16 h-16 rounded-xl overflow-hidden transition-all border-transparent opacity-70 hover:opacity-100 bg-skeleton"
+                  className={`${activeImage === index && "!opacity-100"} relative w-16 h-16 rounded-xl overflow-hidden transition-all border-transparent opacity-70 hover:opacity-100 bg-skeleton`}
                 >
                   {!thumbLoaded[index] && (
                     <div className="absolute inset-0 bg-skeleton animate-pulse rounded-xl z-10" />
