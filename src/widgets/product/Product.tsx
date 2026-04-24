@@ -35,10 +35,6 @@ export default function Product({ enrichedProduct }: ProductProps) {
       window.removeEventListener("resize", handleWindowSizeChange);
     };
   }, []);
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    setMainLoaded(false);
-  }, [activeImage]);
 
   const productPhotos = useMemo(() => {
     const p = enrichedProduct as
@@ -80,7 +76,10 @@ export default function Product({ enrichedProduct }: ProductProps) {
               {productPhotos.map((img, index) => (
                 <button
                   key={index}
-                  onClick={() => setActiveImage(index)}
+                  onClick={() => {
+                    setMainLoaded(false);
+                    setActiveImage(index);
+                  }}
                   className={`${activeImage === index && "!opacity-100"} relative w-16 h-16 rounded-xl overflow-hidden transition-all border-transparent opacity-70 hover:opacity-100 bg-skeleton`}
                 >
                   {!thumbLoaded[index] && (
