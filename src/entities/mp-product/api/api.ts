@@ -98,7 +98,11 @@ export const getPicturesListById = async (
 
 export const getPricesById = async (): Promise<Prices | null> => {
   try {
-    const response = await tableCrmApi.get<Prices>(`/prices/`);
+    const response = await tableCrmApi.get<Prices>(`/prices`, {
+      params: {
+        limit: 500,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Failed to load product:", error);
