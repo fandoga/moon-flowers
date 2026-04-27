@@ -101,14 +101,24 @@ export const getPicturesListById = async (
 
 export const getPricesById = async (): Promise<Prices | null> => {
   try {
-    const response = await tableCrmApi.get<Prices>(`/prices`, {
+    console.log("[getPricesById] Starting request to /prices");
+    const response = await tableCrmApi.get<Prices>(`/prices/`, {
       params: {
         limit: 500,
       },
     });
+    console.log(
+      "[getPricesById] Response received:",
+      response.status,
+      response.data,
+    );
     return response.data;
   } catch (error) {
-    console.error("Failed to load product:", error);
+    console.error("[getPricesById] Failed to load prices:", error);
+    if (error instanceof Error) {
+      console.error("[getPricesById] Error message:", error.message);
+      console.error("[getPricesById] Error stack:", error.stack);
+    }
     return null;
   }
 };

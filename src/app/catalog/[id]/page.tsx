@@ -22,6 +22,8 @@ const enrichProduct = async (
     getPricesById(),
   ]);
 
+  console.log("[enrichProduct] prices response:", prices);
+
   const sortedPictures = [...pictures].sort((a, b) => {
     const am = a?.is_main ? 1 : 0;
     const bm = b?.is_main ? 1 : 0;
@@ -36,9 +38,14 @@ const enrichProduct = async (
     : prices?.result
       ? [prices.result]
       : [];
+
+  console.log("[enrichProduct] pricesList:", pricesList);
+
   const resolvedPrice = pricesList.find(
     (item) => Number(item.nomenclature_id) === Number(base.id),
   );
+
+  console.log("[enrichProduct] resolvedPrice for", base.id, ":", resolvedPrice);
 
   const fallbackPhoto =
     (base as MpProduct & { images?: string[]; photos?: string[] | null })
