@@ -396,8 +396,8 @@ const Videos: React.FC<VideosProps> = ({
                 className="absolute inset-x-0 bottom-10 z-[3] flex max-w-full items-center justify-center px-1"
               >
                 <div className="flex w-[80%] max-w-full min-w-0 items-center justify-center">
-                  <div className="min-w-0 flex-1 h-12 rounded-lg bg-black px-4 py-1 text-white">
-                    <p className="pt-2 text-md leading-tight">{video.title}</p>
+                  <div className="min-w-0 flex-1 flex items-center h-12 rounded-lg bg-black px-4 py-1 text-white">
+                    <p className="text-md leading-tight">{video.title}</p>
                   </div>
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-black text-white">
                     <svg

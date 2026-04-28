@@ -93,7 +93,7 @@ export default function OrderPage() {
   }, [savedAddress]);
 
   // Списание баллов
-  const handleEscrow = () => {
+  const handleEscrow = async () => {
     if (!currentCard) {
       toast.error("Для списания бонусов подключите карту лояльности");
       return;
@@ -104,7 +104,7 @@ export default function OrderPage() {
       return;
     }
 
-    balanceEscrow(total);
+    await balanceEscrow(total);
   };
 
   // Создание контрагента
@@ -343,7 +343,11 @@ export default function OrderPage() {
           />
         </form>
       </div>
-      <SuccesOrderModal orderId={orderId} setOpen={setModalOpen} open={modalOpen} />
+      <SuccesOrderModal
+        orderId={orderId}
+        setOpen={setModalOpen}
+        open={modalOpen}
+      />
     </main>
   );
 }

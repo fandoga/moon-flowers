@@ -186,7 +186,7 @@ const Header = () => {
                 </div>
                 <div
                   id="cart"
-                  className="flex z-100 min-w-30 gap-6 items-center justify-end"
+                  className="flex z-50 min-w-30 gap-6 items-center justify-end"
                 >
                   {total > 0 && (
                     <Link href={"/order"} className="bg-gray rounded-lg p-2">

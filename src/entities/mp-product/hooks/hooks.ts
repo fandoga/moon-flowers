@@ -100,7 +100,6 @@ export const useEnrichedMpProducts = (items: MpProduct[]) => {
       : allPrices?.result
         ? [allPrices.result]
         : [];
-    console.log(pricesList);
     for (const price of pricesList) {
       const productId = Number(price.nomenclature_id);
       const amount = Number(price.price);

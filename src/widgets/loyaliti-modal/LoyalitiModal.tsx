@@ -1,7 +1,8 @@
 import { useLoyalityCardData } from "@/entities/loyaliti/hooks/useLoyalityCard";
 import { formatPhone, getCleanPhone } from "@/lib/utils/formatPhone";
-import { Check, Loader } from "lucide-react";
+import { Check, Loader, Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface LoyalitiModalProps {
   simple?: boolean;
@@ -49,11 +50,13 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
         phone_number: cleanPhone,
         contragent_name: modalName,
       });
+      toast.success("Карта успешно подключена");
       setOpen(false);
     } catch (e) {
       const message =
         e instanceof Error ? e.message : "Не удалось создать карту лояльности";
       setInputError(message);
+      toast.error(message);
     }
   };
 
@@ -145,7 +148,7 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
                 className="cursor-pointer h-12 bg-black flex items-center justify-center gap-2 text-white p-2 rounded-lg"
               >
                 Получить баллы
-                {isLoading && <Loader />}
+                {isLoading && <Loader2 className="animate-spin" />}
               </button>
             </div>
           </div>
