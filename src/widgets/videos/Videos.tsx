@@ -330,7 +330,8 @@ const Videos: React.FC<VideosProps> = ({
           onTouchMove={handleUserAction}
           onMouseEnter={() => !isTouchDevice && setHoveredVideoId(video.id)}
           onMouseLeave={() => !isTouchDevice && setHoveredVideoId(null)}
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             const index = videos.findIndex((v) => v.id === video.id);
             setModalDesktopReady({});
             setDesktopVideoIntrinsic({});
@@ -402,13 +403,15 @@ const Videos: React.FC<VideosProps> = ({
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="absolute inset-x-0 bottom-10 z-[3] flex max-w-full items-center justify-center px-1"
               >
-                <Link
-                  href={"/catalog/" + video.productId}
-                  className="flex w-[80%] max-w-full min-w-0 items-center justify-center"
-                >
-                  <div className="min-w-0 flex-1 flex items-center text-white">
-                    {/* Фотография товара */}
-                    {!isReviews && video.productPhoto && (
+                {!isReviews && video.productPhoto && (
+                  <Link
+                    href={"/catalog/" + video.productId}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex w-[80%] max-w-full min-w-0 items-center justify-center"
+                  >
+                    <div className="min-w-0 flex-1 flex items-center text-white">
+                      {/* Фотография товара */}
+
                       <Image
                         src={video.productPhoto}
                         alt="Product"
@@ -416,37 +419,35 @@ const Videos: React.FC<VideosProps> = ({
                         height={64}
                         className="w-14 h-14 rounded-md object-cover bg-skeleton shrink-0"
                       />
-                    )}
-                    {/* Описание и цена товара */}
-                    {!isReviews && (
                       <div className="w-full h-14 flex flex-col items-start overflow-hidden gap-1 rounded-md bg-black px-2 py-2">
                         <p className="text-sm truncate max-w-42 font-light  leading-tight">
                           {video.productName ? video.productName : video.title}
                         </p>
                         <p className="text-sm text font-light leading-tight">
-                          {video.productPrice + " ₽"}
+                          {video.productPrice && video.productPrice + " ₽"}
                         </p>
                       </div>
-                    )}
-                  </div>
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-black text-white">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 9 9"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M7.59967 0.999814L1 7.59948M7.59967 0.999814L7.59967 6.65667M7.59967 0.999814L1.94281 0.999814"
-                        stroke="currentColor"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                </Link>
+                    </div>
+
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-black text-white">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 9 9"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M7.59967 0.999814L1 7.59948M7.59967 0.999814L7.59967 6.65667M7.59967 0.999814L1.94281 0.999814"
+                          stroke="currentColor"
+                          strokeWidth="1.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  </Link>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
