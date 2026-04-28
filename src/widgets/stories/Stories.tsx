@@ -155,7 +155,7 @@ const Stories = () => {
           </p>
         </motion.div>
 
-        {!data ? (
+        {!data || !displayVideos ? (
           <section className="w-full flex items-center justify-center h-100">
             <Logo alwaysEnabled />
           </section>
@@ -186,7 +186,7 @@ const Stories = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="-mx-4 flex sm:mx-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory pb-2 sm:pb-0"
+              className="-mx-4 flex sm:mx-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-scroll sm:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory pb-2 sm:pb-0 [scroll-snap-type:x_mandatory] sm:[scroll-snap-type:none]"
             >
               <Videos
                 data={data}

@@ -51,14 +51,17 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
     limit: perPage,
     offset,
     search,
+    tags: "Тех_Карта",
   });
 
   const totalCount = data?.count;
   const received = useMemo(() => data?.result ?? [], [data?.result]);
   const visibleItems = loadMore ? items : received;
-  const { enrichedItems, isEnrichmentFetching } = useEnrichedMpProducts(visibleItems);
+  const { enrichedItems, isEnrichmentFetching } =
+    useEnrichedMpProducts(visibleItems);
 
-  const hasMoreByCount = typeof totalCount === "number" ? items.length < totalCount : true;
+  const hasMoreByCount =
+    typeof totalCount === "number" ? items.length < totalCount : true;
   const hasMore = loadMore ? canLoadMore && hasMoreByCount : false;
 
   useEffect(() => {
@@ -99,10 +102,13 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
   const showEmptyState = !showLoader && visibleItems.length === 0;
   const desktopCols = perPage < 4 ? perPage : 4;
   const lgColsClass =
-    desktopCols === 1 ? "lg:grid-cols-1"
-    : desktopCols === 2 ? "lg:grid-cols-2"
-    : desktopCols === 3 ? "lg:grid-cols-3"
-    : "lg:grid-cols-4";
+    desktopCols === 1
+      ? "lg:grid-cols-1"
+      : desktopCols === 2
+        ? "lg:grid-cols-2"
+        : desktopCols === 3
+          ? "lg:grid-cols-3"
+          : "lg:grid-cols-4";
 
   return (
     <>
@@ -140,7 +146,9 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
       )}
       {showEmptyState && (
         <div className="w-full min-h-[220px] rounded-xl border border-[#E7E7E7] flex items-center justify-center px-4 text-center">
-          <p className={`text-sm ${data?.error ? "text-red-500" : "text-muted-foreground"}`}>
+          <p
+            className={`text-sm ${data?.error ? "text-red-500" : "text-muted-foreground"}`}
+          >
             {data?.error || "Товары не найдены"}
           </p>
         </div>

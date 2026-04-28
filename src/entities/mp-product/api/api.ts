@@ -16,10 +16,7 @@ export const getMpProducts = async (
     const response = await tableCrmApi.get<MpProductsResponse>(
       "/nomenclature/",
       {
-        params: {
-          ...params,
-          tags: "Тех_Карта",
-        },
+        params,
       },
     );
     return response.data;

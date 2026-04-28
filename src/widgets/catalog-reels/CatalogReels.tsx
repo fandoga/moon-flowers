@@ -29,6 +29,8 @@ const CatalogReels: React.FC<CatalogReelsProps> = ({
   const router = useRouter();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+
     const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevBodyOverflow = document.body.style.overflow;
     document.documentElement.style.overflow = "hidden";

@@ -23,7 +23,7 @@ import {
 import Link from "next/link";
 
 interface VideosProps {
-  data: VideosMyResponse;
+  data?: VideosMyResponse;
   isReviews?: boolean;
   currentPage?: number;
   pageSize?: number;
@@ -326,6 +326,7 @@ const Videos: React.FC<VideosProps> = ({
       {renderedVideos.map((video, videoIndex) => (
         <button
           key={video.id}
+          data-video-card
           onScroll={handleUserAction}
           onTouchMove={handleUserAction}
           onMouseEnter={() => !isTouchDevice && setHoveredVideoId(video.id)}
@@ -340,7 +341,7 @@ const Videos: React.FC<VideosProps> = ({
             handleUserAction();
           }}
           style={{ display: isVideoVisible(videoIndex) ? undefined : "none" }}
-          className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14]" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:w-auto sm:max-w-none`}
+          className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14]" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:snap-align-none [scroll-snap-stop:always] sm:[scroll-snap-stop:normal] sm:w-auto sm:max-w-none`}
           aria-label={`Открыть видео: ${video.title}`}
         >
           {isReviews &&

@@ -121,6 +121,7 @@ export interface MpProductsResponse {
 }
 
 export interface MpProductsQueryParams {
+  tags?: string;
   has_photos?: boolean;
   global_category_name?: string;
   limit?: number;

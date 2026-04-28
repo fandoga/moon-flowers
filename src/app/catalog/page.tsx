@@ -10,7 +10,6 @@ import {
   useEnrichedMpProducts,
   type MpProduct,
 } from "@/entities/mp-product";
-import Logo from "@/components/ui/logo";
 import CatalogReels from "@/widgets/catalog-reels/CatalogReels";
 import Categories from "@/widgets/categories/Categories";
 import { useCategories } from "@/entities/category";
@@ -108,6 +107,8 @@ function CatalogPageInner() {
 
   const { enrichedItems } = useEnrichedMpProducts(productsToEnrich);
 
+  console.log(previewQueries);
+
   const enrichedByProductId = useMemo(() => {
     const m = new Map<number, MpProduct>();
     for (const p of enrichedItems) {
@@ -129,6 +130,8 @@ function CatalogPageInner() {
       );
       const resolvedImage =
         enriched?.images?.[0] || enriched?.photos?.[0] || "";
+
+      console.log(enriched);
 
       return {
         id: cat.id,
