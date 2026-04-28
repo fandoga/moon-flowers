@@ -16,9 +16,12 @@ export type StoryVideo = {
   avatar: string;
   id: number;
   title: string;
-  src: string;
   poster?: string;
   user?: string;
+  productId?: number;
+  productName?: string;
+  productPhoto?: string;
+  productPrice?: number;
 };
 
 export interface VideosMyResponse {

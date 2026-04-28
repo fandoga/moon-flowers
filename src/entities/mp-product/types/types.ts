@@ -128,3 +128,17 @@ export interface MpProductsQueryParams {
   search?: string;
   category?: number | string;
 }
+
+export interface ProductsWithVideosQueryParams {
+  limit?: number;
+  offset?: number;
+  has_video?: boolean;
+}
+
+export interface ProductsWithVideosResponse {
+  result: MpProduct[];
+  count?: number;
+  limit?: number;
+  offset?: number;
+  error?: string;
+}

@@ -20,12 +20,14 @@ import {
   ModalDesktopSlideSkeleton,
   ModalTouchVideoSkeleton,
 } from "@/widgets/videos/video-skeleton-ui";
+import Link from "next/link";
 
 interface VideosProps {
   data: VideosMyResponse;
   isReviews?: boolean;
   currentPage?: number;
   pageSize?: number;
+  videos?: StoryVideo[];
 }
 
 const Videos: React.FC<VideosProps> = ({
@@ -33,6 +35,7 @@ const Videos: React.FC<VideosProps> = ({
   isReviews,
   currentPage = 0,
   pageSize = 4,
+  videos: propVideos,
 }) => {
   const [activeVideo, setActiveVideo] = useState<StoryVideo | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -86,6 +89,11 @@ const Videos: React.FC<VideosProps> = ({
   }, [activeVideo]);
 
   const videos = useMemo<StoryVideo[]>(() => {
+    // Use propVideos if provided (from Stories with product data), otherwise build from data
+    if (propVideos && propVideos.length > 0) {
+      return propVideos;
+    }
+
     const raw = data?.items ?? [];
     return raw.reduce<StoryVideo[]>((acc, item) => {
       const id = Number(item.video_id);
@@ -94,14 +102,13 @@ const Videos: React.FC<VideosProps> = ({
       acc.push({
         id,
         title: item.title || `Видео #${id}`,
-        src: item.seo_url,
         avatar: item.channel_avatar || "",
         poster: item.preview_url || item.post_image || undefined,
         user: item.channel_username || "",
       });
       return acc;
     }, []);
-  }, [data]);
+  }, [data, propVideos]);
 
   const renderedVideos = videos;
 
@@ -387,7 +394,7 @@ const Videos: React.FC<VideosProps> = ({
             />
           </div>
           <AnimatePresence>
-            {(isTouchDevice || hoveredVideoId === video.id) && (
+            {(isTouchDevice || (hoveredVideoId === video.id && !isReviews)) && (
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -395,14 +402,37 @@ const Videos: React.FC<VideosProps> = ({
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="absolute inset-x-0 bottom-10 z-[3] flex max-w-full items-center justify-center px-1"
               >
-                <div className="flex w-[80%] max-w-full min-w-0 items-center justify-center">
-                  <div className="min-w-0 flex-1 flex items-center h-12 rounded-lg bg-black px-4 py-1 text-white">
-                    <p className="text-md leading-tight">{video.title}</p>
+                <Link
+                  href={"/catalog/" + video.productId}
+                  className="flex w-[80%] max-w-full min-w-0 items-center justify-center"
+                >
+                  <div className="min-w-0 flex-1 flex items-center text-white">
+                    {/* Фотография товара */}
+                    {!isReviews && video.productPhoto && (
+                      <Image
+                        src={video.productPhoto}
+                        alt="Product"
+                        width={64}
+                        height={64}
+                        className="w-14 h-14 rounded-md object-cover bg-skeleton shrink-0"
+                      />
+                    )}
+                    {/* Описание и цена товара */}
+                    {!isReviews && (
+                      <div className="w-full h-14 flex flex-col items-start overflow-hidden gap-1 rounded-md bg-black px-2 py-2">
+                        <p className="text-sm truncate max-w-42 font-light  leading-tight">
+                          {video.productName ? video.productName : video.title}
+                        </p>
+                        <p className="text-sm text font-light leading-tight">
+                          {video.productPrice + " ₽"}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-black text-white">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-black text-white">
                     <svg
-                      width="22"
-                      height="22"
+                      width="20"
+                      height="20"
                       viewBox="0 0 9 9"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
@@ -410,13 +440,13 @@ const Videos: React.FC<VideosProps> = ({
                       <path
                         d="M7.59967 0.999814L1 7.59948M7.59967 0.999814L7.59967 6.65667M7.59967 0.999814L1.94281 0.999814"
                         stroke="currentColor"
-                        strokeWidth="1.6"
+                        strokeWidth="1.2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
                     </svg>
                   </div>
-                </div>
+                </Link>
               </motion.div>
             )}
           </AnimatePresence>
