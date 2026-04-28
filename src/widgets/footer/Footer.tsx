@@ -31,12 +31,22 @@ const Footer = () => {
                 идеальные цветы
               </p>
             </div>
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-start">
               <p className="p py-2 ">
                 г. Москва, ул. Большая <br /> Переяславская 52/1
               </p>
-              <p className="p py-2 ">8 (897) 326-88-88</p>
-              <p className="p py-2 ">flowers@shop.com</p>
+              <a
+                href="tel:+79035972797"
+                className="p py-2 hover:underline cursor-pointer"
+              >
+                8 (903) 597-27-97
+              </a>
+              <a
+                href="mailto:flowers@shop.com"
+                className="p py-2 hover:underline cursor-pointer"
+              >
+                flowers@shop.com
+              </a>
               <FooterIcons />
             </div>
           </div>

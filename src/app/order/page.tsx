@@ -29,7 +29,6 @@ import OrderSummary from "../../widgets/order/OrderSummary";
  * Здесь только главная бизнес логика и состояние
  */
 export default function OrderPage() {
-  // Хук корзины
   const { cartItems, total, removeItemFromCart, writeCart } = useCart();
 
   // Форма
