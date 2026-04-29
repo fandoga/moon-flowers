@@ -21,7 +21,7 @@ const Hero = () => {
               src="/hero/background.png"
               className="w-full h-full object-cover"
               alt="bg_img"
-              width={1600}
+              width={1000}
               height={500}
             />
           </div>
