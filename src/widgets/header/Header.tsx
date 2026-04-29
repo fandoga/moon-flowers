@@ -226,7 +226,9 @@ const Header = () => {
               </Link>
               <Link
                 className="bg-gray px-2 md:px-6 py-2 rounded-lg"
-                href={"https://max"}
+                href={
+                  "https://max.ru/join/2_-2M-qp5mUMlioX89h09ilMEIgmH0zk2H58NH96RVY"
+                }
               >
                 Написать в Max
               </Link>
