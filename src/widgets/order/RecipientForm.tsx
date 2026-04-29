@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import LoyalitiModal from "@/widgets/loyaliti-modal/LoyalitiModal";
 import { formatPhone } from "@/lib/utils/formatPhone";
+import { useLoyalityCardData } from "@/entities/loyaliti";
 
 interface RecipientFormProps {
   activeInput: "From" | "To";
@@ -15,6 +16,7 @@ interface RecipientFormProps {
   setRecipientName: (value: string) => void;
   recipientPhone: string;
   setRecipientPhone: (value: string) => void;
+  errors?: { name?: boolean; phone?: boolean };
 }
 
 /**
@@ -31,7 +33,17 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
   setRecipientName,
   recipientPhone,
   setRecipientPhone,
+  errors = {},
 }) => {
+  const { currentCard } = useLoyalityCardData();
+
+  useEffect(() => {
+    if (!currentCard) return;
+    if (!name) setName(currentCard.contragent ?? "");
+    if (!phone) setPhone(formatPhone(String(currentCard.card_number)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCard]);
+
   return (
     <div>
       <h3 className="mb-3">Получатель</h3>
@@ -62,7 +74,7 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
                 setRecipientName(e.target.value);
               }
             }}
-            className="bg-gray rounded-lg p-3 w-full"
+            className={`bg-gray rounded-lg p-3 w-full ${activeInput === "From" && errors.name ? "ring-2 ring-red-400" : ""}`}
             placeholder={"Имя"}
             type="text"
           />
@@ -75,7 +87,7 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
                 setRecipientPhone(formatPhone(e.target.value));
               }
             }}
-            className="bg-gray rounded-lg p-3 w-full"
+            className={`bg-gray rounded-lg p-3 w-full ${activeInput === "From" && errors.phone ? "ring-2 ring-red-400" : ""}`}
             placeholder={"+7 (000) 000-00-00"}
             type="tel"
           />

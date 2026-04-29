@@ -12,10 +12,10 @@ import {
   LoyalityTransactionsResponse,
 } from "../types/types";
 
-export const useLoyalityCards = () => {
+export const useLoyalityCards = (phone_number?: string) => {
   return useQuery<LoyalityCardsResponse>({
-    queryKey: ["loyality-cards"],
-    queryFn: getLoyalityCards,
+    queryKey: ["loyality-cards", phone_number],
+    queryFn: () => getLoyalityCards(phone_number),
   });
 };
 
@@ -34,7 +34,8 @@ export const useLoyalityAccruals = (loyality_card_number?: string) => {
   return useQuery<LoyalityTransactionsResponse>({
     queryKey: ["loyality-acc", loyality_card_number],
     queryFn: () => {
-      if (!loyality_card_number) return Promise.resolve({ result: [], count: 0 });
+      if (!loyality_card_number)
+        return Promise.resolve({ result: [], count: 0 });
       return getLoyalityAccruals(loyality_card_number);
     },
     enabled: !!loyality_card_number,

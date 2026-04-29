@@ -5,6 +5,8 @@ import {
   MpProduct,
   Pictures,
   Prices,
+  ProductsWithVideosQueryParams,
+  ProductsWithVideosResponse,
 } from "../types/types";
 
 export const getMpProducts = async (
@@ -23,6 +25,36 @@ export const getMpProducts = async (
       error instanceof Error
         ? error.message
         : "Failed to load marketplace products";
+
+    return {
+      result: [],
+      count: 0,
+      limit: params?.limit,
+      offset: params?.offset,
+      error: message,
+    };
+  }
+};
+
+export const getProductsWithVideos = async (
+  params?: ProductsWithVideosQueryParams,
+): Promise<ProductsWithVideosResponse> => {
+  try {
+    const response = await tableCrmApi.get<ProductsWithVideosResponse>(
+      "/nomenclature/",
+      {
+        params: {
+          ...params,
+          has_video: true,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to load products with videos";
 
     return {
       result: [],
@@ -98,10 +130,24 @@ export const getPicturesListById = async (
 
 export const getPricesById = async (): Promise<Prices | null> => {
   try {
-    const response = await tableCrmApi.get<Prices>(`/prices/`);
+    console.log("[getPricesById] Starting request to /prices");
+    const response = await tableCrmApi.get<Prices>(`/prices/`, {
+      params: {
+        limit: 500,
+      },
+    });
+    console.log(
+      "[getPricesById] Response received:",
+      response.status,
+      response.data,
+    );
     return response.data;
   } catch (error) {
-    console.error("Failed to load product:", error);
+    console.error("[getPricesById] Failed to load prices:", error);
+    if (error instanceof Error) {
+      console.error("[getPricesById] Error message:", error.message);
+      console.error("[getPricesById] Error stack:", error.stack);
+    }
     return null;
   }
 };

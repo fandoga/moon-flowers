@@ -12,7 +12,7 @@ import React, {
   useState,
 } from "react";
 import StarsIcon from "@/components/ui/stars-icon";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   GridVideoSkeleton,
@@ -20,12 +20,14 @@ import {
   ModalDesktopSlideSkeleton,
   ModalTouchVideoSkeleton,
 } from "@/widgets/videos/video-skeleton-ui";
+import Link from "next/link";
 
 interface VideosProps {
-  data: VideosMyResponse;
+  data?: VideosMyResponse;
   isReviews?: boolean;
   currentPage?: number;
   pageSize?: number;
+  videos?: StoryVideo[];
 }
 
 const Videos: React.FC<VideosProps> = ({
@@ -33,6 +35,7 @@ const Videos: React.FC<VideosProps> = ({
   isReviews,
   currentPage = 0,
   pageSize = 4,
+  videos: propVideos,
 }) => {
   const [activeVideo, setActiveVideo] = useState<StoryVideo | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -53,6 +56,9 @@ const Videos: React.FC<VideosProps> = ({
   const [desktopVideoIntrinsic, setDesktopVideoIntrinsic] = useState<
     Record<number, { w: number; h: number }>
   >({});
+
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [isTouchDevice, setIsTouchDevice] = useState(
     typeof window !== "undefined" &&
@@ -83,6 +89,11 @@ const Videos: React.FC<VideosProps> = ({
   }, [activeVideo]);
 
   const videos = useMemo<StoryVideo[]>(() => {
+    // Use propVideos if provided (from Stories with product data), otherwise build from data
+    if (propVideos && propVideos.length > 0) {
+      return propVideos;
+    }
+
     const raw = data?.items ?? [];
     return raw.reduce<StoryVideo[]>((acc, item) => {
       const id = Number(item.video_id);
@@ -91,18 +102,26 @@ const Videos: React.FC<VideosProps> = ({
       acc.push({
         id,
         title: item.title || `Видео #${id}`,
-        src: item.seo_url,
         avatar: item.channel_avatar || "",
         poster: item.preview_url || item.post_image || undefined,
         user: item.channel_username || "",
       });
       return acc;
     }, []);
-  }, [data]);
+  }, [data, propVideos]);
 
-  const renderedVideos = isTouchDevice
-    ? videos
-    : videos.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
+  const renderedVideos = videos;
+
+  const isVideoVisible = useCallback(
+    (index: number) => {
+      if (isTouchDevice) return true;
+      return (
+        index >= currentPage * pageSize &&
+        index < currentPage * pageSize + pageSize
+      );
+    },
+    [isTouchDevice, currentPage, pageSize],
+  );
 
   const closeModal = () => {
     setActiveVideo(null);
@@ -178,6 +197,24 @@ const Videos: React.FC<VideosProps> = ({
   useEffect(() => {
     if (!isTouchDevice) return;
 
+    const scrollObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const hasAction = localStorage.getItem("video_swiped_hint");
+            if (!hasAction) {
+              setShowSwipeHint(true);
+            }
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+
+    if (containerRef.current) {
+      scrollObserver.observe(containerRef.current);
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -204,8 +241,9 @@ const Videos: React.FC<VideosProps> = ({
 
     return () => {
       observer.disconnect();
+      scrollObserver.disconnect();
     };
-  }, [isTouchDevice, renderedVideos]);
+  }, [isTouchDevice, videos]);
 
   useEffect(() => {
     if (!activeVideo || isTouchDevice) return;
@@ -252,19 +290,58 @@ const Videos: React.FC<VideosProps> = ({
     });
   }, [activeIndex, activeVideo, videos, isTouchDevice]);
 
+  const handleUserAction = () => {
+    if (showSwipeHint) {
+      setShowSwipeHint(false);
+      localStorage.setItem("video_swiped_hint", "true");
+    }
+  };
+
   return (
     <>
-      {renderedVideos.map((video) => (
+      <div
+        ref={containerRef}
+        className="pointer-events-none absolute top-0 left-0 h-full w-full"
+      >
+        <AnimatePresence>
+          {isTouchDevice && showSwipeHint && (
+            <motion.div
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 50, opacity: 0 }}
+              transition={{
+                type: "spring",
+                damping: 20,
+                stiffness: 100,
+                delay: 0.5,
+              }}
+              className="pointer-events-none fixed right-6 top-1/2 z-[3000] -translate-y-1/2 rounded-full bg-white/20 p-2 backdrop-blur-md"
+            >
+              <ChevronRight className="h-10 w-10 text-white" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {renderedVideos.map((video, videoIndex) => (
         <button
           key={video.id}
-          onClick={() => {
+          data-video-card
+          onScroll={handleUserAction}
+          onTouchMove={handleUserAction}
+          onMouseEnter={() => !isTouchDevice && setHoveredVideoId(video.id)}
+          onMouseLeave={() => !isTouchDevice && setHoveredVideoId(null)}
+          onClick={(e) => {
+            e.stopPropagation();
             const index = videos.findIndex((v) => v.id === video.id);
             setModalDesktopReady({});
             setDesktopVideoIntrinsic({});
             setActiveIndex(index);
             setActiveVideo(video);
+            handleUserAction();
           }}
-          className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14] pt-10" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:w-auto sm:max-w-none`}
+          style={{ display: isVideoVisible(videoIndex) ? undefined : "none" }}
+          className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-background text-left sm:w-full ${isReviews && !isTouchDevice ? "aspect-[10/14]" : "aspect-[9/14]"} w-screen shrink-0 snap-start sm:snap-align-none [scroll-snap-stop:always] sm:[scroll-snap-stop:normal] sm:w-auto sm:max-w-none`}
           aria-label={`Открыть видео: ${video.title}`}
         >
           {isReviews &&
@@ -313,13 +390,13 @@ const Videos: React.FC<VideosProps> = ({
               onLoadedData={() => markGridVideoReady(video.id)}
               onCanPlay={() => markGridVideoReady(video.id)}
               className={cn(
-                "relative z-[2] h-full w-full cursor-pointer object-cover transition-opacity duration-300",
+                "relative z-[2] h-full w-full cursor-pointer rounded-2xl bg-skeleton object-cover transition-opacity duration-300",
                 gridVideoReady[video.id] ? "opacity-100" : "opacity-0",
               )}
             />
           </div>
           <AnimatePresence>
-            {hoveredVideoId === video.id && (
+            {(isTouchDevice || (hoveredVideoId === video.id && !isReviews)) && (
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -327,28 +404,51 @@ const Videos: React.FC<VideosProps> = ({
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="absolute inset-x-0 bottom-10 z-[3] flex max-w-full items-center justify-center px-1"
               >
-                <div className="flex w-[80%] max-w-full min-w-0 items-center justify-center">
-                  <div className="min-w-0 flex-1 h-12 rounded-lg bg-black px-4 py-1 text-white">
-                    <p className="pt-2 text-md leading-tight">{video.title}</p>
-                  </div>
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-black text-white">
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 9 9"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M7.59967 0.999814L1 7.59948M7.59967 0.999814L7.59967 6.65667M7.59967 0.999814L1.94281 0.999814"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                {!isReviews && video.productPhoto && (
+                  <Link
+                    href={"/catalog/" + video.productId}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex w-[80%] max-w-full min-w-0 items-center justify-center"
+                  >
+                    <div className="min-w-0 flex-1 flex items-center text-white">
+                      {/* Фотография товара */}
+
+                      <Image
+                        src={video.productPhoto}
+                        alt="Product"
+                        width={64}
+                        height={64}
+                        className="w-14 h-14 rounded-md object-cover bg-skeleton shrink-0"
                       />
-                    </svg>
-                  </div>
-                </div>
+                      <div className="w-full h-14 flex flex-col items-start overflow-hidden gap-1 rounded-md bg-black px-2 py-2">
+                        <p className="text-sm truncate max-w-42 font-light  leading-tight">
+                          {video.productName ? video.productName : video.title}
+                        </p>
+                        <p className="text-sm text font-light leading-tight">
+                          {video.productPrice && video.productPrice + " ₽"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-black text-white">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 9 9"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M7.59967 0.999814L1 7.59948M7.59967 0.999814L7.59967 6.65667M7.59967 0.999814L1.94281 0.999814"
+                          stroke="currentColor"
+                          strokeWidth="1.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  </Link>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -359,7 +459,7 @@ const Videos: React.FC<VideosProps> = ({
 
       {activeVideo && (
         <div
-          className="fixed inset-0 z-2000 bg-black/90 backdrop-blur-xl flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[2000] bg-black/90 backdrop-blur-xl flex items-center justify-center overflow-hidden"
           onClick={closeModal}
         >
           <button

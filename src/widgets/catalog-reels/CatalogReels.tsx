@@ -29,6 +29,8 @@ const CatalogReels: React.FC<CatalogReelsProps> = ({
   const router = useRouter();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+
     const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevBodyOverflow = document.body.style.overflow;
     document.documentElement.style.overflow = "hidden";
@@ -97,11 +99,11 @@ const CatalogReels: React.FC<CatalogReelsProps> = ({
           }}
           data-category-id={isCategories ? String(item.id) : undefined}
           key={String(item.id)}
-          className="relative w-screen h-full max-h-200 mb-4 snap-start block overflow-hidden"
+          className="relative sm:snap-align-none [scroll-snap-stop:always] sm:[scroll-snap-stop:normal] w-screen h-full max-h-200 mb-4 snap-start block overflow-hidden"
         >
           <div className="absolute inset-0 w-full h-full">
             <Image
-              className="w-full h-full rounded-2xl object-cover bg-center bg-cover bg-neutral-800"
+              className="w-full h-full rounded-2xl object-cover bg-center bg-cover bg-skeleton"
               fill
               src={item.image || ""}
               alt={item.name || ""}
@@ -112,7 +114,8 @@ const CatalogReels: React.FC<CatalogReelsProps> = ({
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
-            className={`absolute top-30 w-full flex justify-around z-10`}
+            className={`absolute top-30 w-full flex justify-between
+              px-6 justify-around z-10`}
           >
             <div className="bg-background/80 backdrop-blur-xs p-2 max-w-[90%] !px-4 rounded-xl">
               <h2 className="p !text-2xl mb-2">{item.name}</h2>

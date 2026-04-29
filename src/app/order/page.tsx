@@ -25,11 +25,10 @@ import OrderSummary from "../../widgets/order/OrderSummary";
 
 /**
  * Главная страница оформления заказа
- * ✅ Все UI компоненты вынесены отдельно
- * ✅ Здесь только главная бизнес логика и состояние
+ * Все UI компоненты вынесены отдельно
+ * Здесь только главная бизнес логика и состояние
  */
 export default function OrderPage() {
-  // Хук корзины
   const { cartItems, total, removeItemFromCart, writeCart } = useCart();
 
   // Форма
@@ -44,10 +43,16 @@ export default function OrderPage() {
   const [apartment, setApartment] = useState("");
   const [entrance, setEntrance] = useState("");
   const [floor, setFloor] = useState("");
+  const [comment, setComment] = useState("");
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [orderId, setOrderId] = useState("");
   const [suggOpen, setSuggOpen] = useState(false);
   const [activeInput, setActiveInput] = useState<"From" | "To">("From");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: boolean;
+    phone?: boolean;
+  }>({});
 
   // Внешние хуки
   const { data } = useAddressSuggestions(addressQuery);
@@ -87,7 +92,7 @@ export default function OrderPage() {
   }, [savedAddress]);
 
   // Списание баллов
-  const handleEscrow = () => {
+  const handleEscrow = async () => {
     if (!currentCard) {
       toast.error("Для списания бонусов подключите карту лояльности");
       return;
@@ -98,7 +103,7 @@ export default function OrderPage() {
       return;
     }
 
-    balanceEscrow(total);
+    await balanceEscrow(total);
   };
 
   // Создание контрагента
@@ -157,26 +162,14 @@ export default function OrderPage() {
     }
 
     const phoneDigits = phone.replace(/\D/g, "");
-    if (phoneDigits.length < 10) {
-      toast.error("Введите номер телефона отправителя");
+    const newErrors: { name?: boolean; phone?: boolean } = {};
+    if (phoneDigits.length < 10) newErrors.phone = true;
+    if (name.length === 0) newErrors.name = true;
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
       return;
     }
-
-    if (recipientPhone.length < 8) {
-      toast.error("Введите номер телефона получателя");
-      return;
-    }
-
-    if (name.length === 0) {
-      toast.error("Введите имя отправителя");
-      return;
-    }
-
-    if (recipientName.length === 0) {
-      toast.error("Введите имя получателя");
-      return;
-    }
-
+    setFieldErrors({});
     if (!addressQuery.trim()) {
       toast.error("Укажите адрес доставки");
       return;
@@ -217,10 +210,6 @@ export default function OrderPage() {
       .filter(Boolean)
       .join(", ");
 
-    const recipientNameRaw = currentCard?.contragent?.trim()
-      ? currentCard.contragent.trim()
-      : recipientName.trim() || currentCard?.contragent?.trim() || "Клиент";
-
     const deliveryPayload = buildDeliveryDoc({
       address: addressLine,
       delivery_date: resolveDeliveryUnix({
@@ -230,13 +219,14 @@ export default function OrderPage() {
       }),
       delivery_price: deliveryPrice,
       recipient: {
-        name: recipientNameRaw,
-        phone: recipientPhone.trim(),
+        name: recipientName.trim() || name.trim(),
+        phone: recipientPhone.trim() || phone.trim(),
       },
       note: [
         apartment.trim() && `кв. ${apartment.trim()}`,
         entrance.trim() && `подъезд ${entrance.trim()}`,
         floor.trim() && `этаж ${floor.trim()}`,
+        comment.trim(),
       ]
         .filter(Boolean)
         .join(". "),
@@ -270,6 +260,7 @@ export default function OrderPage() {
         );
       } else {
         toast.success(`Заказ №${result.order_id} оформлен`);
+        setOrderId(result.order_id);
         setModalOpen(true);
       }
 
@@ -298,7 +289,7 @@ export default function OrderPage() {
             />
 
             {/* Форма получателя и доставка */}
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-x-4 gap-y-2">
               <RecipientForm
                 activeInput={activeInput}
                 setActiveInput={setActiveInput}
@@ -310,6 +301,7 @@ export default function OrderPage() {
                 setRecipientName={setRecipientName}
                 recipientPhone={recipientPhone}
                 setRecipientPhone={setRecipientPhone}
+                errors={fieldErrors}
               />
 
               <DeliveryForm
@@ -327,6 +319,8 @@ export default function OrderPage() {
                 date={date}
                 setDate={setDate}
                 time={time}
+                setComment={setComment}
+                comment={comment}
                 setTime={setTime}
                 deliveryPreferSoon={deliveryPreferSoon}
                 setDeliveryPreferSoon={setDeliveryPreferSoon}
@@ -348,7 +342,11 @@ export default function OrderPage() {
           />
         </form>
       </div>
-      <SuccesOrderModal setOpen={setModalOpen} open={modalOpen} />
+      <SuccesOrderModal
+        orderId={orderId}
+        setOpen={setModalOpen}
+        open={modalOpen}
+      />
     </main>
   );
 }

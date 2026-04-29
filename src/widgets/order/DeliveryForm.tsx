@@ -12,6 +12,8 @@ interface DeliveryFormProps {
   setEntrance: (value: string) => void;
   floor: string;
   setFloor: (value: string) => void;
+  comment: string;
+  setComment: (value: string) => void;
   suggOpen: boolean;
   setSuggOpen: (value: boolean) => void;
   suggestions: string[];
@@ -35,6 +37,8 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({
   setEntrance,
   floor,
   setFloor,
+  comment,
+  setComment,
   suggOpen,
   setSuggOpen,
   suggestions,
@@ -105,6 +109,21 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({
             onTimeChange={setTime}
             preferSoon={deliveryPreferSoon}
             onPreferSoonChange={setDeliveryPreferSoon}
+          />
+          <textarea
+            placeholder="Примечание к заказу"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="col-span-3 text-left outline-none rounded-lg p-3 bg-gray resize-none overflow-hidden transition-[height] duration-300 ease-in-out"
+            style={{ height: "48px" }}
+            onFocus={(e) => {
+              e.target.style.height = "112px";
+            }}
+            onBlur={(e) => {
+              if (!e.target.value) {
+                e.target.style.height = "48px";
+              }
+            }}
           />
         </div>
       </div>

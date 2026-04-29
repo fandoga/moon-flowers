@@ -19,7 +19,7 @@ build:
   only:
     - main
   script:
-    - npm ci 
+    - npm ci
     - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
     - npm run build
   artifacts:
@@ -39,11 +39,11 @@ deploy:
   only:
     - main
   script:
-    - mkdir -p /var/www/cle-ver.ru
-    - cp -rv .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/cle-ver.ru/
-    - cd /var/www/cle-ver.ru
+    - mkdir -p /var/www/moon-flowers
+    - cp -rv .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/moon-flowers/
+    - cd /var/www/moon-flowers
     - npm ci --production
-    - pm2 restart cle-ver || pm2 start npm --name cle-ver -- start
+    - pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start
   environment:
     name: production
-    url: https://cle-ver.ru
+    url: http://149.154.71.226

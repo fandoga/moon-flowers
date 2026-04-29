@@ -121,10 +121,25 @@ export interface MpProductsResponse {
 }
 
 export interface MpProductsQueryParams {
+  tags?: string;
   has_photos?: boolean;
   global_category_name?: string;
   limit?: number;
   offset?: number;
   search?: string;
   category?: number | string;
+}
+
+export interface ProductsWithVideosQueryParams {
+  limit?: number;
+  offset?: number;
+  has_video?: boolean;
+}
+
+export interface ProductsWithVideosResponse {
+  result: MpProduct[];
+  count?: number;
+  limit?: number;
+  offset?: number;
+  error?: string;
 }

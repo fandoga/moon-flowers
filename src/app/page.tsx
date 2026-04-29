@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 // app/page.tsx
 import Hero from "@/widgets/hero/Hero";
 import PopularProducts from "@/widgets/popular-products/PopularProducts";
@@ -31,7 +32,7 @@ export default function Home() {
         <Stories />
       </div>
       <div id="recommendations">
-        <PopularProducts />
+        <Suspense fallback={null}><PopularProducts /></Suspense>
       </div>
       <div id="reviews">
         <Reviews />

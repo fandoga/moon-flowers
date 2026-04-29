@@ -3,13 +3,13 @@
 import { motion } from "framer-motion";
 import { useQueries } from "@tanstack/react-query";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ProductsCatalog from "@/widgets/products-catalog/ProductsCatalog";
 import {
   getMpProducts,
   useEnrichedMpProducts,
   type MpProduct,
 } from "@/entities/mp-product";
-import Logo from "@/components/ui/logo";
 import CatalogReels from "@/widgets/catalog-reels/CatalogReels";
 import Categories from "@/widgets/categories/Categories";
 import { useCategories } from "@/entities/category";
@@ -41,15 +41,34 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-export default function CatalogPage() {
-  const [category, setCategory] = useState<number | undefined>();
-  const [isTouchDevice, setIsTouchDevice] = useState<boolean>();
+function CatalogPageInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const category = useMemo(() => {
+    const v = searchParams.get("category");
+    return v ? Number(v) : undefined;
+  }, [searchParams]);
+
+  const [isTouchDevice, setIsTouchDevice] = useState<boolean | undefined>(
+    undefined,
+  );
   const [visibleCategoryIds, setVisibleCategoryIds] = useState<Set<number>>(
     () => new Set(),
   );
 
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data?.result;
+
+  useEffect(() => {
+    if (!categories) return;
+    const baseTitle = "Moon Flowers - каталог";
+    if (!category) {
+      document.title = baseTitle;
+      return;
+    }
+    const cat = categories.find((c) => c.id === category);
+    document.title = cat ? `${cat.name} - Moon Flowers` : baseTitle;
+  }, [category, categories, searchParams]);
 
   const effectiveVisibleCategoryIds = useMemo(() => {
     if (!categories?.length || isTouchDevice !== true) return new Set<number>();
@@ -88,6 +107,8 @@ export default function CatalogPage() {
 
   const { enrichedItems } = useEnrichedMpProducts(productsToEnrich);
 
+  console.log(previewQueries);
+
   const enrichedByProductId = useMemo(() => {
     const m = new Map<number, MpProduct>();
     for (const p of enrichedItems) {
@@ -109,6 +130,8 @@ export default function CatalogPage() {
       );
       const resolvedImage =
         enriched?.images?.[0] || enriched?.photos?.[0] || "";
+
+      console.log(enriched);
 
       return {
         id: cat.id,
@@ -155,7 +178,7 @@ export default function CatalogPage() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  if (categoriesQuery.isLoading) {
+  if (categoriesQuery.isLoading || isTouchDevice === undefined) {
     return <FullScreenLoader />;
   }
 
@@ -172,7 +195,22 @@ export default function CatalogPage() {
           <motion.h1 variants={itemVariants} className="h !mb-0">
             Каталог
           </motion.h1>
-          <Categories setter={setCategory} />
+          <Categories
+            setter={(id) => {
+              const params = new URLSearchParams(searchParams.toString());
+              if (id) params.set("category", String(id));
+              else params.delete("category");
+              router.replace(`/catalog?${params.toString()}`, {
+                scroll: false,
+              });
+              const cat = categories?.find((c) => c.id === id);
+              setTimeout(() => {
+                document.title = cat
+                  ? `${cat.name} - Moon Flowers`
+                  : "Moon Flowers - каталог";
+              });
+            }}
+          />
           <motion.div variants={itemVariants}>
             <Suspense
               fallback={
@@ -193,5 +231,13 @@ export default function CatalogPage() {
       items={filteredCategories}
       onCategoryVisible={onCategoryVisible}
     />
+  );
+}
+
+export default function CatalogPage() {
+  return (
+    <Suspense fallback={<FullScreenLoader />}>
+      <CatalogPageInner />
+    </Suspense>
   );
 }

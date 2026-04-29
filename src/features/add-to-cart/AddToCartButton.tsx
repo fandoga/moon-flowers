@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-import { Check, LoaderCircle, Minus } from "lucide-react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
+import { Check, LoaderCircle, Minus, ShoppingCart } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const MAX_QUANTITY = 50;
 const LOCAL_CART_KEY = "cart_local";
@@ -56,6 +58,64 @@ const getQuantity = (productId: number) => {
   return cart.items[String(productId)]?.quantity ?? 0;
 };
 
+const getCartPosition = (): { x: number; y: number } => {
+  const el = document.getElementById("cart");
+  if (!el) return { x: window.innerWidth - 50, y: 50 };
+  const rect = el.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+};
+
+// Компонент с летающей иконкой корзины
+const FlyingCartIcon = ({
+  isAnimating,
+  flyPosition,
+  cartPosition,
+}: {
+  isAnimating: boolean;
+  flyPosition: { x: number; y: number };
+  cartPosition: { x: number; y: number };
+}) => {
+  if (typeof window === "undefined" || !isAnimating) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      <motion.div
+        key="flying-cart"
+        initial={{
+          scale: 1,
+          x: flyPosition.x - 12,
+          y: flyPosition.y - 12,
+          opacity: 1,
+        }}
+        animate={{
+          x: cartPosition.x + 30,
+          y: cartPosition.y - 12,
+          scale: 0.5,
+          opacity: 0.8,
+          rotate: 360,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 140,
+          damping: 30,
+          duration: 2,
+          ease: "easeInOut",
+        }}
+        className="fixed pointer-events-none z-50"
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          willChange: "transform",
+        }}
+      >
+        <ShoppingCart className="w-8 h-8 text-[#394426]" />
+      </motion.div>
+    </AnimatePresence>,
+    document.body,
+  );
+};
+
 export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
   productId,
   productName,
@@ -67,6 +127,10 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
   const [quantity, setQuantity] = useState(() => getQuantity(productId));
   const [isUpdating, setIsUpdating] = useState(false);
   const [hasClicked, setClicked] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [flyPosition, setFlyPosition] = useState({ x: 0, y: 0 });
+  const [cartPosition, setCartPosition] = useState({ x: 0, y: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const syncFromStorage = useCallback(() => {
     setQuantity(getQuantity(productId));
@@ -126,6 +190,18 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
       e.stopPropagation();
       setClicked(true);
       updateQuantity(quantity + 1);
+
+      if (buttonRef.current) {
+        const buttonRect = buttonRef.current.getBoundingClientRect();
+        setFlyPosition({
+          x: buttonRect.left + buttonRect.width / 2,
+          y: buttonRect.top + buttonRect.height / 2,
+        });
+        setCartPosition(getCartPosition());
+        setIsAnimating(true);
+      }
+
+      setTimeout(() => setIsAnimating(false), 2000);
     },
     [quantity, updateQuantity],
   );
@@ -149,13 +225,20 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
   if (hideControls) {
     return (
       <button
+        ref={buttonRef}
         type="button"
         onClick={handleImmediateAdd}
         disabled={isUpdating || hasClicked || quantity >= MAX_QUANTITY}
-        className={`${className} cursor-pointer bg-gray rounded-lg p-2 w-12 h-12 flex items-center justify-center`}
+        className={`${className} cursor-pointer bg-gray rounded-lg p-2 w-12 h-12 flex items-center justify-center relative overflow-visible`}
       >
+        <FlyingCartIcon
+          isAnimating={isAnimating}
+          flyPosition={flyPosition}
+          cartPosition={cartPosition}
+        />
+
         <div
-          className={`absolute ${hasClicked ? "opacity-100" : "opacity-0"} duration-300 transition-all`}
+          className={`absolute z-10 ${hasClicked ? "opacity-100" : "opacity-0"} duration-300 transition-all`}
         >
           <Check />
         </div>
@@ -185,7 +268,7 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     <div
       className={`flex items-center h-[40px] sm:h-[48px] w-[100px] sm:w-[140px] ${className}`}
     >
-      <div className="flex w-full h-full items-center justify-between rounded-sm overflow-hidden">
+      <div className="flex w-full h-full items-center justify-between rounded-sm ">
         <button
           type="button"
           onClick={handleDecrement}

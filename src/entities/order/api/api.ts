@@ -92,14 +92,11 @@ export const createContragent = async (
   params: CreateContragentRequest,
 ): Promise<CreateContragentResponse> => {
   try {
-    const response = await tableCrmApi.post<unknown>(
-      "/contragents/",
-      {
-        name: params.name,
-        phone: params.phone,
-        contragent_type: "Покупатель",
-      },
-    );
+    const response = await tableCrmApi.post<unknown>("/contragents/", {
+      name: params.name,
+      phone: params.phone,
+      contragent_type: "Покупатель",
+    });
     const data = response.data as unknown;
     if (data && typeof data === "object") {
       const o = data as Record<string, unknown>;
@@ -107,12 +104,17 @@ export const createContragent = async (
       if (directId != null) {
         return { success: true, contragent_id: String(directId) };
       }
-      const result = o.result as { id?: number; contragent_id?: number } | undefined;
+      const result = o.result as
+        | { id?: number; contragent_id?: number }
+        | undefined;
       const nestedId = result?.contragent_id ?? result?.id;
       if (nestedId != null) {
         return { success: true, contragent_id: String(nestedId) };
       }
-      if (typeof o.success === "boolean" && typeof o.contragent_id === "string") {
+      if (
+        typeof o.success === "boolean" &&
+        typeof o.contragent_id === "string"
+      ) {
         return {
           success: o.success,
           contragent_id: o.contragent_id,
@@ -131,6 +133,34 @@ export const createContragent = async (
       error: message,
     };
   }
+};
+
+export const createOrGetContragent = async (
+  params: CreateContragentRequest,
+): Promise<CreateContragentResponse> => {
+  if (!params.phone) {
+    return {
+      success: false,
+      contragent_id: "",
+      error: "Некорректный номер телефона",
+    };
+  }
+
+  const targetPhone = normalizePhone(params.phone);
+  if (!targetPhone) {
+    return {
+      success: false,
+      contragent_id: "",
+      error: "Некорректный номер телефона",
+    };
+  }
+
+  const existingId = await findContragentByPhone(targetPhone);
+  if (existingId) {
+    return { success: true, contragent_id: String(existingId) };
+  }
+
+  return createContragent(params);
 };
 
 const normalizePhone = (phone: string) => phone.replace(/\D/g, "");

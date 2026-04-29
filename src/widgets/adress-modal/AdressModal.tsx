@@ -62,11 +62,9 @@ const AdressModal = () => {
       <button
         onClick={() => setOpen(true)}
         type="button"
-        className="cursor-pointer rounded-lg p-3 bg-gray col-span-3"
+        className="cursor-pointer rounded-lg p-3 bg-gray col-span-3 text-left truncate max-w-50 lg:max-w-90 xl:max-w-45 lxl:max-w-60 2xl:max-w-80"
       >
-        {localAddress
-          ? localAddress.address.slice(8, 25) + "..."
-          : "Выберите адрес доставки"}
+        {localAddress ? localAddress.address : "Выберите адрес доставки"}
       </button>
       {isOpen && (
         <div

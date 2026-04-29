@@ -31,7 +31,7 @@ const readCart = (): LocalCart => {
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isReady: isPointsReady, pointDigits } = useBonusCounter();
+  const { isReady: isPointsReady, pointDigits, isMaxed } = useBonusCounter();
   const router = useRouter();
   const pathname = usePathname();
   // Инициализируем всегда пустой корзиной на сервере и первом клиентском рендере
@@ -109,10 +109,44 @@ const Header = () => {
               <Link href="/" className="flex items-center scale-115 ">
                 <Logo />
               </Link>
-              <div className="flex items-center cursor-pointer">
-                <LoyalitiModal simple />
-                <div className="min-w-14 px-2 text-center font-semibold h-12 bg-gray rounded-lg overflow-hidden">
-                  <div className="relative h-full flex items-center justify-center gap-[1px]">
+              <div className="flex items-center cursor-pointer h-12">
+                {/* LoyalitiModal с собственным прогресс-баром */}
+                <div className="relative rounded-lg bg-gray overflow-hidden h-12">
+                  <motion.div
+                    className="absolute inset-0 bg-red-200 origin-left"
+                    initial={{ scaleX: 0 }}
+                    animate={{
+                      scaleX: Math.min(
+                        (parseInt(pointDigits.join("")) || 0) / 375,
+                        1,
+                      ),
+                    }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    style={{ opacity: 0.6, transformOrigin: "left" }}
+                  />
+                  <div className="relative z-10 h-full flex items-center">
+                    <LoyalitiModal simple />
+                  </div>
+                </div>
+
+                {/* Счётчик с собственным прогресс-баром */}
+                <div className="relative rounded-lg bg-gray overflow-hidden h-12">
+                  <motion.div
+                    className="absolute inset-0 bg-red-200 origin-left"
+                    initial={{ scaleX: 0 }}
+                    animate={{
+                      scaleX: Math.max(
+                        0,
+                        Math.min(
+                          (parseInt(pointDigits.join("")) || 0) - 375,
+                          125,
+                        ) / 125,
+                      ),
+                    }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    style={{ opacity: 0.6, transformOrigin: "left" }}
+                  />
+                  <div className="relative z-10 text-center font-semibold flex px-3 h-12 items-center justify-center gap-[1px]">
                     {!isPointsReady
                       ? "0"
                       : pointDigits.map((digit, index) => (
@@ -123,7 +157,7 @@ const Header = () => {
               </div>
               <AdressModal />
               <div className="flex items-center justify-end gap-4">
-                <div className="hidden xl:flex w-auto 2xl:w-150 gap-4 xl:gap-10 flex justify-end">
+                <div className="hidden xl:flex w-auto 2xl:w-140 gap-4 xl:gap-10 flex justify-between">
                   <p
                     className="cursor-pointer"
                     onClick={() => scrollToSection("stories")}
@@ -150,11 +184,14 @@ const Header = () => {
                   </p>
                   <Link href={"/catalog"}>Каталог</Link>
                 </div>
-                <div className="flex min-w-30 gap-6 items-center justify-end">
+                <div
+                  id="cart"
+                  className="flex z-50 min-w-30 gap-6 items-center justify-end"
+                >
                   {total > 0 && (
-                    <div className="bg-gray rounded-lg p-2">
+                    <Link href={"/order"} className="bg-gray rounded-lg p-2">
                       <p>{formatPrice(total)}</p>
-                    </div>
+                    </Link>
                   )}
                   <Link href={"/order"}>
                     <svg
@@ -189,11 +226,13 @@ const Header = () => {
               </Link>
               <Link
                 className="bg-gray px-2 md:px-6 py-2 rounded-lg"
-                href={"https://max"}
+                href={
+                  "https://max.ru/join/2_-2M-qp5mUMlioX89h09ilMEIgmH0zk2H58NH96RVY"
+                }
               >
                 Написать в Max
               </Link>
-              <div className="min-w-20 flex scale-90 scale-100 justify-between items-center">
+              <div className="min-w-20 flex scale-90 scale-100 justify-between items-center gap-2">
                 <Link href={"/order"}>
                   <svg
                     width="25"

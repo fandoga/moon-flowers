@@ -33,5 +33,6 @@ export const useBonusCounter = () => {
     points,
     isReady,
     pointDigits,
+    isMaxed: points >= 500,
   };
 };

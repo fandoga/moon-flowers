@@ -51,7 +51,7 @@ const CartItemsList: React.FC<CartItemsListProps> = ({
             className="cursor-pointer grid grid-cols-1 md:grid-cols-[1fr_210px_210px] gap-4 px-4 py-4 border-b border-[#E7E7E7]"
           >
             <Link
-              href={`/catalog${item.id}`}
+              href={`/catalog/${item.id}`}
               className="flex items-center gap-3 min-w-0"
             >
               <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-100 shrink-0">

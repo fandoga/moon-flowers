@@ -1,19 +1,58 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { StoryVideo, useMyVideos } from "@/entities/video";
+import {
+  MpProduct,
+  getProductsWithVideos,
+  getPicturesById,
+  usePrices,
+} from "@/entities/mp-product";
 import Videos from "../videos/Videos";
 import Logo from "@/components/ui/logo";
 
+// Извлечение video_id из обьекта товара
+const extractVideoId = (product: MpProduct): number | null => {
+  if (!product.videos || !Array.isArray(product.videos)) {
+    return null;
+  }
+
+  const videoUrl = product.videos[0]?.url;
+  if (!videoUrl || typeof videoUrl !== "string") {
+    return null;
+  }
+
+  const match = videoUrl.match(/(\d+)(?!.*\d)/);
+  if (!match) {
+    return null;
+  }
+
+  const videoId = parseInt(match[1], 10);
+  return videoId > 0 ? videoId : null;
+};
+
 const Stories = () => {
-  const { data } = useMyVideos({ limit: 15 });
+  const { data } = useMyVideos({ limit: 16 });
+  const { data: allPrices } = usePrices();
   const [currentPage, setCurrentPage] = useState(0);
   const [isTouchDevice, setIsTouchDevice] = useState(
     (typeof window !== "undefined" &&
       window.matchMedia("(hover: none), (pointer: coarse)").matches) ||
       false,
   );
+  const [productsWithVideos, setProductsWithVideos] = useState<MpProduct[]>([]);
+  const [enrichedVideos, setEnrichedVideos] = useState<StoryVideo[]>([]);
+
+  // Fetch products with videos on component mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const response = await getProductsWithVideos({ limit: 16 });
+      setProductsWithVideos(response.result);
+    };
+
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -27,34 +66,71 @@ const Stories = () => {
     return () => media.removeEventListener("change", handleChange);
   }, []);
 
-  const videos = useMemo<StoryVideo[]>(() => {
-    const raw = data?.items ?? [];
-    const normalized = raw.reduce<StoryVideo[]>((acc, item) => {
-      const id = Number(item.video_id);
-      const srcCandidate = item.seo_url;
+  // Собираем видео из товаров
+  useEffect(() => {
+    const buildVideosFromProducts = async () => {
+      if (productsWithVideos.length === 0) {
+        setEnrichedVideos([]);
+        return;
+      }
 
-      if (!id || !srcCandidate) return acc;
+      // Собираем цены
+      const priceByProductId = new Map<number, number>();
+      const pricesList = Array.isArray(allPrices?.result)
+        ? allPrices.result
+        : allPrices?.result
+          ? [allPrices.result]
+          : [];
+      for (const price of pricesList) {
+        const productId = Number(price.nomenclature_id);
+        const amount = Number(price.price);
+        if (!Number.isFinite(productId) || !Number.isFinite(amount)) continue;
+        if (!priceByProductId.has(productId)) {
+          priceByProductId.set(productId, amount);
+        }
+      }
 
-      acc.push({
-        id,
-        title: typeof item.title === "string" ? item.title : `Видео #${id}`,
-        src: srcCandidate,
-        avatar: item.channel_avatar || "",
-        poster:
-          typeof item.preview_url === "string"
-            ? item.preview_url
-            : typeof item.post_image === "string"
-              ? item.post_image
-              : undefined,
-      });
-      return acc;
-    }, []);
+      const videosFromProducts: StoryVideo[] = [];
 
-    return normalized;
-  }, [data]);
+      for (const product of productsWithVideos) {
+        const videoId = extractVideoId(product);
+        if (videoId === null) continue;
+
+        // Find matching video data from API
+        const videoData = data?.items?.find(
+          (item) => Number(item.video_id) === videoId,
+        );
+
+        if (!videoData || !videoData.seo_url) continue;
+
+        const picture = await getPicturesById(product.id);
+
+        const productId = Number(product.id);
+        const fallbackPrice = Number(product.price ?? 0);
+        const resolvedPrice = priceByProductId.get(productId) ?? fallbackPrice;
+
+        videosFromProducts.push({
+          id: videoId,
+          title: product.name,
+          avatar: videoData.channel_avatar || "",
+          poster: videoData.preview_url || videoData.post_image || undefined,
+          productId: productId,
+          productName: product.name,
+          productPhoto: picture?.public_url || picture?.url || undefined,
+          productPrice: resolvedPrice > 0 ? resolvedPrice : undefined,
+        });
+      }
+
+      setEnrichedVideos(videosFromProducts);
+    };
+
+    buildVideosFromProducts();
+  }, [productsWithVideos, data, allPrices]);
+
+  const displayVideos = enrichedVideos;
 
   const pageSize = 4;
-  const totalPages = Math.ceil(videos.length / pageSize);
+  const totalPages = Math.ceil(displayVideos.length / pageSize);
   const safeCurrentPage =
     totalPages > 0 ? Math.min(currentPage, totalPages - 1) : 0;
 
@@ -79,14 +155,10 @@ const Stories = () => {
           </p>
         </motion.div>
 
-        {!data ? (
+        {!data || !displayVideos ? (
           <section className="w-full flex items-center justify-center h-100">
             <Logo alwaysEnabled />
           </section>
-        ) : videos.length === 0 ? (
-          <div className="w-full py-16 text-center text-lg text-[#394426]">
-            {data?.error || "Видео пока недоступны"}
-          </div>
         ) : (
           <>
             {!isTouchDevice && totalPages > 1 && (
@@ -114,12 +186,13 @@ const Stories = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="-mx-4 flex sm:mx-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory pb-2 sm:pb-0"
+              className="-mx-4 flex sm:mx-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-scroll sm:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory pb-2 sm:pb-0 [scroll-snap-type:x_mandatory] sm:[scroll-snap-type:none]"
             >
               <Videos
                 data={data}
                 currentPage={safeCurrentPage}
                 pageSize={pageSize}
+                videos={displayVideos}
               />
             </motion.div>
           </>

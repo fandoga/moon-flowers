@@ -28,8 +28,8 @@ const ProductImgModal: React.FC<ProductImgModalProps> = ({
             className="bg-background rounded-2xl overflow-hidden"
           >
             <Image
-              width={400}
-              height={500}
+              width={500}
+              height={600}
               className="w-full h-full object-cover"
               src={src}
               alt="img"

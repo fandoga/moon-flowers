@@ -1,11 +1,13 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import DesktopProductPage from "@/widgets/product-page/ProductPage";
+import Product from "@/widgets/product/Product";
 import {
   getMpProductById,
   getPicturesListById,
   getPricesById,
   type MpProduct,
 } from "@/entities/mp-product";
+import { FullScreenLoader } from "@/widgets/initial-loader.tsx/InitialLoader";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -19,6 +21,8 @@ const enrichProduct = async (
     getPicturesListById(productId),
     getPricesById(),
   ]);
+
+  console.log("[enrichProduct] prices response:", prices);
 
   const sortedPictures = [...pictures].sort((a, b) => {
     const am = a?.is_main ? 1 : 0;
@@ -34,9 +38,14 @@ const enrichProduct = async (
     : prices?.result
       ? [prices.result]
       : [];
+
+  console.log("[enrichProduct] pricesList:", pricesList);
+
   const resolvedPrice = pricesList.find(
     (item) => Number(item.nomenclature_id) === Number(base.id),
   );
+
+  console.log("[enrichProduct] resolvedPrice for", base.id, ":", resolvedPrice);
 
   const fallbackPhoto =
     (base as MpProduct & { images?: string[]; photos?: string[] | null })
@@ -52,11 +61,18 @@ const enrichProduct = async (
   } as MpProduct;
 };
 
-const getEnrichedProduct = async (id: string): Promise<MpProduct | null> => {
+async function EnrichedProduct({ id }: { id: string }) {
   const base = await getMpProductById(id);
-  if (!base) return null;
-  return enrichProduct(id, base);
-};
+  if (!base) {
+    return (
+      <div className="text-xl flex items-center justify-center min-h-[60vh]">
+        Товар не найден
+      </div>
+    );
+  }
+  const enriched = await enrichProduct(id, base);
+  return <Product enrichedProduct={enriched} />;
+}
 
 export async function generateMetadata({
   params,
@@ -79,21 +95,14 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: PageProps) {
   const { id } = await params;
-  const enrichedProduct = await getEnrichedProduct(id);
-
-  if (!enrichedProduct) {
-    return (
-      <main className="py-8 md:py-12 bg-background max-w-[1440px] m-auto min-h-[60vh] flex items-center justify-center">
-        <div className="text-xl">Товар не найден</div>
-      </main>
-    );
-  }
 
   return (
-    <main className="md:py-10 bg-background min-h-screen">
-      <main className="md:py-12 bg-background max-w-[1440px] m-auto">
-        <DesktopProductPage enrichedProduct={enrichedProduct} />
-      </main>
+    <main className="bg-background min-h-screen">
+      <div className="md:py-12 bg-background max-w-[1440px] m-auto">
+        <Suspense fallback={<FullScreenLoader />}>
+          <EnrichedProduct id={id} />
+        </Suspense>
+      </div>
     </main>
   );
 }

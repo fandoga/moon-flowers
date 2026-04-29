@@ -1,32 +1,35 @@
 "use client";
 import { motion } from "framer-motion";
 import { MpProduct } from "@/entities/mp-product";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { Check } from "lucide-react";
 import ProductsCatalog from "@/widgets/products-catalog/ProductsCatalog";
-import ProductImgModal from "../product-card/ProductImgModal";
+import ProductImgModal from "./ProductImgModal";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-interface ProductPageProps {
+interface ProductProps {
   enrichedProduct: MpProduct;
 }
 
-export default function ProductPage({ enrichedProduct }: ProductPageProps) {
+export default function Product({ enrichedProduct }: ProductProps) {
   const [activeImage, setActiveImage] = useState(0);
   const [cartClicked, setCartClicked] = useState(false);
   const [openImg, setOpenImg] = useState(false);
-  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [width, setWidth] = useState<number>();
+  const [mainLoaded, setMainLoaded] = useState(false);
+  const [thumbLoaded, setThumbLoaded] = useState<Record<number, boolean>>({});
 
   function handleWindowSizeChange() {
     setWidth(window.innerWidth);
   }
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!window) return;
+    setTimeout(() => setWidth(window.innerWidth));
     window.addEventListener("resize", handleWindowSizeChange);
     return () => {
       window.removeEventListener("resize", handleWindowSizeChange);
@@ -53,14 +56,19 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
             {/* Основное изображение */}
             <div
               onClick={() => setOpenImg(true)}
-              className="flex-1 relative aspect-square rounded-3xl overflow-hidden"
+              className="flex-1 relative aspect-square rounded-3xl overflow-hidden bg-skeleton"
             >
+              {!mainLoaded && (
+                <div className="absolute inset-0 bg-skeleton animate-pulse rounded-3xl z-10" />
+              )}
               <Image
-                src={productPhotos[activeImage] || productPhotos[0] || ""}
+                key={productPhotos[activeImage] || productPhotos[0]}
+                src={productPhotos[activeImage] || productPhotos[0]}
                 alt={enrichedProduct.name}
                 fill
-                className="cursor-pointer object-cover"
+                className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
                 priority
+                onLoad={() => setMainLoaded(true)}
               />
             </div>
             {/* Галерея миниатюр */}
@@ -68,15 +76,24 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
               {productPhotos.map((img, index) => (
                 <button
                   key={index}
-                  onClick={() => setActiveImage(index)}
-                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${activeImage === index ? "border-black" : "border-transparent opacity-70 hover:opacity-100"}`}
+                  onClick={() => {
+                    setMainLoaded(false);
+                    setActiveImage(index);
+                  }}
+                  className={`${activeImage === index && "!opacity-100"} relative w-16 h-16 rounded-xl overflow-hidden transition-all border-transparent opacity-70 hover:opacity-100 bg-skeleton`}
                 >
+                  {!thumbLoaded[index] && (
+                    <div className="absolute inset-0 bg-skeleton animate-pulse rounded-xl z-10" />
+                  )}
                   <Image
                     src={img}
                     alt={`Фото ${index + 1}`}
                     width={64}
                     height={64}
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover transition-opacity duration-300 ${thumbLoaded[index] ? "opacity-100" : "opacity-0"}`}
+                    onLoad={() =>
+                      setThumbLoaded((prev) => ({ ...prev, [index]: true }))
+                    }
                   />
                 </button>
               ))}
@@ -90,7 +107,7 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
           className="flex flex-col items-start md:items-center md:items-start"
         >
           <div>
-            <h1 className="h text-4xl md:text-5xl font-medium">
+            <h1 className="h text-4xl md:text-5xl max-w-80 font-medium">
               {enrichedProduct?.name}
             </h1>
 
@@ -100,10 +117,8 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
 
             <div
               onClick={() => {
-                // При клике сразу меняем состояние на нашей кнопке
                 setCartClicked(true);
 
-                // Напрямую вызываем логику добавления в корзину как это делает внутренняя кнопка
                 const cart = JSON.parse(
                   localStorage.getItem("cart_local") || '{"items":{}}',
                 );
@@ -123,10 +138,10 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
                 localStorage.setItem("cart_local", JSON.stringify(cart));
                 window.dispatchEvent(new Event("cart-local-updated"));
               }}
-              className="cursor-pointer bg-black border-1 border-black text-white p-2 pl-6 h-12 rounded-lg w-fit flex items-center gap-3 group hover:bg-white hover:text-black transition-colors"
+              className="cursor-pointer bg-black border-1 border-black text-white p-2 pl-6 h-12 rounded-lg w-fit flex items-center gap-3 group hover:bg-white hover:text-black duration-400 transition-colors"
             >
               <p className="max-w-40">Добавить в корзину</p>
-              <div className="bg-white rounded-lg group-hover:bg-black group-hover:text-white p-3 text-black flex items-center justify-center">
+              <div className="bg-white rounded-lg group-hover:bg-black group-hover:text-white p-3 text-black flex duration-400 items-center justify-center">
                 {cartClicked ? (
                   <Check size={12} />
                 ) : (
@@ -147,15 +162,6 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
                   </svg>
                 )}
               </div>
-              {/*  Скрытая кнопка остается для синхронизации состояния */}
-              <AddToCartButton
-                productId={enrichedProduct?.id}
-                productName={enrichedProduct?.name}
-                imageUrl={productPhotos?.[0]}
-                price={enrichedProduct?.price}
-                hideControls
-                className="absolute w-60 opacity-0 pointer-events-none"
-              />
             </div>
 
             <div className="text-base leading-relaxed mb-8 pt-8 space-y-3">
@@ -183,7 +189,7 @@ export default function ProductPage({ enrichedProduct }: ProductPageProps) {
             displayInfo={false}
             loadMore={false}
             query=""
-            size={width <= 1281 ? 1 : 3}
+            size={(width ?? 0) <= 1281 ? 1 : 3}
           />
         </div>
       </motion.div>
