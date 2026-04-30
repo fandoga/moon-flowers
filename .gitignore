@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# Kiro AI
+/.kiro
+.DEPLOYMENT_GUIDE.md
+
 # production
 /build
 
