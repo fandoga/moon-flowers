@@ -5,25 +5,12 @@ import Header from "@/widgets/header/Header";
 import Footer from "@/widgets/footer/Footer";
 import { Providers } from "./providers";
 import { Toaster } from "react-hot-toast";
-import localFont from "next/font/local";
 import InitialLoader from "@/widgets/initial-loader.tsx/InitialLoader";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["cyrillic", "latin"],
   variable: "--font-inter",
-});
-
-const sans = localFont({
-  src: [
-    {
-      path: "../../public/fonts/BezierSans_Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-  ],
-  variable: "--sans",
-  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -91,7 +78,7 @@ export default function RootLayout({
     <html lang="ru">
       <body
         className={`
-          ${inter.variable} ${sans.variable}
+          ${inter.variable}
           font-inter antialiased bg-background
           flex flex-col min-h-screen
         `}
