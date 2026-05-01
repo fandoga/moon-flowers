@@ -14,7 +14,7 @@ cache:
 build:
   stage: build
   tags:
-    - "flowes-runner"
+    - "flowers-runner"
   image: node:22
   only:
     - main
@@ -35,7 +35,7 @@ build:
 deploy:
   stage: deploy
   tags:
-    - "flowes-runner"
+    - "flowers-runner"
   only:
     - main
   script:
