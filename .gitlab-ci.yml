@@ -14,8 +14,6 @@ cache:
 build:
   stage: build
   image: node:22
-  tags:
-    - flowers-runner
   only:
     - main
   script:
@@ -34,8 +32,6 @@ build:
 
 deploy:
   stage: deploy
-  tags:
-    - flowers-runner
   only:
     - main
   script:
