@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+#Kiro AI
+/.kiro
+
 # next.js
 /.next/
 /out/
