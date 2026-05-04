@@ -2,14 +2,14 @@ stages:
   - build
   - deploy
 
-variables:
-  NODE_OPTIONS: "--max-old-space-size=1800"
+variables: {}
 
 cache:
-  key: npm
+  key:
+    files:
+      - package-lock.json
   paths:
     - node_modules/
-    - ~/.npm/
 
 build:
   stage: build
@@ -18,8 +18,10 @@ build:
   image: node:22
   only:
     - main
+  before_script:
+    - npm cache clean --force
   script:
-    - npm ci
+    - npm ci --prefer-offline --no-audit
     - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
     - npm run build
   artifacts:
