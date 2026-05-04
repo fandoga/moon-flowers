@@ -41,16 +41,12 @@ deploy:
     - "flowers-runner"
   only:
     - main
-  before_script:
-    - apt-get update -qq && apt-get install -y -qq openssh-client
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts 2>/dev/null
   script:
-    - scp -r .next/ public/ package.json package-lock.json next.config.ts .env.production root@$SSH_HOST:/var/www/moon-flowers/
-    - ssh root@$SSH_HOST 'cd /var/www/moon-flowers && npm ci --production && pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start'
+    - mkdir -p /var/www/moon-flowers
+    - cp -r .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/moon-flowers/
+    - cd /var/www/moon-flowers
+    - npm ci --production
+    - pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start
   environment:
     name: production
     url: http://$SSH_HOST
