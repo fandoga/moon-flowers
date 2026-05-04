@@ -38,6 +38,11 @@ deploy:
     - "flowers-runner"
   only:
     - main
+  before_script:
+      - eval $(ssh-agent -s)
+      - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      - mkdir -p ~/.ssh
+      - chmod 700 ~/.ssh
   script:
     - mkdir -p /var/www/moon-flowers
     - cp -rv .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/moon-flowers/
@@ -46,4 +51,4 @@ deploy:
     - pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start
   environment:
     name: production
-    url: http://149.154.71.226
+    url: http://$SSH_HOST
