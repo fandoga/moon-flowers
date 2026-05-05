@@ -152,6 +152,12 @@ function CatalogPageInner() {
     });
   }, [mobileCategories, previewQueries]);
 
+  const categoriesWithImage = useMemo(() => {
+    return filteredCategories.filter(
+      (item) => item.image && item.image !== "placeholder.jpg",
+    );
+  }, [filteredCategories]);
+
   const onCategoryVisible = useCallback(
     (categoryId: number) => {
       if (isTouchDevice !== true) return;
@@ -228,7 +234,7 @@ function CatalogPageInner() {
   return (
     <CatalogReels
       isCategories
-      items={filteredCategories}
+      items={categoriesWithImage}
       onCategoryVisible={onCategoryVisible}
     />
   );

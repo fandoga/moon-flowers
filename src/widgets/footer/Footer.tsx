@@ -32,9 +32,7 @@ const Footer = () => {
               </p>
             </div>
             <div className="flex flex-col items-start">
-              <p className="p py-2 ">
-                г. Москва, ул. Большая <br /> Переяславская 52/1
-              </p>
+              <p className="p py-2 ">г. Москва, ул. Полярная 21</p>
               <a
                 href="tel:+79035972797"
                 className="p py-2 hover:underline cursor-pointer"
@@ -45,7 +43,7 @@ const Footer = () => {
                 href="mailto:flowers@shop.com"
                 className="p py-2 hover:underline cursor-pointer"
               >
-                flowers@shop.com
+                moonflowers.msk@yandex.ru
               </a>
               <FooterIcons />
             </div>
@@ -66,7 +64,7 @@ const Footer = () => {
                 Москва
               </a>
               <a
-                href="https://yandex.ru/maps/213/moscow/house/bolshaya_pereyaslavskaya_ulitsa_52s1/Z04YcANgT0cEQFtvfXt5dnRnYw==/?from=tableau_yabro&ll=37.640652%2C55.787861&utm_medium=mapframe&utm_source=maps&z=20.77"
+                href="https://yandex.ru/maps/213/moscow/house/polyarnaya_ulitsa_21/Z04YcARkT0UDQFtvfXR2eHhhZA==/?ll=37.634596%2C55.879413&utm_medium=mapframe&utm_source=maps&z=21"
                 style={{
                   color: "#eee",
                   fontSize: "12px",
@@ -74,15 +72,15 @@ const Footer = () => {
                   top: "14px",
                 }}
               >
-                Большая Переяславская улица, 52с1 — Яндекс Карты
+                Полярная улица, 21 — Яндекс Карты
               </a>
               <iframe
-                src="https://yandex.ru/map-widget/v1/?from=tableau_yabro&ll=37.640652%2C55.787861&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg1Njc0MzYwMhJX0KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINCR0L7Qu9GM0YjQsNGPINCf0LXRgNC10Y_RgdC70LDQstGB0LrQsNGPINGD0LvQuNGG0LAsIDUy0YExIgoNAJAWQhXBJl9C&z=20.77"
+                src="https://yandex.ru/map-widget/v1/?ll=37.634596%2C55.879413&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg1Njc5NTg3MhI70KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINCf0L7Qu9GP0YDQvdCw0Y8g0YPQu9C40YbQsCwgMjEiCg3ViRZCFYeEX0I%2C&z=21"
                 width="560"
                 height="400"
                 frameBorder="1"
-                className="w-full h-120"
                 allowFullScreen
+                className="w-full h-70 md:h-100"
                 style={{ position: "relative" }}
               ></iframe>
             </div>

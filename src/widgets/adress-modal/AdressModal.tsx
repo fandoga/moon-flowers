@@ -131,41 +131,6 @@ const AdressModal = () => {
                 className="text-center outline-none rounded-lg p-3 bg-gray"
               />
             </div>
-            {/* <div className="w-full overlflow-hidden py-8">
-              <div style={{ position: "relative", overflow: "hidden" }}>
-                <a
-                  href="https://yandex.ru/maps/213/moscow/?utm_medium=mapframe&utm_source=maps"
-                  style={{
-                    color: "#eee",
-                    fontSize: "12px",
-                    position: "absolute",
-                    top: "0px",
-                  }}
-                >
-                  Москва
-                </a>
-                <a
-                  href="https://yandex.ru/maps/213/moscow/house/bolshaya_pereyaslavskaya_ulitsa_52s1/Z04YcANgT0cEQFtvfXt5dnRnYw==/?from=tableau_yabro&ll=37.640652%2C55.787861&utm_medium=mapframe&utm_source=maps&z=20.77"
-                  style={{
-                    color: "#eee",
-                    fontSize: "12px",
-                    position: "absolute",
-                    top: "14px",
-                  }}
-                >
-                  Большая Переяславская улица, 52с1 — Яндекс Карты
-                </a>
-                <iframe
-                  src="https://yandex.ru/map-widget/v1/?from=tableau_yabro&ll=37.640652%2C55.787861&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg1Njc0MzYwMhJX0KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINCR0L7Qu9GM0YjQsNGPINCf0LXRgNC10Y_RgdC70LDQstGB0LrQsNGPINGD0LvQuNGG0LAsIDUy0YExIgoNAJAWQhXBJl9C&z=20.77"
-                  width="560"
-                  height="400"
-                  frameBorder="1"
-                  className="w-full h-70 md:max-h-80 lg:max-h-100 rounded-4xl"
-                  allowFullScreen
-                  style={{ position: "relative" }}
-                ></iframe>
-              </div>
-            </div> */}
             <button
               onClick={() => {
                 const payload = {
