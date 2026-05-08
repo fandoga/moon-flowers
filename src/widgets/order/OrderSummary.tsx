@@ -33,14 +33,12 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   return (
     <aside className="lg:sticky lg:top-24 h-fit">
       <div className="rounded-xl bg-white/40 space-y-3">
-        <div
-          onClick={() => handleEscrow()}
-          className="flex items-center cursor-pointer"
-        >
+        <div className="flex items-center">
           <button
-            disabled={points === 0}
+            onClick={() => handleEscrow()}
+            disabled={points === 0 || hasEscrow}
             type="button"
-            className={`${hasEscrow ? "!text-muted-foreground" : ""} cursor-pointer flex-1 h-12 rounded-xl bg-black text-white`}
+            className={`${hasEscrow ? "!text-muted-foreground" : ""} cursor-pointer disabled:cursor-default flex-1 h-12 rounded-xl bg-black text-white`}
           >
             {hasEscrow
               ? "Баллы применены"

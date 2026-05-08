@@ -17,6 +17,13 @@ import {
 } from "@/entities/loyaliti/lib/cardStorage";
 import { createOrGetContragent } from "@/entities/order/api/api";
 
+const RECENT_SYNC_TTL_MS = 5000;
+const balanceSyncRequests = new Map<string, Promise<LoyalityCard | null>>();
+const recentBalanceSyncs = new Map<string, number>();
+
+const getBalanceSyncKey = (cardNumber: number, targetPoints: number) =>
+  `${cardNumber}:${targetPoints}`;
+
 /**
  * Хук для работы с картой лояльности
  * Включает всю логику: загрузка карт, проверка существующей, создание новой, сохранение в localStorage
@@ -26,14 +33,12 @@ export const useLoyalityCardData = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [points, setPoints] = useState<number>();
   const [escrow, setEscrow] = useState<number>();
-  const [canSync, setCanSync] = useState(true);
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
-  const [searchPhone, setSearchPhone] = useState<string | undefined>(undefined);
-  const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const escrowRequestRef = useRef<Promise<void> | null>(null);
 
   const MAX_POINTS = 500;
 
-  const { data, isLoading } = useLoyalityCards(searchPhone);
+  const { data, isLoading } = useLoyalityCards();
   const createCardMutation = useCreateLoyalityCard();
   const createBalanceMutation = useAddLoyalityTransactionAccrual();
 
@@ -134,60 +139,75 @@ export const useLoyalityCardData = () => {
   );
 
   /**
-   * Синхронизировать баланс карты с локальными баллами!
+   * Синхронизировать баланс карты с локальными баллами
    */
   const syncBalance = useCallback(
-    async (cardOverride?: LoyalityCard) => {
+    async (cardOverride?: LoyalityCard): Promise<LoyalityCard | null> => {
       const initialCard = cardOverride || currentCard;
-      if (!initialCard || points === undefined || !canSync) return;
+      if (!initialCard || points === undefined) return null;
 
-      setCanSync(false);
+      const syncKey = getBalanceSyncKey(initialCard.card_number, points);
+      const recentSyncAt = recentBalanceSyncs.get(syncKey);
 
-      try {
+      if (recentSyncAt && Date.now() - recentSyncAt < RECENT_SYNC_TTL_MS) {
+        return initialCard;
+      }
+
+      const activeRequest = balanceSyncRequests.get(syncKey);
+      if (activeRequest) {
+        return activeRequest;
+      }
+
+      const request = (async () => {
         // Получаем актуальные данные карты перед синхронизацией
         const freshCard = await refetchCard(initialCard.card_number);
         const card = freshCard || initialCard;
 
         const currentBalance = card.balance || 0;
+        let updatedCard = card;
 
         if (points > currentBalance) {
           const addValue = points - currentBalance;
-          createBalanceMutation.mutate({
+          const result = await createBalanceMutation.mutateAsync({
             loyality_card_number: card.card_number,
             amount: addValue,
           });
+
+          if (result?.error) {
+            throw new Error(result.error);
+          }
+
+          updatedCard = { ...card, balance: currentBalance + addValue };
         } else if (points < currentBalance) {
           const removeValue = currentBalance - points;
-          createBalanceMutation.mutate({
+          const result = await createBalanceMutation.mutateAsync({
             loyality_card_number: card.card_number,
             amount: removeValue,
             type: "withdraw",
           });
-        }
-      } finally {
-        // Очищаем старый таймер если есть
-        if (syncTimerRef.current) {
-          clearTimeout(syncTimerRef.current);
+
+          if (result?.error) {
+            throw new Error(result.error);
+          }
+
+          updatedCard = { ...card, balance: currentBalance - removeValue };
         }
 
-        // Разблокируем через 1 секунду в любом случае (даже если была ошибка)
-        syncTimerRef.current = setTimeout(() => {
-          setCanSync(true);
-          syncTimerRef.current = null;
-        }, 1000);
+        setCurrentCard(updatedCard);
+        recentBalanceSyncs.set(syncKey, Date.now());
+        return updatedCard;
+      })();
+
+      balanceSyncRequests.set(syncKey, request);
+
+      try {
+        return await request;
+      } finally {
+        balanceSyncRequests.delete(syncKey);
       }
     },
-    [currentCard, points, createBalanceMutation, canSync, refetchCard],
+    [currentCard, points, createBalanceMutation, refetchCard],
   );
-
-  // Cleanup таймера при размонтировании
-  useEffect(() => {
-    return () => {
-      if (syncTimerRef.current) {
-        clearTimeout(syncTimerRef.current);
-      }
-    };
-  }, []);
 
   /**
    * Создать новую карту или вернуть существующую
@@ -233,10 +253,9 @@ export const useLoyalityCardData = () => {
 
       if (result && !result.error) {
         const newCard = Array.isArray(result) ? result[0] : result;
-        console.log(result);
         setPendingCardId(newCard.id);
         setCurrentCard(newCard);
-        syncBalance(newCard);
+        await syncBalance(newCard);
         return newCard;
       }
 
@@ -248,39 +267,68 @@ export const useLoyalityCardData = () => {
   const balanceEscrow = useCallback(
     async (cartBalance: number) => {
       if (!currentCard || points === undefined) return;
+      if ((escrow ?? 0) > 0) return;
 
-      await syncBalance();
+      if (escrowRequestRef.current) {
+        return escrowRequestRef.current;
+      }
 
-      // Получаем актуальные данные после синхронизации
-      const freshCard = await refetchCard(currentCard.card_number);
-      const card = freshCard || currentCard;
+      const request = (async () => {
+        const syncedCard = await syncBalance();
 
-      if (cartBalance > card.balance) {
-        // Если запрашиваем больше чем есть на карте - списываем весь доступный баланс карты
-        createBalanceMutation.mutate({
+        // Получаем актуальные данные после синхронизации
+        const freshCard = await refetchCard(currentCard.card_number);
+        const card = freshCard || syncedCard || currentCard;
+        const availableBalance = Math.max(0, card.balance || 0);
+        const withdrawAmount = Math.min(cartBalance, availableBalance);
+
+        if (withdrawAmount <= 0) {
+          setEscrow(0);
+          return;
+        }
+
+        const result = await createBalanceMutation.mutateAsync({
           loyality_card_number: card.card_number,
-          amount: Math.abs(card.balance),
+          amount: withdrawAmount,
           type: "withdraw",
         });
 
-        const newLocalPoints = points - card.balance;
+        if (result?.error) {
+          throw new Error(result.error);
+        }
+
+        const newLocalPoints = points - withdrawAmount;
         const nextPoints = writeLogoPoints(Math.max(0, newLocalPoints));
-        setEscrow(Math.abs(card.balance));
+        const nextCard = {
+          ...card,
+          balance: Math.max(0, availableBalance - withdrawAmount),
+        };
+
+        setEscrow(withdrawAmount);
         setPoints(nextPoints);
-      } else {
-        // Списываем ровно запрошенную сумму
-        createBalanceMutation.mutate({
-          loyality_card_number: card.card_number,
-          amount: -Math.abs(cartBalance),
-          type: "withdraw",
-        });
-        const newLocalPoints = points - cartBalance;
-        const nextPoints = writeLogoPoints(Math.max(0, newLocalPoints));
-        setEscrow(Math.abs(cartBalance));
-        setPoints(nextPoints);
+        setCurrentCard(nextCard);
+        recentBalanceSyncs.set(
+          getBalanceSyncKey(card.card_number, nextPoints),
+          Date.now(),
+        );
+      })();
+
+      escrowRequestRef.current = request;
+
+      try {
+        await request;
+      } finally {
+        escrowRequestRef.current = null;
       }
     },
-    [currentCard, points, syncBalance, createBalanceMutation, refetchCard],
+    [
+      currentCard,
+      points,
+      escrow,
+      syncBalance,
+      createBalanceMutation,
+      refetchCard,
+    ],
   );
 
   /**
