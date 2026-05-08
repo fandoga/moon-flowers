@@ -13,7 +13,6 @@ interface OrderSummaryProps {
   escrow: number | undefined | null;
   hasEscrow: boolean;
   isSubmitting: boolean;
-  handleEscrow: () => void;
 }
 
 /**
@@ -28,14 +27,12 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   escrow,
   hasEscrow,
   isSubmitting,
-  handleEscrow,
 }) => {
   return (
     <aside className="lg:sticky lg:top-24 h-fit">
       <div className="rounded-xl bg-white/40 space-y-3">
         <div className="flex items-center">
           <button
-            onClick={() => handleEscrow()}
             disabled={points === 0 || hasEscrow}
             type="button"
             className={`${hasEscrow ? "!text-muted-foreground" : ""} cursor-pointer disabled:cursor-default flex-1 h-12 rounded-xl bg-black text-white`}

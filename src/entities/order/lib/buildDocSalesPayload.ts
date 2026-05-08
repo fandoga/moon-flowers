@@ -83,12 +83,8 @@ export function buildDocSalesOrder(params: {
   }
 
   const goodsSum = goods.reduce((acc, g) => acc + g.price * g.quantity, 0);
-  const sumNominal =
-    deliveryPrice > 0 && deliveryNomenclatureId <= 0
-      ? goodsSum + deliveryPrice
-      : goodsSum;
 
-  const sum = round2(sumNominal);
+  const sum = round2(goodsSum);
   const paidLt = round2(Math.min(sum, Math.max(0, escrowRub)));
   const paidRubles = round2(Math.max(0, sum - paidLt));
 

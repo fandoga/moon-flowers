@@ -347,7 +347,6 @@ export default function OrderPage() {
             escrow={escrow}
             hasEscrow={hasEscrow}
             isSubmitting={isSubmitting}
-            handleEscrow={handleEscrow}
           />
         </form>
       </div>
