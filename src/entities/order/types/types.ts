@@ -10,6 +10,7 @@ export interface DocSalesGoodItem {
 
 /** Один документ продажи в теле массива для /docs_sales/. */
 export interface DocSalesCreateItem {
+  tags: string;
   priority: number;
   dated: number;
   operation: "Заказ";

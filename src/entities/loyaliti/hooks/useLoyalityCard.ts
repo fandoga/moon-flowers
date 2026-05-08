@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   LoyalityCard,
   useLoyalityCards,
@@ -8,7 +8,6 @@ import {
 import {
   readLogoPoints,
   subscribeLogoPoints,
-  writeLogoPoints,
 } from "@/entities/loyaliti/lib/pointsStorage";
 import {
   readStoredLoyalityCard,
@@ -17,12 +16,47 @@ import {
 } from "@/entities/loyaliti/lib/cardStorage";
 import { createOrGetContragent } from "@/entities/order/api/api";
 
-const RECENT_SYNC_TTL_MS = 5000;
+const RECENT_SYNC_TTL_MS = 3000;
 const balanceSyncRequests = new Map<string, Promise<LoyalityCard | null>>();
 const recentBalanceSyncs = new Map<string, number>();
 
 const getBalanceSyncKey = (cardNumber: number, targetPoints: number) =>
   `${cardNumber}:${targetPoints}`;
+
+type BackendCardLookup =
+  | { status: "found"; card: LoyalityCard }
+  | { status: "missing" }
+  | { status: "error"; error: unknown };
+
+const fetchBackendCard = async (
+  cardNumber: number,
+): Promise<BackendCardLookup> => {
+  try {
+    const response = await fetch(
+      `/api/loyality/loyality_cards?card_number=${cardNumber}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch loyalty card: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data?.result && Array.isArray(data.result)) {
+      const freshCard = data.result.find(
+        (item: LoyalityCard) => item.card_number === cardNumber,
+      );
+
+      if (freshCard) {
+        return { status: "found", card: freshCard };
+      }
+    }
+
+    return { status: "missing" };
+  } catch (error) {
+    return { status: "error", error };
+  }
+};
 
 /**
  * Хук для работы с картой лояльности
@@ -34,7 +68,6 @@ export const useLoyalityCardData = () => {
   const [points, setPoints] = useState<number>();
   const [escrow, setEscrow] = useState<number>();
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
-  const escrowRequestRef = useRef<Promise<void> | null>(null);
 
   const MAX_POINTS = 500;
 
@@ -77,6 +110,39 @@ export const useLoyalityCardData = () => {
     };
   }, []);
 
+  // Если сохраненная карта больше не существует на бэке, удаляем ее локально
+  useEffect(() => {
+    if (!isInitialized || !currentCard || pendingCardId) return;
+
+    let cancelled = false;
+
+    void fetchBackendCard(currentCard.card_number).then((result) => {
+      if (cancelled) return;
+
+      if (result.status === "found") {
+        if (JSON.stringify(result.card) !== JSON.stringify(currentCard)) {
+          setCurrentCard(result.card);
+        }
+        return;
+      }
+
+      if (result.status === "missing") {
+        setCurrentCard(null);
+        writeStoredLoyalityCard(null);
+        return;
+      }
+
+      console.error(
+        "[loyalityCard] Failed to validate stored card:",
+        result.error,
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentCard, isInitialized, pendingCardId]);
+
   // Обновляем данные когда приходят карты с сервера
   useEffect(() => {
     if (!data?.result || !currentCard || pendingCardId) return;
@@ -114,29 +180,37 @@ export const useLoyalityCardData = () => {
    */
   const refetchCard = useCallback(
     async (cardNumber: number): Promise<LoyalityCard | null> => {
-      try {
-        const response = await fetch(
-          `/api/loyality/loyality_cards?card_number=${cardNumber}`,
-        );
-        const data = await response.json();
+      const result = await fetchBackendCard(cardNumber);
 
-        if (data?.result && Array.isArray(data.result)) {
-          const freshCard = data.result.find(
-            (item: LoyalityCard) => item.card_number === cardNumber,
-          );
-          if (freshCard) {
-            setCurrentCard(freshCard);
-            return freshCard;
-          }
-        }
-        return null;
-      } catch (error) {
-        console.error("[refetchCard] Failed to fetch card:", error);
-        return null;
+      if (result.status === "found") {
+        setCurrentCard(result.card);
+        return result.card;
       }
+
+      if (result.status === "error") {
+        console.error("[refetchCard] Failed to fetch card:", result.error);
+      }
+
+      if (result.status === "missing") {
+        console.warn("[refetchCard] Loyalty card was not found:", cardNumber);
+      }
+
+      return null;
     },
     [],
   );
+
+  useEffect(() => {
+    if (!pendingCardId) return;
+
+    const timer = setTimeout(() => {
+      setPendingCardId(null);
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [pendingCardId]);
 
   /**
    * Синхронизировать баланс карты с локальными баллами
@@ -269,66 +343,18 @@ export const useLoyalityCardData = () => {
       if (!currentCard || points === undefined) return;
       if ((escrow ?? 0) > 0) return;
 
-      if (escrowRequestRef.current) {
-        return escrowRequestRef.current;
+      const availablePoints = Math.max(0, points);
+      const withdrawAmount = Math.min(cartBalance, availablePoints);
+
+      if (withdrawAmount <= 0) {
+        setEscrow(0);
+        return;
       }
 
-      const request = (async () => {
-        const syncedCard = await syncBalance();
-
-        // Получаем актуальные данные после синхронизации
-        const freshCard = await refetchCard(currentCard.card_number);
-        const card = freshCard || syncedCard || currentCard;
-        const availableBalance = Math.max(0, card.balance || 0);
-        const withdrawAmount = Math.min(cartBalance, availableBalance);
-
-        if (withdrawAmount <= 0) {
-          setEscrow(0);
-          return;
-        }
-
-        const result = await createBalanceMutation.mutateAsync({
-          loyality_card_number: card.card_number,
-          amount: withdrawAmount,
-          type: "withdraw",
-        });
-
-        if (result?.error) {
-          throw new Error(result.error);
-        }
-
-        const newLocalPoints = points - withdrawAmount;
-        const nextPoints = writeLogoPoints(Math.max(0, newLocalPoints));
-        const nextCard = {
-          ...card,
-          balance: Math.max(0, availableBalance - withdrawAmount),
-        };
-
-        setEscrow(withdrawAmount);
-        setPoints(nextPoints);
-        setCurrentCard(nextCard);
-        recentBalanceSyncs.set(
-          getBalanceSyncKey(card.card_number, nextPoints),
-          Date.now(),
-        );
-      })();
-
-      escrowRequestRef.current = request;
-
-      try {
-        await request;
-      } finally {
-        escrowRequestRef.current = null;
-      }
+      setEscrow(withdrawAmount);
+      setPoints(Math.max(0, availablePoints - withdrawAmount));
     },
-    [
-      currentCard,
-      points,
-      escrow,
-      syncBalance,
-      createBalanceMutation,
-      refetchCard,
-    ],
+    [currentCard, points, escrow],
   );
 
   /**

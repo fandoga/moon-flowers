@@ -89,6 +89,7 @@ export function buildDocSalesOrder(params: {
   const paidRubles = round2(Math.max(0, sum - paidLt));
 
   return {
+    tags: "moonflowers.ru, fromsite",
     priority: 0,
     dated: Math.floor(Date.now() / 1000),
     operation: "Заказ",
