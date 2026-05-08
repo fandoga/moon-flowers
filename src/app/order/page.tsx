@@ -160,7 +160,7 @@ export default function OrderPage() {
   };
 
   // Расчеты
-  const deliveryPrice = cartItems.length > 0 ? 897 : 0;
+  const deliveryPrice = cartItems.length > 0 ? 0 : 0;
   const grandTotal = total + deliveryPrice - (escrow ?? 0);
   const hasEscrow = (escrow ?? 0) > 0;
 
