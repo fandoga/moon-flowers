@@ -1,7 +1,5 @@
 import axios from "axios";
 
-// ✅ Теперь все запросы идут через серверный прокси /api/loyality
-// Это полностью убирает CORS блокировки
 const loyalitiApi = axios.create({
   baseURL: "/api/loyality",
 });
@@ -94,6 +92,8 @@ export const addLoyalityTransactionAccrual = async (
     // Оборачиваем каждый элемент в нужные общие поля
     const payload = basePayload.map((item) => ({
       ...item,
+      name: "Пополнение",
+      tags: "moonflowers.ru, fromsite",
       dated: Math.floor(Date.now() / 1000),
     }));
 

@@ -35,7 +35,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <div className="rounded-xl bg-white/40 space-y-3">
         <div className="flex items-center">
           <button
-            onClick={() => handleEscrow()}
+            onClick={handleEscrow}
             disabled={points === 0 || hasEscrow}
             type="button"
             className={`${hasEscrow ? "!text-muted-foreground" : ""} cursor-pointer disabled:cursor-default flex-1 h-12 rounded-xl bg-black text-white`}

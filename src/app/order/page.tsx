@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
 import { useAddressSuggestions, useSavedAddressForm } from "@/entities/address";
 import { useLoyalityCardData } from "@/entities/loyaliti";
+import { writeLogoPoints } from "@/entities/loyaliti/lib/pointsStorage";
 import {
   buildDeliveryDoc,
   buildDocSalesOrder,
@@ -61,7 +62,7 @@ export default function OrderPage() {
   const createContragent = useCreateContragent();
   const findContragentByPhone = useFindContragentByPhone();
   const sendDelivery = useSendDeliveryInfo();
-  const { syncBalance, currentCard, points, escrow, balanceEscrow } =
+  const { currentCard, points, escrow, balanceEscrow, syncBalance } =
     useLoyalityCardData();
 
   const suggestions = useMemo(
@@ -71,10 +72,11 @@ export default function OrderPage() {
 
   const balanceSyncDone = useRef(false);
 
-  // Синхронизация баланса один раз
+  // Синхронизация локальных баллов с API один раз при открытии оформления
   useEffect(() => {
     if (balanceSyncDone.current) return;
     if (!currentCard || points === undefined) return;
+
     balanceSyncDone.current = true;
     void syncBalance().catch((error) => {
       balanceSyncDone.current = false;
@@ -165,6 +167,8 @@ export default function OrderPage() {
   // Отправка формы
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     if (cartItems.length === 0) {
       toast.error("Корзина пуста");
       return;
@@ -248,6 +252,8 @@ export default function OrderPage() {
         toast.error(result.error ?? "Не удалось создать заказ");
         return;
       }
+
+      writeLogoPoints(0);
 
       if (!result.order_id) {
         toast.error(
