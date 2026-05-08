@@ -75,8 +75,11 @@ export default function OrderPage() {
   useEffect(() => {
     if (balanceSyncDone.current) return;
     if (!currentCard || points === undefined) return;
-    syncBalance();
     balanceSyncDone.current = true;
+    void syncBalance().catch((error) => {
+      balanceSyncDone.current = false;
+      console.error("[OrderPage] Failed to sync loyalty balance:", error);
+    });
   }, [currentCard, points, syncBalance]);
 
   // Подставка сохраненного адреса
@@ -93,6 +96,8 @@ export default function OrderPage() {
 
   // Списание баллов
   const handleEscrow = async () => {
+    if (hasEscrow) return;
+
     if (!currentCard) {
       toast.error("Для списания бонусов подключите карту лояльности");
       return;
@@ -103,7 +108,11 @@ export default function OrderPage() {
       return;
     }
 
-    await balanceEscrow(total);
+    try {
+      await balanceEscrow(total);
+    } catch {
+      toast.error("Не удалось списать бонусы, попробуйте позже");
+    }
   };
 
   // Создание контрагента
