@@ -11,6 +11,8 @@ import {
 import ProductCard from "../product-card/ProductCard";
 import Logo from "@/components/ui/logo";
 
+const TECH_CARD_TAG = "Тех_Карта";
+
 type ProductsCatalogProps = {
   query: string;
   limit?: number;
@@ -51,7 +53,7 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
     limit: perPage,
     offset,
     search,
-    tags: "Тех_Карта",
+    tags: TECH_CARD_TAG,
   });
 
   const totalCount = data?.count;

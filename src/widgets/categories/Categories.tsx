@@ -1,5 +1,5 @@
+import { useCategoriesWithData } from "@/entities/category";
 import React, { useEffect, useRef, useState } from "react";
-import { useCategories } from "@/entities/category";
 
 const DRAG_THRESHOLD_PX = 8;
 
@@ -9,9 +9,7 @@ interface CategoriesProps {
 
 const Categories: React.FC<CategoriesProps> = ({ setter }) => {
   const [isGrabbing, setIsGrabbing] = useState(false);
-  const query = useCategories();
-
-  const categories = query.data?.result;
+  const { filteredCategories: categories } = useCategoriesWithData();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragStartXRef = useRef(0);
@@ -98,7 +96,7 @@ const Categories: React.FC<CategoriesProps> = ({ setter }) => {
       {categories &&
         categories.map((item) => (
           <div
-            onClick={(e) => onChipClick(e, item.id)}
+            onClick={(e) => onChipClick(e, Number(item.id))}
             className={`w-40 md:w-60 h-15 shrink-0 pt-4.5 text-center p-2 bg-gray rounded-xl ${
               isGrabbing ? "cursor-grabbing" : "cursor-pointer"
             }`}
