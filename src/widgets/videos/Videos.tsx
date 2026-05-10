@@ -20,7 +20,7 @@ import {
   ModalDesktopSlideSkeleton,
   ModalTouchVideoSkeleton,
 } from "@/widgets/videos/video-skeleton-ui";
-import Link from "next/link";
+import VideoProductInfo from "@/widgets/videos/VideoProductInfo";
 
 interface VideosProps {
   data?: VideosMyResponse;
@@ -404,50 +404,12 @@ const Videos: React.FC<VideosProps> = ({
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="absolute inset-x-0 bottom-10 z-[3] flex max-w-full items-center justify-center px-1"
               >
-                {!isReviews && video.productPhoto && (
-                  <Link
-                    href={"/catalog/" + video.productId}
-                    onClick={(e) => e.stopPropagation()}
+                {!isReviews && (
+                  <VideoProductInfo
+                    video={video}
                     className="flex w-[80%] max-w-full min-w-0 items-center justify-center"
-                  >
-                    <div className="min-w-0 flex-1 flex items-center text-white">
-                      {/* Фотография товара */}
-
-                      <Image
-                        src={video.productPhoto}
-                        alt="Product"
-                        width={64}
-                        height={64}
-                        className="w-14 h-14 rounded-md object-cover bg-skeleton shrink-0"
-                      />
-                      <div className="w-full h-14 flex flex-col items-start overflow-hidden gap-1 rounded-md bg-black px-2 py-2">
-                        <p className="text-sm truncate max-w-42 font-light  leading-tight">
-                          {video.productName ? video.productName : video.title}
-                        </p>
-                        <p className="text-sm text font-light leading-tight">
-                          {video.productPrice && video.productPrice + " ₽"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-black text-white">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 9 9"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M7.59967 0.999814L1 7.59948M7.59967 0.999814L7.59967 6.65667M7.59967 0.999814L1.94281 0.999814"
-                          stroke="currentColor"
-                          strokeWidth="1.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-                  </Link>
+                    onClick={(e) => e.stopPropagation()}
+                  />
                 )}
               </motion.div>
             )}
@@ -577,6 +539,13 @@ const Videos: React.FC<VideosProps> = ({
                                 : "opacity-0",
                             )}
                           />
+                          {index === activeIndex && !isReviews && (
+                            <VideoProductInfo
+                              video={video}
+                              className="absolute inset-x-0 bottom-10 z-[4] mx-auto flex w-[80%] max-w-full min-w-0 items-center justify-center px-1"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          )}
                         </ModalDesktopSlideFrame>
                       </motion.div>
                     </div>

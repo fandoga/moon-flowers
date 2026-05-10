@@ -47,6 +47,8 @@ export default function Product({ enrichedProduct }: ProductProps) {
     return p?.photos?.length ? p.photos : p?.images?.length ? p.images : [];
   }, [enrichedProduct]);
 
+  const mainImage = productPhotos[activeImage] || productPhotos[0];
+
   return (
     <div className="container mx-auto px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
@@ -61,20 +63,22 @@ export default function Product({ enrichedProduct }: ProductProps) {
               {!mainLoaded && (
                 <div className="absolute inset-0 bg-skeleton animate-pulse rounded-3xl z-10" />
               )}
-              <Image
-                key={productPhotos[activeImage] || productPhotos[0]}
-                src={productPhotos[activeImage] || productPhotos[0]}
-                alt={enrichedProduct.name}
-                fill
-                className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
-                priority
-                onLoad={() => setMainLoaded(true)}
-              />
+              {mainImage && (
+                <Image
+                  src={mainImage}
+                  alt={enrichedProduct.name}
+                  fill
+                  className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
+                  priority
+                  onLoadingComplete={() => setMainLoaded(true)}
+                />
+              )}
             </div>
             {/* Галерея миниатюр */}
             <div className="hidden md:flex flex-col gap-3">
               {productPhotos.map((img, index) => (
                 <button
+                  type="button"
                   key={index}
                   onClick={() => {
                     setMainLoaded(false);

@@ -29,8 +29,8 @@ const sans = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL("https://moon-flowers.ru"),
   title: {
-    default: "Moon Flowers - Доствка цветов в Москве",
-    template: "%s | Moon Flowers - Доствка цветов в Москве",
+    default: "Moon Flowers - Доставка цветов в Москве",
+    template: "%s | Moon Flowers - Доставка цветов в Москве",
   },
   description:
     "Доставка самых разных букетов на любой вкус. Moon Flowers - Москва.",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moon Flowers - Доствка цветов в Москве",
+    title: "Moon Flowers - Доставка цветов в Москве",
     description:
       "Доставка самых разных букетов на любой вкус. Moon Flowers - Москва.",
     images: ["/logo.svg"],
