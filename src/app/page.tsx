@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-// app/page.tsx
 import Hero from "@/widgets/hero/Hero";
 import PopularProducts from "@/widgets/popular-products/PopularProducts";
 import Reviews from "@/widgets/reviews/Reviews";
@@ -7,16 +6,16 @@ import Stories from "@/widgets/stories/Stories";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Moon Flowers - Доствка цветов в Москве",
+  title: "Moon Flowers - Доставка цветов в Москве",
   description:
     "Доставка самых разных букетов на любой вкус. Moon Flowers - Москва.",
   openGraph: {
-    title: "Moon Flowers - Доствка цветов в Москве",
+    title: "Moon Flowers - Доставка цветов в Москве",
     description:
       "Доставка самых разных букетов на любой вкус. Moon Flowers - Москва.",
     images: [
       {
-        url: "/og-home.jpg",
+        url: "/image.svg",
         width: 1200,
         height: 630,
       },

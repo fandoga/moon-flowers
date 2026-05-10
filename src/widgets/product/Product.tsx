@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { MpProduct } from "@/entities/mp-product";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Check } from "lucide-react";
 import ProductsCatalog from "@/widgets/products-catalog/ProductsCatalog";
@@ -21,14 +21,16 @@ export default function Product({ enrichedProduct }: ProductProps) {
   const [cartClicked, setCartClicked] = useState(false);
   const [openImg, setOpenImg] = useState(false);
   const [width, setWidth] = useState<number>();
-  const [mainLoaded, setMainLoaded] = useState(false);
+  const [loadedMainImages, setLoadedMainImages] = useState<
+    Record<string, boolean>
+  >({});
   const [thumbLoaded, setThumbLoaded] = useState<Record<number, boolean>>({});
 
   function handleWindowSizeChange() {
     setWidth(window.innerWidth);
   }
   useLayoutEffect(() => {
-    if (!window) return;
+    if (typeof window === "undefined") return;
     setTimeout(() => setWidth(window.innerWidth));
     window.addEventListener("resize", handleWindowSizeChange);
     return () => {
@@ -47,6 +49,9 @@ export default function Product({ enrichedProduct }: ProductProps) {
     return p?.photos?.length ? p.photos : p?.images?.length ? p.images : [];
   }, [enrichedProduct]);
 
+  const mainImage = productPhotos[activeImage] || productPhotos[0];
+  const mainLoaded = mainImage ? Boolean(loadedMainImages[mainImage]) : false;
+
   return (
     <div className="container mx-auto px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
@@ -61,25 +66,30 @@ export default function Product({ enrichedProduct }: ProductProps) {
               {!mainLoaded && (
                 <div className="absolute inset-0 bg-skeleton animate-pulse rounded-3xl z-10" />
               )}
-              <Image
-                key={productPhotos[activeImage] || productPhotos[0]}
-                src={productPhotos[activeImage] || productPhotos[0]}
-                alt={enrichedProduct.name}
-                fill
-                className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
-                priority
-                onLoad={() => setMainLoaded(true)}
-              />
+              {mainImage && (
+                <Image
+                  key={mainImage}
+                  src={mainImage}
+                  alt={enrichedProduct.name}
+                  fill
+                  className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
+                  priority
+                  onLoad={() =>
+                    setLoadedMainImages((prev) => ({
+                      ...prev,
+                      [mainImage]: true,
+                    }))
+                  }
+                />
+              )}
             </div>
             {/* Галерея миниатюр */}
             <div className="hidden md:flex flex-col gap-3">
               {productPhotos.map((img, index) => (
                 <button
+                  type="button"
                   key={index}
-                  onClick={() => {
-                    setMainLoaded(false);
-                    setActiveImage(index);
-                  }}
+                  onClick={() => setActiveImage(index)}
                   className={`${activeImage === index && "!opacity-100"} relative w-16 h-16 rounded-xl overflow-hidden transition-all border-transparent opacity-70 hover:opacity-100 bg-skeleton`}
                 >
                   {!thumbLoaded[index] && (
