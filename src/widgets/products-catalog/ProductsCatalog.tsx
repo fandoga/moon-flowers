@@ -120,21 +120,18 @@ const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
           <Logo alwaysEnabled />
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center gap-6">
-          <motion.div
-            className={`grid grid-cols-1 md:grid-cols-2 ${lgColsClass} gap-4 sm:gap-6 lg:gap-8 w-full`}
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {enrichedItems.map((product) => (
-              <motion.div key={Number(product.id)} variants={itemVariants}>
-                <ProductCard displayOnHover={!displayInfo} product={product} />
-              </motion.div>
-            ))}
-          </motion.div>
-          <ActionButton src="/catalog" text="Увидеть больше" />
-        </div>
+        <motion.div
+          className={`grid grid-cols-1 md:grid-cols-2 ${lgColsClass} gap-4 sm:gap-6 lg:gap-8 w-full`}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {enrichedItems.map((product) => (
+            <motion.div key={Number(product.id)} variants={itemVariants}>
+              <ProductCard displayOnHover={!displayInfo} product={product} />
+            </motion.div>
+          ))}
+        </motion.div>
       )}
 
       {loadMore && hasMore && (

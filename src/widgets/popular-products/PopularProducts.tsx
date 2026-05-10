@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import ProductsCatalog from "../products-catalog/ProductsCatalog";
 import Categories from "../categories/Categories";
 import { useCategories } from "@/entities/category";
+import ActionButton from "@/components/ui/action-button";
 
 const PopularProducts = () => {
   const searchParams = useSearchParams();
@@ -25,7 +26,7 @@ const PopularProducts = () => {
     }
     const cat = categories.find((c) => c.id === category);
     document.title = cat ? `${cat.name} - Moon Flowers` : baseTitle;
-  }, [category, categories, searchParams]); 
+  }, [category, categories, searchParams]);
 
   return (
     <div>
@@ -55,6 +56,9 @@ const PopularProducts = () => {
         }}
       />
       <ProductsCatalog category={category} loadMore={false} query="" size={8} />
+      <div className="flex flex-col items-center justify-center pt-6">
+        <ActionButton src="/catalog" text="Увидеть больше" />
+      </div>
     </div>
   );
 };

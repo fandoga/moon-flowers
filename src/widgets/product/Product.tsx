@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { MpProduct } from "@/entities/mp-product";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Check } from "lucide-react";
 import ProductsCatalog from "@/widgets/products-catalog/ProductsCatalog";
@@ -21,14 +21,16 @@ export default function Product({ enrichedProduct }: ProductProps) {
   const [cartClicked, setCartClicked] = useState(false);
   const [openImg, setOpenImg] = useState(false);
   const [width, setWidth] = useState<number>();
-  const [mainLoaded, setMainLoaded] = useState(false);
+  const [loadedMainImages, setLoadedMainImages] = useState<
+    Record<string, boolean>
+  >({});
   const [thumbLoaded, setThumbLoaded] = useState<Record<number, boolean>>({});
 
   function handleWindowSizeChange() {
     setWidth(window.innerWidth);
   }
   useLayoutEffect(() => {
-    if (!window) return;
+    if (typeof window === "undefined") return;
     setTimeout(() => setWidth(window.innerWidth));
     window.addEventListener("resize", handleWindowSizeChange);
     return () => {
@@ -48,6 +50,7 @@ export default function Product({ enrichedProduct }: ProductProps) {
   }, [enrichedProduct]);
 
   const mainImage = productPhotos[activeImage] || productPhotos[0];
+  const mainLoaded = mainImage ? Boolean(loadedMainImages[mainImage]) : false;
 
   return (
     <div className="container mx-auto px-4">
@@ -65,12 +68,18 @@ export default function Product({ enrichedProduct }: ProductProps) {
               )}
               {mainImage && (
                 <Image
+                  key={mainImage}
                   src={mainImage}
                   alt={enrichedProduct.name}
                   fill
                   className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
                   priority
-                  onLoadingComplete={() => setMainLoaded(true)}
+                  onLoad={() =>
+                    setLoadedMainImages((prev) => ({
+                      ...prev,
+                      [mainImage]: true,
+                    }))
+                  }
                 />
               )}
             </div>
@@ -80,10 +89,7 @@ export default function Product({ enrichedProduct }: ProductProps) {
                 <button
                   type="button"
                   key={index}
-                  onClick={() => {
-                    setMainLoaded(false);
-                    setActiveImage(index);
-                  }}
+                  onClick={() => setActiveImage(index)}
                   className={`${activeImage === index && "!opacity-100"} relative w-16 h-16 rounded-xl overflow-hidden transition-all border-transparent opacity-70 hover:opacity-100 bg-skeleton`}
                 >
                   {!thumbLoaded[index] && (
