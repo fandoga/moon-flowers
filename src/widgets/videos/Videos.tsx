@@ -571,7 +571,7 @@ const Videos: React.FC<VideosProps> = ({
                               markDesktopSlideReady(index);
                             }}
                             className={cn(
-                              "relative z-[2] h-full w-full object-cover transition-opacity duration-300",
+                              "relative z-[2] h-full w-full object-cover bg-skeleton transition-opacity duration-300",
                               modalDesktopReady[index]
                                 ? "opacity-100"
                                 : "opacity-0",

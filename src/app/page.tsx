@@ -7,11 +7,13 @@ import Stories from "@/widgets/stories/Stories";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Moon Flowers - цветы",
-  description: "Самые разные букеты на любой вкус. Moon Flowers",
+  title: "Moon Flowers - Доствка цветов в Москве",
+  description:
+    "Доставка самых разных букетов на любой вкус. Moon Flowers - Москва.",
   openGraph: {
-    title: "Moon Flowers - цветы",
-    description: "Самые разные букеты на любой вкус. Moon Flowers",
+    title: "Moon Flowers - Доствка цветов в Москве",
+    description:
+      "Доставка самых разных букетов на любой вкус. Moon Flowers - Москва.",
     images: [
       {
         url: "/og-home.jpg",
@@ -32,7 +34,9 @@ export default function Home() {
         <Stories />
       </div>
       <div id="recommendations">
-        <Suspense fallback={null}><PopularProducts /></Suspense>
+        <Suspense fallback={null}>
+          <PopularProducts />
+        </Suspense>
       </div>
       <div id="reviews">
         <Reviews />
