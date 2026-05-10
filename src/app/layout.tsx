@@ -29,10 +29,11 @@ const sans = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL("https://moon-flowers.ru"),
   title: {
-    default: "Moon Flowers - цветы",
-    template: "%s | Moon Flowers - цветы",
+    default: "Moon Flowers - Доствка цветов в Москве",
+    template: "%s | Moon Flowers - Доствка цветов в Москве",
   },
-  description: "Самые разные букеты на любой вкус. Moon Flowers.",
+  description:
+    "Доставка самых разных букетов на любой вкус. Moon Flowers - Москва.",
   keywords: [
     "купить букет",
     "букеты Москва",
@@ -47,18 +48,19 @@ export const metadata: Metadata = {
     siteName: "Moon Flowers",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/logo.svg",
         width: 1200,
         height: 630,
-        alt: "Магазин букетов MoonFlowers",
+        alt: "Доставка буктов MoonFlowers",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moon Flowers - цветы.",
-    description: "Самые разные букеты на любой вкус. Moon Flowers.",
-    images: ["/og-image.jpg"],
+    title: "Moon Flowers - Доствка цветов в Москве",
+    description:
+      "Доставка самых разных букетов на любой вкус. Moon Flowers - Москва.",
+    images: ["/logo.svg"],
   },
   alternates: {
     canonical: "https://moon-flowers.ru",

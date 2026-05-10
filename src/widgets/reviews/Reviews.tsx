@@ -6,12 +6,15 @@ import { useMyVideos } from "@/entities/video";
 import Videos from "../videos/Videos";
 
 const Reviews = () => {
-  const { data } = useMyVideos({ limit: 4 });
+  const { data } = useMyVideos({
+    limit: 4,
+    user_id: 335,
+  });
 
   if (!data) return;
 
   return (
-    <div className="bg-background pt-30">
+    <div className="bg-background pt-20">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}

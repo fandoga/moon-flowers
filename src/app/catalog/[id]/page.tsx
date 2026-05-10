@@ -88,8 +88,8 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${product.name} | Moon Flowers`,
-    description: product.description_short || "Карточка товара Moon Flowers",
+    title: `${product.seo_title}`,
+    description: product.seo_description || "Карточка товара Moon Flowers",
   };
 }
 

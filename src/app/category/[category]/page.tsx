@@ -1,47 +1,14 @@
 "use client";
 
-import { CatalogItemType } from "@/app/catalog/page";
 import Logo from "@/components/ui/logo";
-import { useEnrichedMpProducts, useMpProducts } from "@/entities/mp-product";
+import { useProductsFromCategories } from "@/entities/category";
 import CatalogReels from "@/widgets/catalog-reels/CatalogReels";
-import { useParams } from "next/navigation";
-import React, { useMemo } from "react";
-
-function buildCategoryQueryParam(
-  raw: string | string[] | undefined,
-): Record<string, string> {
-  const segment = Array.isArray(raw) ? raw[0] : raw;
-  if (segment == null || segment === "") return {};
-  const decoded = decodeURIComponent(segment);
-  if (/^\d+$/.test(decoded)) {
-    return { category: decoded };
-  }
-  return { global_category_name: decoded };
-}
 
 const MobileProcutCatalog = () => {
-  const params = useParams();
-  const queryParams = buildCategoryQueryParam(params?.category);
-  const hasCategoryParam = Object.keys(queryParams).length > 0;
-  const { data, isLoading } = useMpProducts(queryParams, {
-    enabled: hasCategoryParam,
-  });
-  const result = data?.result;
-  const { enrichedItems, isEnrichmentFetching } = useEnrichedMpProducts(
-    result ?? [],
-  );
+  const [filteredItems, isEnrichmentFetching, isLoading, hasCategoryParam] =
+    useProductsFromCategories();
 
-  const normalizedItems = useMemo<CatalogItemType[]>(
-    () =>
-      enrichedItems.map((product) => ({
-        id: String(product.id),
-        name: product.name,
-        price: Number(product.price ?? product.prices?.[0]?.price ?? 0),
-        image: product.images?.[0] || product.photos?.[0] || "",
-        count: enrichedItems.length,
-      })),
-    [enrichedItems],
-  );
+  console.log(filteredItems);
 
   if (!hasCategoryParam) {
     return (
@@ -51,14 +18,14 @@ const MobileProcutCatalog = () => {
     );
   }
 
-  if (isLoading || isEnrichmentFetching || result === undefined)
+  if (isLoading || isEnrichmentFetching === undefined)
     return (
       <div className="w-full h-screen flex items-center justify-center">
         <Logo alwaysEnabled />
       </div>
     );
 
-  return <CatalogReels items={normalizedItems} />;
+  return <CatalogReels items={filteredItems} />;
 };
 
 export default MobileProcutCatalog;
