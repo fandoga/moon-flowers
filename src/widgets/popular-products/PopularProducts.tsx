@@ -19,7 +19,7 @@ const PopularProducts = () => {
 
   useEffect(() => {
     if (!categories) return;
-    const baseTitle = "Moon Flowers - цветы";
+    const baseTitle = "Moon Flowers - Доставка цветов в Москве";
     if (!category) {
       document.title = baseTitle;
       return;
@@ -51,7 +51,7 @@ const PopularProducts = () => {
           setTimeout(() => {
             document.title = cat
               ? `${cat.name} - Moon Flowers`
-              : "Moon Flowers - цветы";
+              : "Moon Flowers - Доставка цветов в Москве";
           });
         }}
       />
