@@ -1,6 +1,6 @@
 import { useLoyalityCardData } from "@/entities/loyaliti/hooks/useLoyalityCard";
 import { formatPhone, getCleanPhone } from "@/lib/utils/formatPhone";
-import { Check, Loader, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -19,8 +19,8 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
   const [modalPhone, setPhone] = useState("");
   const [modalName, setName] = useState("");
   const [inputError, setInputError] = useState("");
-  const { currentCard, createOrGetCard, error, isLoading } =
-    useLoyalityCardData();
+  const { currentCard, createOrGetCard, error } = useLoyalityCardData();
+  const [isConnecting, setIsConnecting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -38,6 +38,8 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
   }, [isOpen, name, phone]);
 
   const handleClick = async () => {
+    if (isConnecting) return;
+
     const cleanPhone = getCleanPhone(modalPhone);
 
     if (cleanPhone.length !== 11 || modalName.length === 0) {
@@ -46,6 +48,7 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
     }
 
     try {
+      setIsConnecting(true);
       await createOrGetCard({
         phone_number: cleanPhone,
         contragent_name: modalName,
@@ -57,6 +60,8 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
         e instanceof Error ? e.message : "Не удалось создать карту лояльности";
       setInputError(message);
       toast.error(message);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -126,6 +131,7 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
                 className="bg-gray  rounded-lg p-3 w-full"
                 placeholder="Имя"
                 type="text"
+                disabled={isConnecting}
               />
               <input
                 value={modalPhone}
@@ -133,6 +139,7 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
                 className="bg-gray rounded-lg p-3 w-full"
                 placeholder="+7 (000) 000-00-00"
                 type="tel"
+                disabled={isConnecting}
               />
               {inputError.length > 0 && (
                 <span className="text-sm text-destructive">{inputError}</span>
@@ -145,10 +152,11 @@ const LoyalitiModal: React.FC<LoyalitiModalProps> = ({
               <button
                 onClick={() => handleClick()}
                 type="button"
-                className="cursor-pointer h-12 bg-black flex items-center justify-center gap-2 text-white p-2 rounded-lg"
+                disabled={isConnecting}
+                className="cursor-pointer disabled:cursor-default disabled:opacity-80 h-12 bg-black flex items-center justify-center gap-2 text-white p-2 rounded-lg"
               >
-                Получить баллы
-                {isLoading && <Loader2 className="animate-spin" />}
+                {isConnecting ? "Подключаем..." : "Получить баллы"}
+                {isConnecting && <Loader2 className="size-4 animate-spin" />}
               </button>
             </div>
           </div>
