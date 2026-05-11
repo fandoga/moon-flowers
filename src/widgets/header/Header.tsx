@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, Store, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import AdressModal from "../adress-modal/AdressModal";
 import LoyalitiModal from "../loyaliti-modal/LoyalitiModal";
@@ -34,6 +34,10 @@ const Header = () => {
   const { isReady: isPointsReady, pointDigits, isMaxed } = useBonusCounter();
   const router = useRouter();
   const pathname = usePathname();
+  const [pendingScrollToSection, setPendingScrollToSection] = useState<
+    string | null
+  >(null);
+  const [isCartDropdown, setCartDropdown] = useState(false);
   // Инициализируем всегда пустой корзиной на сервере и первом клиентском рендере
   const [cart, setCart] = useState<LocalCart>({ items: {} });
 
@@ -78,6 +82,30 @@ const Header = () => {
     };
   }, [isMobileMenuOpen]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setCartDropdown(window.scrollY > 50);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (pendingScrollToSection && pathname === "/") {
+      const element = document.getElementById(pendingScrollToSection);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+        //eslint-disable-next-line
+        setPendingScrollToSection(null);
+      }
+    }
+  }, [pathname, pendingScrollToSection]);
+
   const submenuVariants = {
     hidden: { opacity: 0, x: 50 },
     visible: { opacity: 1, x: 0, transition: { duration: 0.2 } },
@@ -90,8 +118,12 @@ const Header = () => {
 
   const scrollToSection = (sectionId: string) => {
     if (pathname !== "/") {
+      setPendingScrollToSection(sectionId);
       router.replace("/");
+      setIsMobileMenuOpen(false);
+      return;
     }
+
     setIsMobileMenuOpen(false);
     const element = document.getElementById(sectionId);
     if (element) {
@@ -186,7 +218,7 @@ const Header = () => {
                 </div>
                 <div
                   id="cart"
-                  className="flex z-50 min-w-30 gap-6 items-center justify-end"
+                  className={`${isCartDropdown ? "fixed bg-background rounded-xl p-2 pt-6 -mt-20" : "block"}  flex z-50 min-w-30 gap-6 items-center justify-end`}
                 >
                   {total > 0 && (
                     <Link href={"/order"} className="bg-gray rounded-lg p-2">
@@ -210,12 +242,12 @@ const Header = () => {
                       />
                     </svg>
                   </Link>
-                  <div
-                    onClick={() => handleToggleClick()}
-                    className="block xl:hidden text-white cursor-pointer pt-1"
-                  >
-                    <Menu color="black" size={30} />
-                  </div>
+                </div>
+                <div
+                  onClick={() => handleToggleClick()}
+                  className="block xl:hidden text-white cursor-pointer pt-1"
+                >
+                  <Menu color="black" size={30} />
                 </div>
               </div>
             </div>
@@ -227,9 +259,7 @@ const Header = () => {
               </Link>
               <Link
                 className="bg-gray px-2 md:px-6 py-2 rounded-lg"
-                href={
-                  "https://max.ru/join/2_-2M-qp5mUMlioX89h09ilMEIgmH0zk2H58NH96RVY"
-                }
+                href={"https://t.me/Moon_Flowers_salonn"}
               >
                 Написать в Max
               </Link>

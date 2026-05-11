@@ -3,6 +3,7 @@
 import React from "react";
 import { formatPrice } from "@/lib/utils/formatPrice";
 import ActionButton from "@/components/ui/action-button";
+import { Loader2 } from "lucide-react";
 
 interface OrderSummaryProps {
   cartItemsCount: number;
@@ -13,6 +14,7 @@ interface OrderSummaryProps {
   escrow: number | undefined | null;
   hasEscrow: boolean;
   isSubmitting: boolean;
+  isApplyingPoints: boolean;
   handleEscrow: () => void;
 }
 
@@ -28,6 +30,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   escrow,
   hasEscrow,
   isSubmitting,
+  isApplyingPoints,
   handleEscrow,
 }) => {
   return (
@@ -36,15 +39,22 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <div className="flex items-center">
           <button
             onClick={handleEscrow}
-            disabled={points === 0 || hasEscrow}
+            disabled={points === 0 || hasEscrow || isApplyingPoints}
             type="button"
-            className={`${hasEscrow ? "!text-muted-foreground" : ""} cursor-pointer disabled:cursor-default flex-1 h-12 rounded-xl bg-black text-white`}
+            className={`${hasEscrow ? "!text-muted-foreground" : ""} cursor-pointer disabled:cursor-default flex-1 h-12 rounded-xl bg-black text-white flex items-center justify-center gap-2`}
           >
-            {hasEscrow
-              ? "Баллы применены"
-              : points === 0
-                ? "Баллов нет"
-                : "Списать баллы"}
+            {isApplyingPoints ? (
+              <>
+                <span>Применяем...</span>
+                <Loader2 className="size-4 animate-spin" />
+              </>
+            ) : hasEscrow ? (
+              "Баллы применены"
+            ) : points === 0 ? (
+              "Баллов нет"
+            ) : (
+              "Списать баллы"
+            )}
           </button>
           <div
             className={`${hasEscrow ? "!text-muted-foreground" : ""} min-w-10 h-12 px-2 rounded-xl bg-black flex text-white items-center justify-center font-semibold`}

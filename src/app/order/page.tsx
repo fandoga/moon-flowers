@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useAddressSuggestions, useSavedAddressForm } from "@/entities/address";
 import { useLoyalityCardData } from "@/entities/loyaliti";
@@ -50,6 +50,7 @@ export default function OrderPage() {
   const [suggOpen, setSuggOpen] = useState(false);
   const [activeInput, setActiveInput] = useState<"From" | "To">("From");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isApplyingPoints, setIsApplyingPoints] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     name?: boolean;
     phone?: boolean;
@@ -62,27 +63,13 @@ export default function OrderPage() {
   const createContragent = useCreateContragent();
   const findContragentByPhone = useFindContragentByPhone();
   const sendDelivery = useSendDeliveryInfo();
-  const { currentCard, points, escrow, balanceEscrow, syncBalance } =
+  const { currentCard, points, escrow, balanceEscrow, accruePointsToApi } =
     useLoyalityCardData();
 
   const suggestions = useMemo(
     () => data?.suggestions ?? [],
     [data?.suggestions],
   );
-
-  const balanceSyncDone = useRef(false);
-
-  // Синхронизация локальных баллов с API один раз при открытии оформления
-  useEffect(() => {
-    if (balanceSyncDone.current) return;
-    if (!currentCard || points === undefined) return;
-
-    balanceSyncDone.current = true;
-    void syncBalance().catch((error) => {
-      balanceSyncDone.current = false;
-      console.error("[OrderPage] Failed to sync loyalty balance:", error);
-    });
-  }, [currentCard, points, syncBalance]);
 
   // Подставка сохраненного адреса
   useEffect(() => {
@@ -98,6 +85,7 @@ export default function OrderPage() {
 
   // Списание баллов
   const handleEscrow = async () => {
+    if (isApplyingPoints) return;
     if (hasEscrow) return;
 
     if (!currentCard) {
@@ -111,9 +99,13 @@ export default function OrderPage() {
     }
 
     try {
+      setIsApplyingPoints(true);
+      await accruePointsToApi();
       await balanceEscrow(total);
     } catch {
       toast.error("Не удалось списать бонусы, попробуйте позже");
+    } finally {
+      setIsApplyingPoints(false);
     }
   };
 
@@ -353,6 +345,7 @@ export default function OrderPage() {
             escrow={escrow}
             hasEscrow={hasEscrow}
             isSubmitting={isSubmitting}
+            isApplyingPoints={isApplyingPoints}
             handleEscrow={handleEscrow}
           />
         </form>

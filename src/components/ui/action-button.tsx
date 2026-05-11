@@ -71,14 +71,24 @@ const ActionButton: React.FC<ActionButtonProps> = ({
     </>
   );
 
+  const isInternalLink = finalHref?.startsWith("/");
+
   if (finalHref) {
     return (
       <Link
         className={baseClasses}
         href={finalHref}
+        scroll={true}
         aria-disabled={isDisabled}
         onClick={(e) => {
-          if (isDisabled) e.preventDefault();
+          if (isDisabled) {
+            e.preventDefault();
+            return;
+          }
+
+          if (isInternalLink) {
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+          }
         }}
       >
         {content}
