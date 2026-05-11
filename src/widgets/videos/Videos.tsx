@@ -246,6 +246,27 @@ const Videos: React.FC<VideosProps> = ({
   }, [isTouchDevice, videos]);
 
   useEffect(() => {
+    if (isTouchDevice) return;
+
+    renderedVideos.forEach((video, index) => {
+      const videoElement = videoRefs.current[video.id];
+      if (!videoElement) return;
+
+      videoElement.muted = true;
+      videoElement.defaultMuted = true;
+      videoElement.playsInline = true;
+
+      if (activeVideo || !isVideoVisible(index)) {
+        videoElement.pause();
+        videoElement.currentTime = 0;
+        return;
+      }
+
+      videoElement.play().catch(() => undefined);
+    });
+  }, [activeVideo, isTouchDevice, isVideoVisible, renderedVideos]);
+
+  useEffect(() => {
     if (!activeVideo || isTouchDevice) return;
 
     const handleWheel = (e: WheelEvent) => {
@@ -387,8 +408,18 @@ const Videos: React.FC<VideosProps> = ({
               loop
               autoPlay
               playsInline
+              preload="auto"
               onLoadedData={() => markGridVideoReady(video.id)}
-              onCanPlay={() => markGridVideoReady(video.id)}
+              onCanPlay={(event) => {
+                markGridVideoReady(video.id);
+                if (
+                  !isTouchDevice &&
+                  !activeVideo &&
+                  isVideoVisible(videoIndex)
+                ) {
+                  event.currentTarget.play().catch(() => undefined);
+                }
+              }}
               className={cn(
                 "relative z-[2] h-full w-full cursor-pointer rounded-2xl bg-skeleton object-cover transition-opacity duration-300",
                 gridVideoReady[video.id] ? "opacity-100" : "opacity-0",

@@ -88,8 +88,8 @@ const FlyingCartIcon = ({
           opacity: 1,
         }}
         animate={{
-          x: cartPosition.x + 30,
-          y: cartPosition.y - 12,
+          x: cartPosition.x + 35,
+          y: cartPosition.y - 4,
           scale: 0.5,
           opacity: 0.8,
           rotate: 360,
@@ -109,7 +109,7 @@ const FlyingCartIcon = ({
           willChange: "transform",
         }}
       >
-        <ShoppingCart className="w-8 h-8 text-[#394426]" />
+        <ShoppingCart className="hidden md:block w-8 h-8 -z-100 text-black" />
       </motion.div>
     </AnimatePresence>,
     document.body,
