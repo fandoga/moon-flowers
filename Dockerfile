@@ -1,25 +1,46 @@
 # syntax=docker/dockerfile:1
-ARG NODE_VERSION=22
-##########################################################
+# Build: same stack as .gitlab-ci.yml (npm + Node 22). Runtime: standalone bundle only.
 
-FROM node:${NODE_VERSION}-alpine AS vendor
+FROM public.ecr.aws/docker/library/node:22-alpine AS builder
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,id=npm,target=/root/.npm npm ci
+RUN npm ci
 
-##########################################################
-
-FROM node:${NODE_VERSION}-alpine AS builder
 COPY . .
-COPY --from=vendor /app/node_modules ./node_modules
-RUN --mount=type=cache,id=npm,target=/app/node_modules/.cache npm run build
 
-##########################################################
+# NEXT_PUBLIC_* are inlined at build time — pass --build-arg in CI or compose.
+ARG NEXT_PUBLIC_API_URL=""
+ARG NEXT_PUBLIC_TABLE_CRM_TOKEN=""
+ARG NEXT_PUBLIC_ORG_ID=""
+ARG NEXT_PUBLIC_ORDER_WAREHOUSE=""
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_TABLE_CRM_TOKEN=$NEXT_PUBLIC_TABLE_CRM_TOKEN \
+    NEXT_PUBLIC_ORG_ID=$NEXT_PUBLIC_ORG_ID \
+    NEXT_PUBLIC_ORDER_WAREHOUSE=$NEXT_PUBLIC_ORDER_WAREHOUSE
 
-FROM nginx:1.27-alpine
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/dist /usr/share/nginx/html
+RUN npm run build
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# ---
+
+FROM public.ecr.aws/docker/library/node:22-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
