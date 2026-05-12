@@ -2,6 +2,13 @@ stages:
   - build
   - deploy
 
+include:
+- project: devops/ci-templates
+  file:
+    - ci/lint.yml
+    # - ci/audit.yml
+    - ci/deploy.yml
+
 variables: {}
 
 cache:
@@ -50,3 +57,7 @@ deploy:
   environment:
     name: production
     url: http://$SSH_HOST
+
+bake-kubernetes:
+  extends: .bake
+  when: manual
