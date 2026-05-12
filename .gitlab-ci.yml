@@ -62,7 +62,7 @@ bake-kubernetes:
   extends: .bake
   when: manual
 
-deploy-kubernetes-images:
+deploy-kubernetes:
   extends: .deploy
   tags:
    - kubernetes-deploy
