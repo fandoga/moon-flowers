@@ -61,3 +61,12 @@ deploy:
 bake-kubernetes:
   extends: .bake
   when: manual
+
+deploy-kubernetes-images:
+  extends: .deploy
+  tags:
+   - kubernetes-deploy
+  needs: [bake-kubernetes]
+  variables:
+    KUBERNETES_NAMESPACE: landings
+    KUBERNETES_DEPLOYMENT: moon-flowers
