@@ -9,15 +9,15 @@ include:
     # - ci/audit.yml
     - ci/deploy.yml
 
-variables: {}
-
-cache:
-  key:
-    files:
-      - package-lock.json
-  paths:
-    - node_modules/
-    - .next/cache/
+# variables: {}
+# 
+# cache:
+#   key:
+#     files:
+#       - package-lock.json
+#   paths:
+#     - node_modules/
+#     - .next/cache/
 
 # build:
 #   stage: build
