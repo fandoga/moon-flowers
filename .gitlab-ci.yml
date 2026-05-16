@@ -19,44 +19,44 @@ cache:
     - node_modules/
     - .next/cache/
 
-build:
-  stage: build
-  tags:
-    - "flowers-runner"
-  image: node:22
-  only:
-    - main
-  before_script:
-    - npm cache clean --force
-  script:
-    - npm ci --prefer-offline --no-audit
-    - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
-    - npm run build
-  artifacts:
-    paths:
-      - .next/
-      - public/
-      - package.json
-      - package-lock.json
-      - next.config.ts
-      - .env.production
-    expire_in: 1 week
-
-deploy:
-  stage: deploy
-  tags:
-    - "flowers-runner"
-  only:
-    - main
-  script:
-    - mkdir -p /var/www/moon-flowers
-    - cp -r .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/moon-flowers/
-    - cd /var/www/moon-flowers
-    - npm ci --production
-    - pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start
-  environment:
-    name: production
-    url: http://$SSH_HOST
+# build:
+#   stage: build
+#   tags:
+#     - "flowers-runner"
+#   image: node:22
+#   only:
+#     - main
+#   before_script:
+#     - npm cache clean --force
+#   script:
+#     - npm ci --prefer-offline --no-audit
+#     - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
+#     - npm run build
+#   artifacts:
+#     paths:
+#       - .next/
+#       - public/
+#       - package.json
+#       - package-lock.json
+#       - next.config.ts
+#       - .env.production
+#     expire_in: 1 week
+# 
+# deploy:
+#   stage: deploy
+#   tags:
+#     - "flowers-runner"
+#   only:
+#     - main
+#   script:
+#     - mkdir -p /var/www/moon-flowers
+#     - cp -r .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/moon-flowers/
+#     - cd /var/www/moon-flowers
+#     - npm ci --production
+#     - pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start
+#   environment:
+#     name: production
+#     url: http://$SSH_HOST
 
 bake-kubernetes:
   extends: .bake
