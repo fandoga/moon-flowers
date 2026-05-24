@@ -158,6 +158,63 @@ input[type="search"] {
   appearance: none;
 }
 
+.mf-logo-mark {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.mf-logo-petal {
+  display: inline-flex;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.mf-logo-petal--loader-0 {
+  animation: mf-logo-loader-left 1.6s ease-in-out infinite;
+}
+
+.mf-logo-petal--loader-1 {
+  animation: mf-logo-loader-center 2.5s linear infinite;
+}
+
+.mf-logo-petal--loader-2 {
+  animation: mf-logo-loader-right 1.6s ease-in-out infinite;
+}
+
+@keyframes mf-logo-loader-left {
+  0% {
+    transform: translateX(-3px) rotate(0deg);
+  }
+  50% {
+    transform: translateX(-7px) rotate(180deg);
+  }
+  100% {
+    transform: translateX(-3px) rotate(360deg);
+  }
+}
+
+@keyframes mf-logo-loader-center {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes mf-logo-loader-right {
+  0% {
+    transform: translateX(3px) rotate(0deg);
+  }
+  50% {
+    transform: translateX(7px) rotate(180deg);
+  }
+  100% {
+    transform: translateX(3px) rotate(360deg);
+  }
+}
+
 .h {
   @apply text-4xl font-sans text-left md:text-5xl xl:text-6xl leading-tight mb-4 md:mb-6;
 }
