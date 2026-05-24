@@ -30,7 +30,7 @@ const ProductImgModal: React.FC<ProductImgModalProps> = ({
             <Image
               width={500}
               height={600}
-              className="w-full bg-skeleton h-full object-cover"
+              className="w-full max-w-300 max-h-300 bg-skeleton h-full object-cover"
               src={src}
               alt="img"
             />

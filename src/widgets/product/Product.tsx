@@ -69,7 +69,7 @@ export default function Product({ enrichedProduct }: ProductProps) {
               {mainImage && (
                 <Image
                   key={mainImage}
-                  src={mainImage}
+                  src={productPhotos[activeImage]}
                   alt={enrichedProduct.name}
                   fill
                   className={`cursor-pointer object-cover transition-opacity duration-300 ${mainLoaded ? "opacity-100" : "opacity-0"}`}
