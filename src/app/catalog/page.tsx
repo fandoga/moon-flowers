@@ -4,14 +4,6 @@ import { FullScreenLoader } from "@/widgets/initial-loader.tsx/InitialLoader";
 import { Metadata } from "next";
 import CatalogPageInner from "@/widgets/catalog-page/CatalogPageInner";
 
-export interface CatalogItemType {
-  id: string | number;
-  name?: string | "";
-  price?: number;
-  image?: string | "";
-  count?: number;
-  categoryId?: number;
-}
 export const metadata: Metadata = {
   title: "Moon Flowers - Каталог цветов",
   description:
