@@ -58,6 +58,7 @@ function CatalogPageInner() {
     return <FullScreenLoader />;
   }
 
+  console.log(categories);
   if (!isTouchDevice) {
     return (
       <main className=" md:py-2 bg-background max-w-[1440px] m-auto">
