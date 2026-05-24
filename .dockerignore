@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.gitignore
+*.md
+.env
+.env.*
+Dockerfile*
+docker-compose*.yml
+.mcps
+.cursor
+.gitlab-ci.yml
