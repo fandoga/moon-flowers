@@ -466,7 +466,6 @@ const Videos: React.FC<VideosProps> = ({
             className="relative flex h-[80%] w-full items-center justify-center"
             onClick={(e) => {
               e.stopPropagation();
-              // closeModal();
             }}
           >
             {/* Desktop arrows */}
@@ -602,6 +601,14 @@ const Videos: React.FC<VideosProps> = ({
                   }}
                   className="absolute right-0 top-0 w-[30%] h-full z-20 bg-transparent"
                 />
+
+                {/* Кнопка для закрытия видео */}
+                <button
+                  onClick={closeModal}
+                  className="cursor-pointer absolute -top-10 right-5 z-500 w-10 h-10 text-3xl text-white items-center justify-center"
+                >
+                  ✕
+                </button>
 
                 <div className="relative w-full max-w-full">
                   {isVideoLoading && <ModalTouchVideoSkeleton />}

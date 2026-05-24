@@ -44,7 +44,6 @@ const ProductCard: React.FC<{
       <div className="relative w-full aspect-[5/6] md:h-full bg-skeleton">
         <Image
           fill
-          loading="lazy"
           src={imageUrl}
           alt={product.name ? String(product.name) : "Товар"}
           className="absolute inset-0 w-full h-full object-cover"
