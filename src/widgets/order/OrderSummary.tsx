@@ -142,7 +142,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 className="hover:underline"
                 href="https://disk.yandex.ru/i/DwPhoQMQEw6Vww"
               >
-                Я прочитал и принимаю оферту
+                Я прочитал(-a) и принимаю оферту
               </a>
             </FieldLabel>
           </Field>
