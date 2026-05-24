@@ -51,7 +51,8 @@ export default function OrderPage() {
   const [activeInput, setActiveInput] = useState<"From" | "To">("From");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isApplyingPoints, setIsApplyingPoints] = useState(false);
-  const [isAgreed, setIsAgreed] = useState(false);
+  const [offertaConfirmed, setOffertaConfirmed] = useState(false);
+  const [offertaError, setOffertaError] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     name?: boolean;
     phone?: boolean;
@@ -83,6 +84,13 @@ export default function OrderPage() {
       });
     }
   }, [savedAddress]);
+
+  // Сброс ошибки оферты при подтверждении
+  useEffect(() => {
+    if (offertaConfirmed) {
+      setOffertaError(false);
+    }
+  }, [offertaConfirmed]);
 
   // Списание баллов
   const handleEscrow = async () => {
@@ -164,6 +172,11 @@ export default function OrderPage() {
 
     if (cartItems.length === 0) {
       toast.error("Корзина пуста");
+      return;
+    }
+
+    if (!offertaConfirmed) {
+      setOffertaError(true);
       return;
     }
 
@@ -347,9 +360,10 @@ export default function OrderPage() {
             hasEscrow={hasEscrow}
             isSubmitting={isSubmitting}
             isApplyingPoints={isApplyingPoints}
+            offertaError={offertaError}
             handleEscrow={handleEscrow}
-            isAgreed={isAgreed}
-            setIsAgreed={setIsAgreed}
+            setOffertaError={setOffertaError}
+            setOffertaConfirmed={setOffertaConfirmed}
           />
         </form>
       </div>

@@ -9,8 +9,8 @@ import {
   useEnrichedMpProducts,
   useMpProducts,
 } from "@/entities/mp-product";
-import { CatalogItemType } from "@/app/catalog/page";
 import { useMemo } from "react";
+import { CatalogItemType } from "@/widgets/catalog-page/CatalogPageInner";
 
 type CategoriesWithDataResult = [
   normalizedItems: CatalogItemType[],
