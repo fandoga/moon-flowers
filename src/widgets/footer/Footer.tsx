@@ -85,10 +85,28 @@ const Footer = () => {
               ></iframe>
             </div>
           </div>
-          <ActionButton
-            src="https://tablecrm.com/"
-            text="Работает на базе TableCRM.com"
-          />
+          <div className="w-full flex flex-col items-center gap-4 text-center mt-8 border-t border-gray/20 pt-8 pb-4">
+            <div className="text-[10px] md:text-xs text-black/50 space-y-1">
+              <p>ИП Сучков Владимир Викторович</p>
+              <p>ОГРНИП: 325508100667490 | ИНН: 772333368503</p>
+              <p>
+                Юридический адрес: Московская область, г.о. Домодедово, ДНП
+                Ветеран, Южная улица, 14
+              </p>
+              <p>
+                <a
+                  href="/oferta"
+                  className="underline hover:text-black transition-colors"
+                >
+                  Публичная оферта
+                </a>
+              </p>
+            </div>
+            <ActionButton
+              src="https://tablecrm.com/"
+              text="Работает на базе TableCRM.com"
+            />
+          </div>
         </div>
       </motion.footer>
     </div>

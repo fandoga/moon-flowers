@@ -51,6 +51,7 @@ export default function OrderPage() {
   const [activeInput, setActiveInput] = useState<"From" | "To">("From");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isApplyingPoints, setIsApplyingPoints] = useState(false);
+  const [isAgreed, setIsAgreed] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     name?: boolean;
     phone?: boolean;
@@ -347,6 +348,8 @@ export default function OrderPage() {
             isSubmitting={isSubmitting}
             isApplyingPoints={isApplyingPoints}
             handleEscrow={handleEscrow}
+            isAgreed={isAgreed}
+            setIsAgreed={setIsAgreed}
           />
         </form>
       </div>
