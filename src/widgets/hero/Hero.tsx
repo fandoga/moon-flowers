@@ -17,7 +17,7 @@ const Hero = () => {
         >
           <div className="h-[500px] w-full overflow-hidden rounded-xl md:rounded-2xl lg:rounded-[40px]">
             <Image
-              priority
+              loading="eager"
               src="/hero/image.png"
               className="w-full h-full object-cover"
               alt="bg_img"
