@@ -153,3 +153,65 @@ export interface GetContragentsResponse {
   count?: number;
   error?: string;
 }
+
+interface Amount {
+  value: string | number;
+  currency: string;
+}
+
+interface Customer {
+  full_name?: string;
+  inn?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface MarkQuantity {
+  numerator: number;
+  denominator: number;
+}
+
+interface Item {
+  description: string;
+  amount?: Amount;
+  vat_code: number | string;
+  quantity?: number;
+  measure?: string;
+  mark_quantity?: MarkQuantity;
+  payment_subject?: string;
+  payment_mode?: string;
+  id: number | string;
+}
+
+interface Receipt {
+  customer: Customer;
+  items: Item[];
+}
+
+interface Card {
+  number: string;
+  expiry_year: string;
+  expiry_month: string;
+}
+
+interface PaymentMethodData {
+  type: "bank_card";
+  card: Card;
+}
+
+interface Confirmation {
+  type: "redirect";
+  return_url: string;
+}
+
+export interface PaymentRequest {
+  amount: Amount;
+  description?: string;
+  receipt?: Receipt;
+  tax_system_code?: number;
+  capture?: boolean;
+  merchant_customer_id?: string;
+  payment_method_data?: PaymentMethodData;
+  test?: boolean;
+  confirmation?: Confirmation;
+}

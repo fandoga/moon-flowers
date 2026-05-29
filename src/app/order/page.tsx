@@ -9,12 +9,14 @@ import {
   buildDeliveryDoc,
   buildDocSalesOrder,
   getOrderEnvDefaults,
+  PaymentRequest,
   resolveDeliveryUnix,
   useCreateContragent,
   useCreateOrder,
   useFindContragentByPhone,
   useSendDeliveryInfo,
 } from "@/entities/order";
+import { tableCrmApi } from "@/shared/api/clients";
 import SuccesOrderModal from "@/widgets/order/SuccesOrderModal";
 
 // Вынесенные компоненты
@@ -52,7 +54,6 @@ export default function OrderPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isApplyingPoints, setIsApplyingPoints] = useState(false);
   const [offertaConfirmed, setOffertaConfirmed] = useState(false);
-  const [offertaError, setOffertaError] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     name?: boolean;
     phone?: boolean;
@@ -84,13 +85,6 @@ export default function OrderPage() {
       });
     }
   }, [savedAddress]);
-
-  // Сброс ошибки оферты при подтверждении
-  useEffect(() => {
-    if (offertaConfirmed) {
-      setOffertaError(false);
-    }
-  }, [offertaConfirmed]);
 
   // Списание баллов
   const handleEscrow = async () => {
@@ -176,7 +170,6 @@ export default function OrderPage() {
     }
 
     if (!offertaConfirmed) {
-      setOffertaError(true);
       return;
     }
 
@@ -252,6 +245,9 @@ export default function OrderPage() {
     });
 
     setIsSubmitting(true);
+    let createdOrderId: string | null = null;
+    let submitStage: "order" | "payment" = "order";
+
     try {
       const result = await createOrder.mutateAsync([document]);
       if (!result.success) {
@@ -259,18 +255,18 @@ export default function OrderPage() {
         return;
       }
 
-      writeLogoPoints(0);
-
       if (!result.order_id) {
         toast.error(
           "Заказ создан, но сервер не вернул номер — доставку сохранить нельзя",
         );
-        writeCart({ items: {} });
         return;
       }
 
+      createdOrderId = result.order_id;
+      setOrderId(createdOrderId);
+
       const deliveryResult = await sendDelivery.mutateAsync({
-        orderId: result.order_id,
+        orderId: createdOrderId,
         ...deliveryPayload,
       });
 
@@ -279,15 +275,91 @@ export default function OrderPage() {
           deliveryResult.error ??
             "Заказ создан, но не удалось сохранить доставку",
         );
-      } else {
-        toast.success(`Заказ №${result.order_id} оформлен`);
-        setOrderId(result.order_id);
-        setModalOpen(true);
+        return;
       }
 
+      submitStage = "payment";
+
+      const amountToPay = Math.max(0, grandTotal);
+
+      if (amountToPay <= 0) {
+        writeLogoPoints(0);
+        writeCart({ items: {} });
+        toast.success(`Заказ №${createdOrderId} оформлен`);
+        setModalOpen(true);
+        return;
+      }
+
+      const vatCode = 1;
+      const goodsSum = cartItems.reduce(
+        (acc, item) => acc + item.price * item.quantity,
+        0,
+      );
+      const loyaltySubtraction = Math.min(escrow ?? 0, goodsSum);
+
+      const paymentData: PaymentRequest = {
+        amount: { value: amountToPay.toFixed(2), currency: "RUB" },
+        capture: true,
+        receipt: {
+          customer: { phone: phoneDigits, full_name: name.trim() },
+          items: [],
+        },
+        confirmation: {
+          type: "redirect",
+          return_url: `https://moon-flowers.ru/order?order_id=${createdOrderId}`,
+        },
+      };
+
+      cartItems.forEach((item) => {
+        const discountPerUnit =
+          goodsSum > 0 ? (item.price / goodsSum) * loyaltySubtraction : 0;
+        const itemPrice = Math.max(0, item.price - discountPerUnit);
+
+        paymentData.receipt?.items.push({
+          description: item.name,
+          id: item.id.toString(),
+          quantity: item.quantity,
+          vat_code: vatCode,
+          amount: {
+            value: itemPrice.toFixed(2),
+            currency: "RUB",
+          },
+        });
+      });
+
+      if (deliveryPrice > 0) {
+        paymentData.receipt?.items.push({
+          description: "Доставка",
+          id: envDefaults.deliveryNomenclatureId.toString(),
+          quantity: 1,
+          vat_code: vatCode,
+          amount: { value: deliveryPrice.toFixed(2), currency: "RUB" },
+        });
+      }
+
+      const paymentRes = await tableCrmApi.post<{
+        confirmation?: { confirmation_url?: string };
+      }>("/yookassa/payments", paymentData, {
+        params: {
+          warehouse: envDefaults.warehouse,
+          doc_sales_id: createdOrderId,
+        },
+      });
+      const confirmationUrl = paymentRes.data.confirmation?.confirmation_url;
+
+      if (!confirmationUrl) {
+        throw new Error("Missing YooKassa confirmation URL");
+      }
+
+      writeLogoPoints(0);
       writeCart({ items: {} });
+      window.location.href = confirmationUrl;
     } catch {
-      toast.error("Не удалось создать заказ");
+      toast.error(
+        submitStage === "payment"
+          ? "Ошибка создания платежа"
+          : "Не удалось создать заказ",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -360,10 +432,9 @@ export default function OrderPage() {
             hasEscrow={hasEscrow}
             isSubmitting={isSubmitting}
             isApplyingPoints={isApplyingPoints}
-            offertaError={offertaError}
             handleEscrow={handleEscrow}
-            setOffertaError={setOffertaError}
-            setOffertaConfirmed={setOffertaConfirmed}
+            isAgreed={offertaConfirmed}
+            setIsAgreed={setOffertaConfirmed}
           />
         </form>
       </div>

@@ -25,9 +25,6 @@ interface OrderSummaryProps {
   hasEscrow: boolean;
   isSubmitting: boolean;
   isApplyingPoints: boolean;
-  offertaError: boolean;
-  setOffertaError: React.Dispatch<React.SetStateAction<boolean>>;
-  setOffertaConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
   handleEscrow: () => void;
   isAgreed: boolean;
   setIsAgreed: (val: boolean) => void;
@@ -46,9 +43,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   hasEscrow,
   isSubmitting,
   isApplyingPoints,
-  offertaError,
-  setOffertaError,
-  setOffertaConfirmed,
   handleEscrow,
   isAgreed,
   setIsAgreed,
@@ -110,7 +104,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           </div>
         </div>
 
-        <div className="flex items-start gap-2 py-4">
+        <div className="flex items-center gap-2 py-4">
           <input
             type="checkbox"
             id="oferta-agree"
@@ -141,40 +135,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           disabled={cartItemsCount === 0 || !isAgreed}
           className="px-4 py-2 cursor-pointer"
         />
-        <FieldGroup className="mx-auto px-2 w-full">
-          <Field orientation="horizontal">
-            <Checkbox
-              onCheckedChange={(checked) => {
-                const isChecked = checked === true;
-                setOffertaConfirmed(isChecked);
-                if (isChecked) {
-                  setOffertaError(false);
-                }
-              }}
-              id="terms-checkbox-basic"
-              name="terms-checkbox-basic"
-            />
-            <FieldLabel
-              className={`font-normal ${offertaError ? "text-red-500" : "text-black"}`}
-              htmlFor="terms-checkbox-basic"
-              style={
-                offertaError
-                  ? {
-                      animation: "shake 0.3s 3",
-                    }
-                  : { animation: "none" }
-              }
-            >
-              <style>{shakeKeyframes}</style>
-              <a
-                className="hover:underline"
-                href="https://disk.yandex.ru/i/DwPhoQMQEw6Vww"
-              >
-                Я прочитал(-a) и принимаю оферту
-              </a>
-            </FieldLabel>
-          </Field>
-        </FieldGroup>
       </div>
     </aside>
   );

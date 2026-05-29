@@ -109,18 +109,6 @@ const Footer = () => {
           </div>
         </div>
       </motion.footer>
-      <div className="w-full bg-gray py-4">
-        <div className="max-w-[1640px] px-14 mx-auto">
-          <p className="text-muted-foreground">ИП Сучков Владимир Викторович</p>
-          <p className="text-muted-foreground">
-            (ОГРНИП: 325508100667490, ИНН: 772333368503)
-          </p>
-          <p className="text-muted-foreground">
-            Юридический адрес: Московская область, городской округ Домодедово,
-            ДНП Ветеран, Южная улица, 14
-          </p>
-        </div>
-      </div>
     </div>
   );
 };
