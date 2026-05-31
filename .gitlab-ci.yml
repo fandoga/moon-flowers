@@ -2,33 +2,37 @@ stages:
   - build
   - deploy
 
-# include:
-# - project: devops/ci-templates
-#   file:
-#     - ci/lint.yml
-#     # - ci/audit.yml
-#     - ci/deploy.yml
-
-variables: {}
+variables:
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  NEXT_TELEMETRY_DISABLED: "1"
+  KUBERNETES_MEMORY_LIMIT: "2Gi"
+  KUBERNETES_MEMORY_REQUEST: "512Mi"
+  KUBERNETES_CPU_LIMIT: "2"
+  KUBERNETES_CPU_REQUEST: "500m"
 
 cache:
-  key:
-    files:
-      - package-lock.json
-  paths:
-    - node_modules/
-    - .next/cache/
+  - key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+      - .npm/
+    policy: pull-push
+  - key: "next-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .next/cache/
+    policy: pull-push
 
 build:
   stage: build
   tags:
-    # - "flowers-runner"
-    - "kubernetes-legacy-build"
-  image: node:22
+    - kubernetes-build
+  image: node:22-bookworm-slim
   only:
     - main
-  before_script:
-    - npm cache clean --force
+  variables:
+    NODE_OPTIONS: "--max-old-space-size=1536"
+    NEXT_BUILD_WORKERS: "1"
   script:
     - npm ci --prefer-offline --no-audit
     - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
@@ -46,7 +50,7 @@ build:
 deploy:
   stage: deploy
   tags:
-    - "flowers-runner"
+    - flowers-runner
   only:
     - main
   script:
@@ -58,16 +62,3 @@ deploy:
   environment:
     name: production
     url: http://$SSH_HOST
-
-# bake-kubernetes:
-#   extends: .bake
-#   when: manual
-# 
-# deploy-kubernetes:
-#   extends: .deploy
-#   tags:
-#    - kubernetes-deploy
-#   needs: [bake-kubernetes]
-#   variables:
-#     KUBERNETES_NAMESPACE: landings
-#     KUBERNETES_DEPLOYMENT: moon-flowers
