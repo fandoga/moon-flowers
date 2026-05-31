@@ -56,6 +56,7 @@ build:
     - cp -r public .next/standalone/public
     - cp -r .next/static .next/standalone/.next/static
     - cp .env.production .next/standalone/.env.production
+    - cp ecosystem.config.cjs .next/standalone/ecosystem.config.cjs
   artifacts:
     paths:
       - .next/standalone/
@@ -111,17 +112,47 @@ deploy:
     - ssh "${SSH_USER}@${SSH_HOST}" "command -v rsync && mkdir -p '${DEPLOY_PATH}'"
     - rsync -az --delete .next/standalone/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
     - |
-      ssh "${SSH_USER}@${SSH_HOST}" "
-        set -e
-        cd '${DEPLOY_PATH}'
-        export PORT=3000 HOSTNAME=0.0.0.0 NODE_ENV=production
-        if pm2 describe moon-flowers >/dev/null 2>&1; then
-          pm2 restart moon-flowers --update-env
+      ssh "${SSH_USER}@${SSH_HOST}" "DEPLOY_PATH='${DEPLOY_PATH}' bash -s" <<'REMOTE'
+      set -euo pipefail
+      cd "${DEPLOY_PATH}"
+
+      run_pm2() {
+        if sudo -n true 2>/dev/null; then
+          sudo -n pm2 "$@"
         else
-          pm2 start server.js --name moon-flowers --cwd '${DEPLOY_PATH}'
+          pm2 "$@"
         fi
-        pm2 save
-      "
+      }
+
+      pm2_owner() {
+        if sudo -n pm2 list >/dev/null 2>&1; then
+          echo root
+        else
+          id -un
+        fi
+      }
+
+      # Drop duplicate app under gitlab-runner when root PM2 is available
+      if sudo -n true 2>/dev/null && [ "$(id -un)" != root ]; then
+        pm2 delete moon-flowers 2>/dev/null || true
+      fi
+
+      if run_pm2 describe moon-flowers >/dev/null 2>&1; then
+        run_pm2 restart moon-flowers --update-env
+      elif [ -f ecosystem.config.cjs ]; then
+        run_pm2 start ecosystem.config.cjs --update-env
+      else
+        run_pm2 start server.js --name moon-flowers --cwd "${DEPLOY_PATH}" \
+          --update-env --env NODE_ENV=production --env PORT=3000 --env HOSTNAME=0.0.0.0
+      fi
+      run_pm2 save
+      echo "PM2 owner: $(pm2_owner)"
+      run_pm2 list
+      run_pm2 describe moon-flowers | grep -q online || {
+        echo "moon-flowers is not online after deploy"
+        exit 1
+      }
+      REMOTE
   environment:
     name: production
     url: https://moon-flowers.ru
