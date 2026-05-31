@@ -54,14 +54,12 @@ build:
     - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
     - npm run build
     - rm -rf .next/cache
+    - cp -r public .next/standalone/public
+    - cp -r .next/static .next/standalone/.next/static
+    - cp .env.production .next/standalone/.env.production
   artifacts:
     paths:
-      - .next/
-      - public/
-      - package.json
-      - package-lock.json
-      - next.config.ts
-      - .env.production
+      - .next/standalone/
     expire_in: 1 week
 
 deploy:
@@ -111,18 +109,20 @@ deploy:
     - chmod 644 ~/.ssh/known_hosts
   script:
     - test -n "$SSH_HOST" && test -n "$SSH_USER"
-    - ssh "${SSH_USER}@${SSH_HOST}" "command -v rsync >/dev/null || (echo 'rsync missing on server; wait for bootstrap_deploy_ssh' && exit 1)"
-    - ssh "${SSH_USER}@${SSH_HOST}" "sudo chown -R '${SSH_USER}':'${SSH_USER}' '${DEPLOY_PATH}'"
-    - rsync -az --delete --exclude 'cache/' .next/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/.next/"
-    - rsync -az --delete public/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/"
-    - rsync -az package.json package-lock.json next.config.ts .env.production "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
+    - ssh "${SSH_USER}@${SSH_HOST}" "command -v rsync && mkdir -p '${DEPLOY_PATH}'"
+    - rsync -az --delete .next/standalone/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
     - |
       ssh "${SSH_USER}@${SSH_HOST}" "
         set -e
         cd '${DEPLOY_PATH}'
-        npm ci --omit=dev --no-audit
-        pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start
+        export PORT=3000 HOSTNAME=0.0.0.0 NODE_ENV=production
+        if pm2 describe moon-flowers >/dev/null 2>&1; then
+          pm2 restart moon-flowers --update-env
+        else
+          pm2 start server.js --name moon-flowers --cwd '${DEPLOY_PATH}'
+        fi
+        pm2 save
       "
   environment:
     name: production
-    url: https://${SSH_HOST}
+    url: https://moon-flowers.ru
