@@ -111,9 +111,9 @@ deploy:
     - chmod 644 ~/.ssh/known_hosts
   script:
     - test -n "$SSH_HOST" && test -n "$SSH_USER"
-    - rsync -az --delete .next/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/.next/"
-    - rsync -az --delete public/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/"
-    - rsync -az package.json package-lock.json next.config.ts .env.production "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
+    - |
+      ssh "${SSH_USER}@${SSH_HOST}" "mkdir -p '${DEPLOY_PATH}' && rm -rf '${DEPLOY_PATH}/.next' '${DEPLOY_PATH}/public'"
+    - tar -cf - .next public package.json package-lock.json next.config.ts .env.production | ssh "${SSH_USER}@${SSH_HOST}" "tar -xf - -C '${DEPLOY_PATH}'"
     - |
       ssh "${SSH_USER}@${SSH_HOST}" "
         set -e
