@@ -132,15 +132,16 @@ deploy:
         fi
       }
 
-      # Drop duplicate app under gitlab-runner when root PM2 is available
-      if sudo -n true 2>/dev/null && [ "$(id -un)" != root ]; then
-        pm2 delete moon-flowers 2>/dev/null || true
+      # Remove legacy "pm2 start npm -- start" (needs node_modules + next CLI)
+      pm2 delete moon-flowers 2>/dev/null || true
+      if sudo -n true 2>/dev/null; then
+        sudo -n pm2 delete moon-flowers 2>/dev/null || true
       fi
 
-      if run_pm2 describe moon-flowers >/dev/null 2>&1; then
-        run_pm2 restart moon-flowers --update-env
-      elif [ -f ecosystem.config.cjs ]; then
-        run_pm2 start ecosystem.config.cjs --update-env
+      test -f server.js || { echo "missing ${DEPLOY_PATH}/server.js (standalone deploy)"; exit 1; }
+
+      if [ -f ecosystem.config.cjs ]; then
+        run_pm2 start ecosystem.config.cjs
       else
         run_pm2 start server.js --name moon-flowers --cwd "${DEPLOY_PATH}" \
           --update-env --env NODE_ENV=production --env PORT=3000 --env HOSTNAME=0.0.0.0
