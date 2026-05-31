@@ -19,13 +19,9 @@ cache:
     paths:
       - node_modules/
       - .npm/
-    policy: pull-push
-  - key: "next-$CI_COMMIT_REF_SLUG"
-    paths:
       - .next/cache/
     policy: pull-push
 
-# One-time: installs DEPLOY_PUBKEY into gitlab-runner@moon-flowers (flowers-runner shell).
 bootstrap_deploy_ssh:
   stage: bootstrap
   tags:
@@ -37,6 +33,7 @@ bootstrap_deploy_ssh:
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
     - grep -qF "$DEPLOY_PUBKEY" ~/.ssh/authorized_keys || echo "$DEPLOY_PUBKEY" >> ~/.ssh/authorized_keys
+    - sudo chown -R gitlab-runner:gitlab-runner "${DEPLOY_PATH}" 2>/dev/null || true
 
 build:
   stage: build
@@ -52,6 +49,7 @@ build:
     - npm ci --prefer-offline --no-audit
     - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
     - npm run build
+    - rm -rf .next/cache
   artifacts:
     paths:
       - .next/
@@ -74,7 +72,6 @@ deploy:
       artifacts: true
     - job: bootstrap_deploy_ssh
       optional: true
-  # Global cache is for build only; do not pull node_modules on deploy.
   cache: {}
   only:
     - main
@@ -84,7 +81,7 @@ deploy:
     KUBERNETES_CPU_LIMIT: "500m"
     KUBERNETES_CPU_REQUEST: "100m"
   before_script:
-    - apk add --no-cache openssh-client
+    - apk add --no-cache openssh-client tar
     - eval "$(ssh-agent -s)"
     - install -m 700 -d ~/.ssh
     - |
@@ -98,7 +95,7 @@ deploy:
         chmod 600 ~/.ssh/id_ci
       fi
       grep -q 'PRIVATE KEY' ~/.ssh/id_ci || {
-        echo "SSH_PRIVATE_KEY must be an OpenSSH/PEM private key (prefer variable type: File)"
+        echo "SSH_PRIVATE_KEY must be an OpenSSH/PEM private key"
         exit 1
       }
       ssh-add ~/.ssh/id_ci
@@ -112,7 +109,16 @@ deploy:
   script:
     - test -n "$SSH_HOST" && test -n "$SSH_USER"
     - |
-      ssh "${SSH_USER}@${SSH_HOST}" "mkdir -p '${DEPLOY_PATH}' && rm -rf '${DEPLOY_PATH}/.next' '${DEPLOY_PATH}/public'"
+      ssh "${SSH_USER}@${SSH_HOST}" "
+        set -e
+        mkdir -p '${DEPLOY_PATH}'
+        if command -v sudo >/dev/null 2>&1; then
+          sudo chown -R '${SSH_USER}':'${SSH_USER}' '${DEPLOY_PATH}' || true
+          sudo rm -rf '${DEPLOY_PATH}/.next' '${DEPLOY_PATH}/public'
+        else
+          rm -rf '${DEPLOY_PATH}/.next' '${DEPLOY_PATH}/public'
+        fi
+      "
     - tar -cf - .next public package.json package-lock.json next.config.ts .env.production | ssh "${SSH_USER}@${SSH_HOST}" "tar -xf - -C '${DEPLOY_PATH}'"
     - |
       ssh "${SSH_USER}@${SSH_HOST}" "
