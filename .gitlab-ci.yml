@@ -30,6 +30,7 @@ bootstrap_deploy_ssh:
   stage: bootstrap
   tags:
     - flowers-runner
+  cache: {}
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $DEPLOY_PUBKEY
   script:
