@@ -28,12 +28,17 @@ bootstrap_deploy_ssh:
     - flowers-runner
   cache: {}
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $DEPLOY_PUBKEY
+    - if: $CI_COMMIT_BRANCH == "main"
   script:
-    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
-    - touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
-    - grep -qF "$DEPLOY_PUBKEY" ~/.ssh/authorized_keys || echo "$DEPLOY_PUBKEY" >> ~/.ssh/authorized_keys
-    - sudo chown -R gitlab-runner:gitlab-runner "${DEPLOY_PATH}" 2>/dev/null || true
+    - command -v rsync >/dev/null || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rsync
+    - sudo mkdir -p "${DEPLOY_PATH}"
+    - sudo chown -R gitlab-runner:gitlab-runner "${DEPLOY_PATH}"
+    - |
+      if [ -n "${DEPLOY_PUBKEY}" ]; then
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
+        grep -qF "$DEPLOY_PUBKEY" ~/.ssh/authorized_keys || echo "$DEPLOY_PUBKEY" >> ~/.ssh/authorized_keys
+      fi
 
 build:
   stage: build
@@ -81,7 +86,7 @@ deploy:
     KUBERNETES_CPU_LIMIT: "500m"
     KUBERNETES_CPU_REQUEST: "100m"
   before_script:
-    - apk add --no-cache openssh-client tar
+    - apk add --no-cache openssh-client rsync
     - eval "$(ssh-agent -s)"
     - install -m 700 -d ~/.ssh
     - |
