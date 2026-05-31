@@ -9,6 +9,7 @@ variables:
   KUBERNETES_MEMORY_REQUEST: "512Mi"
   KUBERNETES_CPU_LIMIT: "2"
   KUBERNETES_CPU_REQUEST: "500m"
+  DEPLOY_PATH: "/var/www/moon-flowers"
 
 cache:
   - key:
@@ -50,15 +51,46 @@ build:
 deploy:
   stage: deploy
   tags:
-    - flowers-runner
+    - kubernetes-deploy
+  image:
+    name: alpine:3.20
+    entrypoint: [""]
+  needs:
+    - job: build
+      artifacts: true
+  # Global cache is for build only; do not pull node_modules on deploy.
+  cache: {}
   only:
     - main
+  variables:
+    KUBERNETES_MEMORY_LIMIT: "512Mi"
+    KUBERNETES_MEMORY_REQUEST: "128Mi"
+    KUBERNETES_CPU_LIMIT: "500m"
+    KUBERNETES_CPU_REQUEST: "100m"
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval "$(ssh-agent -s)"
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - |
+      if [ -n "$SSH_KNOWN_HOSTS" ]; then
+        printf '%s\n' "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+      else
+        ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+      fi
+    - chmod 644 ~/.ssh/known_hosts
   script:
-    - mkdir -p /var/www/moon-flowers
-    - cp -r .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/moon-flowers/
-    - cd /var/www/moon-flowers
-    - npm ci --production
-    - pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start
+    - test -n "$SSH_HOST" && test -n "$SSH_USER"
+    - rsync -az --delete .next/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/.next/"
+    - rsync -az --delete public/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/"
+    - rsync -az package.json package-lock.json next.config.ts .env.production "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
+    - |
+      ssh "${SSH_USER}@${SSH_HOST}" "
+        set -e
+        cd '${DEPLOY_PATH}'
+        npm ci --omit=dev --no-audit
+        pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start
+      "
   environment:
     name: production
-    url: http://$SSH_HOST
+    url: https://${SSH_HOST}
