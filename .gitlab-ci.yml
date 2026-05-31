@@ -70,8 +70,20 @@ deploy:
   before_script:
     - apk add --no-cache openssh-client rsync
     - eval "$(ssh-agent -s)"
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - install -m 700 -d ~/.ssh
+    # GitLab "File" variable: SSH_PRIVATE_KEY is a path, not key body.
+    - |
+      if [ -f "${SSH_PRIVATE_KEY}" ]; then
+        install -m 600 "${SSH_PRIVATE_KEY}" ~/.ssh/id_ci
+      else
+        printf '%s' "${SSH_PRIVATE_KEY}" | tr -d '\r' > ~/.ssh/id_ci
+        chmod 600 ~/.ssh/id_ci
+      fi
+      grep -q 'PRIVATE KEY' ~/.ssh/id_ci || {
+        echo "SSH_PRIVATE_KEY must be an OpenSSH/PEM private key (prefer variable type: File)"
+        exit 1
+      }
+      ssh-add ~/.ssh/id_ci
     - |
       if [ -n "$SSH_KNOWN_HOSTS" ]; then
         printf '%s\n' "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
