@@ -53,7 +53,6 @@ build:
     - npm ci --prefer-offline --no-audit
     - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
     - npm run build
-    - rm -rf .next/cache
     - cp -r public .next/standalone/public
     - cp -r .next/static .next/standalone/.next/static
     - cp .env.production .next/standalone/.env.production
