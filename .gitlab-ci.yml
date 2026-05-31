@@ -23,7 +23,7 @@ build:
   stage: build
   tags:
     # - "flowers-runner"
-    - "kubernetes-build"
+    - "kubernetes-legacy-build"
   image: node:22
   only:
     - main
