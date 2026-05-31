@@ -76,7 +76,6 @@ deploy:
     - job: build
       artifacts: true
     - job: bootstrap_deploy_ssh
-      optional: true
   cache: {}
   only:
     - main
@@ -113,18 +112,11 @@ deploy:
     - chmod 644 ~/.ssh/known_hosts
   script:
     - test -n "$SSH_HOST" && test -n "$SSH_USER"
-    - |
-      ssh "${SSH_USER}@${SSH_HOST}" "
-        set -e
-        mkdir -p '${DEPLOY_PATH}'
-        if command -v sudo >/dev/null 2>&1; then
-          sudo chown -R '${SSH_USER}':'${SSH_USER}' '${DEPLOY_PATH}' || true
-          sudo rm -rf '${DEPLOY_PATH}/.next' '${DEPLOY_PATH}/public'
-        else
-          rm -rf '${DEPLOY_PATH}/.next' '${DEPLOY_PATH}/public'
-        fi
-      "
-    - tar -cf - .next public package.json package-lock.json next.config.ts .env.production | ssh "${SSH_USER}@${SSH_HOST}" "tar -xf - -C '${DEPLOY_PATH}'"
+    - ssh "${SSH_USER}@${SSH_HOST}" "command -v rsync >/dev/null || (echo 'rsync missing on server; wait for bootstrap_deploy_ssh' && exit 1)"
+    - ssh "${SSH_USER}@${SSH_HOST}" "sudo chown -R '${SSH_USER}':'${SSH_USER}' '${DEPLOY_PATH}'"
+    - rsync -az --delete --exclude 'cache/' .next/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/.next/"
+    - rsync -az --delete public/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/"
+    - rsync -az package.json package-lock.json next.config.ts .env.production "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
     - |
       ssh "${SSH_USER}@${SSH_HOST}" "
         set -e
