@@ -1,4 +1,5 @@
 stages:
+  - bootstrap
   - build
   - deploy
 
@@ -23,6 +24,18 @@ cache:
     paths:
       - .next/cache/
     policy: pull-push
+
+# One-time: installs DEPLOY_PUBKEY into gitlab-runner@moon-flowers (flowers-runner shell).
+bootstrap_deploy_ssh:
+  stage: bootstrap
+  tags:
+    - flowers-runner
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $DEPLOY_PUBKEY
+  script:
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
+    - grep -qF "$DEPLOY_PUBKEY" ~/.ssh/authorized_keys || echo "$DEPLOY_PUBKEY" >> ~/.ssh/authorized_keys
 
 build:
   stage: build
@@ -58,6 +71,8 @@ deploy:
   needs:
     - job: build
       artifacts: true
+    - job: bootstrap_deploy_ssh
+      optional: true
   # Global cache is for build only; do not pull node_modules on deploy.
   cache: {}
   only:
@@ -71,9 +86,11 @@ deploy:
     - apk add --no-cache openssh-client rsync
     - eval "$(ssh-agent -s)"
     - install -m 700 -d ~/.ssh
-    # GitLab "File" variable: SSH_PRIVATE_KEY is a path, not key body.
     - |
-      if [ -f "${SSH_PRIVATE_KEY}" ]; then
+      if [ -n "${SSH_PRIVATE_KEY_B64}" ]; then
+        echo "${SSH_PRIVATE_KEY_B64}" | base64 -d > ~/.ssh/id_ci
+        chmod 600 ~/.ssh/id_ci
+      elif [ -f "${SSH_PRIVATE_KEY}" ]; then
         install -m 600 "${SSH_PRIVATE_KEY}" ~/.ssh/id_ci
       else
         printf '%s' "${SSH_PRIVATE_KEY}" | tr -d '\r' > ~/.ssh/id_ci
