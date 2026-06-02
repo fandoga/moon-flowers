@@ -4,6 +4,16 @@ import React from "react";
 import { formatPrice } from "@/lib/utils/formatPrice";
 import ActionButton from "@/components/ui/action-button";
 import { Loader2 } from "lucide-react";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const shakeKeyframes = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+`;
 
 interface OrderSummaryProps {
   cartItemsCount: number;
@@ -16,6 +26,8 @@ interface OrderSummaryProps {
   isSubmitting: boolean;
   isApplyingPoints: boolean;
   handleEscrow: () => void;
+  isAgreed: boolean;
+  setIsAgreed: (val: boolean) => void;
 }
 
 /**
@@ -32,6 +44,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   isSubmitting,
   isApplyingPoints,
   handleEscrow,
+  isAgreed,
+  setIsAgreed,
 }) => {
   return (
     <aside className="lg:sticky lg:top-24 h-fit">
@@ -89,12 +103,36 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span>{formatPrice(grandTotal)}</span>
           </div>
         </div>
+
+        <div className="flex items-center gap-2 py-4">
+          <input
+            type="checkbox"
+            id="oferta-agree"
+            checked={isAgreed}
+            onChange={(e) => setIsAgreed(e.target.checked)}
+            className="mt-1 size-4 cursor-pointer accent-black"
+          />
+          <label
+            htmlFor="oferta-agree"
+            className="text-xs text-black/60 leading-tight cursor-pointer select-none"
+          >
+            Я согласен с условиями{" "}
+            <a
+              href="/oferta"
+              target="_blank"
+              className="underline hover:text-black"
+            >
+              публичной оферты
+            </a>
+          </label>
+        </div>
+
         <ActionButton
           text="Перейти к оплате"
           type="submit"
           fullWidth
           loading={isSubmitting}
-          disabled={cartItemsCount === 0}
+          disabled={cartItemsCount === 0 || !isAgreed}
           className="px-4 py-2 cursor-pointer"
         />
       </div>

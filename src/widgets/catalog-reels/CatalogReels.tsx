@@ -1,14 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { CatalogItemType } from "@/app/catalog/page";
 import ActionButton from "@/components/ui/action-button";
 import { AddToCartButton } from "@/features/add-to-cart/AddToCartButton";
 import { FullScreenLoader } from "../initial-loader.tsx/InitialLoader";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { CatalogItemType } from "../catalog-page/CatalogPageInner";
 
 interface CatalogReelsProps {
   items: CatalogItemType[];

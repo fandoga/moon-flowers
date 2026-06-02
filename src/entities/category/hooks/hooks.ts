@@ -9,8 +9,8 @@ import {
   useEnrichedMpProducts,
   useMpProducts,
 } from "@/entities/mp-product";
-import { CatalogItemType } from "@/app/catalog/page";
 import { useMemo } from "react";
+import { CatalogItemType } from "@/widgets/catalog-page/CatalogPageInner";
 
 type CategoriesWithDataResult = [
   normalizedItems: CatalogItemType[],
@@ -100,7 +100,7 @@ export const useCategoriesWithData = (): CategoriesDataResult => {
       queryFn: () =>
         getMpProducts({
           limit: 1,
-          offset: 2,
+          offset: 1,
           category: String(cat.id),
           tags: TECH_CARD_TAG,
         }),
@@ -140,6 +140,7 @@ export const useCategoriesWithData = (): CategoriesDataResult => {
       const resolvedPrice = Number(
         enriched?.price ?? enriched?.prices?.[0]?.price ?? 0,
       );
+      console.log(enriched);
       const resolvedImage =
         enriched?.images?.[0] || enriched?.photos?.[0] || "";
 

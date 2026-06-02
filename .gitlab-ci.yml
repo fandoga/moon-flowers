@@ -1,70 +1,171 @@
 stages:
+  - bootstrap
   - build
   - deploy
 
-include:
-- project: devops/ci-templates
-  file:
-    - ci/lint.yml
-    # - ci/audit.yml
-    - ci/deploy.yml
-
-variables: {}
+variables:
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  NEXT_TELEMETRY_DISABLED: "1"
+  KUBERNETES_MEMORY_LIMIT: "2Gi"
+  KUBERNETES_MEMORY_REQUEST: "512Mi"
+  KUBERNETES_CPU_LIMIT: "2"
+  KUBERNETES_CPU_REQUEST: "500m"
+  DEPLOY_PATH: "/var/www/moon-flowers"
 
 cache:
-  key:
-    files:
-      - package-lock.json
-  paths:
-    - node_modules/
-    - .next/cache/
+  - key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+      - .npm/
+      - .next/cache/
+    policy: pull-push
+
+bootstrap_deploy_ssh:
+  stage: bootstrap
+  tags:
+    - flowers-runner
+  cache: {}
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - command -v rsync
+    - mkdir -p "${DEPLOY_PATH}"
+    - |
+      if [ -n "${DEPLOY_PUBKEY}" ]; then
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
+        grep -qF "$DEPLOY_PUBKEY" ~/.ssh/authorized_keys || echo "$DEPLOY_PUBKEY" >> ~/.ssh/authorized_keys
+      fi
 
 build:
   stage: build
   tags:
-    - "flowers-runner"
-  image: node:22
+    - kubernetes-build
+  image: node:22-bookworm-slim
   only:
     - main
-  before_script:
-    - npm cache clean --force
+  variables:
+    NODE_OPTIONS: "--max-old-space-size=1536"
+    NEXT_BUILD_WORKERS: "1"
   script:
     - npm ci --prefer-offline --no-audit
     - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
     - npm run build
+    - cp -r public .next/standalone/public
+    - cp -r .next/static .next/standalone/.next/static
+    - cp .env.production .next/standalone/.env.production
+    - cp ecosystem.config.cjs .next/standalone/ecosystem.config.cjs
   artifacts:
     paths:
-      - .next/
-      - public/
-      - package.json
-      - package-lock.json
-      - next.config.ts
-      - .env.production
+      - .next/standalone/
     expire_in: 1 week
 
 deploy:
   stage: deploy
   tags:
-    - "flowers-runner"
+    - kubernetes-deploy
+  image:
+    name: alpine:3.20
+    entrypoint: [""]
+  needs:
+    - job: build
+      artifacts: true
+    - job: bootstrap_deploy_ssh
+  cache: {}
   only:
     - main
+  variables:
+    KUBERNETES_MEMORY_LIMIT: "512Mi"
+    KUBERNETES_MEMORY_REQUEST: "128Mi"
+    KUBERNETES_CPU_LIMIT: "500m"
+    KUBERNETES_CPU_REQUEST: "100m"
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval "$(ssh-agent -s)"
+    - install -m 700 -d ~/.ssh
+    - |
+      if [ -n "${SSH_PRIVATE_KEY_B64}" ]; then
+        echo "${SSH_PRIVATE_KEY_B64}" | base64 -d > ~/.ssh/id_ci
+        chmod 600 ~/.ssh/id_ci
+      elif [ -f "${SSH_PRIVATE_KEY}" ]; then
+        install -m 600 "${SSH_PRIVATE_KEY}" ~/.ssh/id_ci
+      else
+        printf '%s' "${SSH_PRIVATE_KEY}" | tr -d '\r' > ~/.ssh/id_ci
+        chmod 600 ~/.ssh/id_ci
+      fi
+      grep -q 'PRIVATE KEY' ~/.ssh/id_ci || {
+        echo "SSH_PRIVATE_KEY must be an OpenSSH/PEM private key"
+        exit 1
+      }
+      ssh-add ~/.ssh/id_ci
+    - |
+      if [ -n "$SSH_KNOWN_HOSTS" ]; then
+        printf '%s\n' "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+      else
+        ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+      fi
+    - chmod 644 ~/.ssh/known_hosts
   script:
-    - mkdir -p /var/www/moon-flowers
-    - cp -r .next/ public/ package.json package-lock.json next.config.ts .env.production /var/www/moon-flowers/
-    - cd /var/www/moon-flowers
-    - npm ci --production
-    - pm2 restart moon-flowers || pm2 start npm --name moon-flowers -- start
+    - test -n "$SSH_HOST" && test -n "$SSH_USER"
+    - ssh "${SSH_USER}@${SSH_HOST}" "command -v rsync && mkdir -p '${DEPLOY_PATH}'"
+    - rsync -az --delete .next/standalone/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
+    - |
+      ssh "${SSH_USER}@${SSH_HOST}" "DEPLOY_PATH='${DEPLOY_PATH}' bash -s" <<'REMOTE'
+      set -euo pipefail
+      cd "${DEPLOY_PATH}"
+
+      run_pm2() {
+        if sudo -n true 2>/dev/null; then
+          sudo -n pm2 "$@"
+        else
+          pm2 "$@"
+        fi
+      }
+
+      pm2_owner() {
+        if sudo -n pm2 list >/dev/null 2>&1; then
+          echo root
+        else
+          id -un
+        fi
+      }
+
+      # Remove legacy "pm2 start npm -- start" (needs node_modules + next CLI)
+      pm2 delete moon-flowers 2>/dev/null || true
+      if sudo -n true 2>/dev/null; then
+        sudo -n pm2 delete moon-flowers 2>/dev/null || true
+      fi
+
+      test -f server.js || { echo "missing ${DEPLOY_PATH}/server.js (standalone deploy)"; exit 1; }
+
+      if [ -f ecosystem.config.cjs ]; then
+        run_pm2 start ecosystem.config.cjs
+      else
+        run_pm2 start server.js --name moon-flowers --cwd "${DEPLOY_PATH}" \
+          --update-env --env NODE_ENV=production --env PORT=3000 --env HOSTNAME=0.0.0.0
+      fi
+      run_pm2 save
+      echo "PM2 owner: $(pm2_owner)"
+      run_pm2 list
+      run_pm2 describe moon-flowers | grep -q online || {
+        echo "moon-flowers is not online after deploy"
+        exit 1
+      }
+      REMOTE
   environment:
     name: production
     url: http://$SSH_HOST
-
-bake-kubernetes:
-  extends: .bake
-  when: manual
-
-deploy-kubernetes:
-  extends: .deploy
-  needs: [bake-kubernetes]
-  variables:
-    KUBERNETES_NAMESPACE: landings
-    KUBERNETES_DEPLOYMENT: moon-flowers
+# 
+# bake-kubernetes:
+#   extends: .bake
+#   when: manual
+# 
+# deploy-kubernetes:
+#   extends: .deploy
+#   needs: [bake-kubernetes]
+#   variables:
+#     KUBERNETES_NAMESPACE: landings
+#     KUBERNETES_DEPLOYMENT: moon-flowers
+# 
