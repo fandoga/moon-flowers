@@ -33,6 +33,8 @@ const extractVideoId = (product: MpProduct): number | null => {
 };
 
 const Stories = () => {
+  // Рекомендации больше НЕ являются источником видео.
+  // Используются только для опционального обогащения (аватар/постер).
   const { data } = useMyVideos({ limit: 16 });
   const { data: allPrices } = usePrices();
   const [currentPage, setCurrentPage] = useState(0);
@@ -43,12 +45,17 @@ const Stories = () => {
   );
   const [productsWithVideos, setProductsWithVideos] = useState<MpProduct[]>([]);
   const [enrichedVideos, setEnrichedVideos] = useState<StoryVideo[]>([]);
+  const [isProductsLoading, setIsProductsLoading] = useState(true);
 
-  // Fetch products with videos on component mount
+  // Источник видео — таблица товаров, отфильтрованных по has_video=true
   useEffect(() => {
     const fetchProducts = async () => {
-      const response = await getProductsWithVideos({ limit: 16 });
-      setProductsWithVideos(response.result);
+      try {
+        const response = await getProductsWithVideos({ limit: 16 });
+        setProductsWithVideos(response.result ?? []);
+      } finally {
+        setIsProductsLoading(false);
+      }
     };
 
     fetchProducts();
@@ -66,7 +73,7 @@ const Stories = () => {
     return () => media.removeEventListener("change", handleChange);
   }, []);
 
-  // Собираем видео из товаров
+  // Собираем видео из товаров (таблица — источник правды)
   useEffect(() => {
     const buildVideosFromProducts = async () => {
       if (productsWithVideos.length === 0) {
@@ -94,29 +101,35 @@ const Stories = () => {
 
       for (const product of productsWithVideos) {
         const videoId = extractVideoId(product);
+        // Пропускаем только если у товара реально нет валидного видео.
         if (videoId === null) continue;
 
-        // Find matching video data from API
+        // Необязательное обогащение из рекомендаций (аватар/постер).
+        // Отсутствие совпадения больше НЕ исключает товар.
         const videoData = data?.items?.find(
           (item) => Number(item.video_id) === videoId,
         );
-
-        if (!videoData || !videoData.seo_url) continue;
 
         const picture = await getPicturesById(product.id);
 
         const productId = Number(product.id);
         const fallbackPrice = Number(product.price ?? 0);
         const resolvedPrice = priceByProductId.get(productId) ?? fallbackPrice;
+        const productPhoto = picture?.public_url || picture?.url || undefined;
 
         videosFromProducts.push({
           id: videoId,
           title: product.name,
-          avatar: videoData.channel_avatar || "",
-          poster: videoData.preview_url || videoData.post_image || undefined,
+          avatar: videoData?.channel_avatar || "",
+          // постер из рекомендаций, если есть; иначе фото товара как запасной
+          poster:
+            videoData?.preview_url ||
+            videoData?.post_image ||
+            productPhoto ||
+            undefined,
           productId: productId,
           productName: product.name,
-          productPhoto: picture?.public_url || picture?.url || undefined,
+          productPhoto: productPhoto,
           productPrice: resolvedPrice > 0 ? resolvedPrice : undefined,
         });
       }
@@ -155,7 +168,7 @@ const Stories = () => {
           </p>
         </motion.div>
 
-        {!data || !displayVideos ? (
+        {isProductsLoading ? (
           <section className="w-full flex items-center justify-center h-100">
             <Logo alwaysEnabled />
           </section>
