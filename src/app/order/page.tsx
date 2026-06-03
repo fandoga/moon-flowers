@@ -341,7 +341,7 @@ export default function OrderPage() {
         confirmation?: { confirmation_url?: string };
       }>("/yookassa/payments", paymentData, {
         params: {
-          warehouse: envDefaults.warehouse,
+          warehouse: 470,
           doc_sales_id: createdOrderId,
         },
       });

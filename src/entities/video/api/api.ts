@@ -6,7 +6,7 @@ export const getMyVideos = async (
 ): Promise<VideosMyResponse> => {
   try {
     const response = await api.get<VideosMyResponse>(
-      "/videos/recommendations",
+      "https://interesnoitochka.ru/api/v1/videos/recommendations",
       {
         params: {
           ...params,
