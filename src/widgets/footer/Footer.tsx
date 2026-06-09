@@ -1,15 +1,39 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import FooterIcons from "./FooterIcons";
 import ActionButton from "@/components/ui/action-button";
 
+const YANDEX_MAP_SRC =
+  "https://yandex.ru/map-widget/v1/?ll=37.634596%2C55.879413&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg1Njc5NTg3MhI70KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINCf0L7Qu9GP0YDQvdCw0Y8g0YPQu9C40YbQsCwgMjEiCg3ViRZCFYeEX0I%2C&z=14";
+
 const Footer = () => {
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const [shouldLoadMap, setShouldLoadMap] = useState(false);
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
+
+  useEffect(() => {
+    if (!mapRef.current || shouldLoadMap) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setShouldLoadMap(true);
+        observer.disconnect();
+      },
+      { rootMargin: "300px 0px" },
+    );
+
+    observer.observe(mapRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [shouldLoadMap]);
 
   return (
     <div>
@@ -50,7 +74,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="w-full flex flex-col items-center pb-4">
-          <div className="w-full pb-4">
+          <div ref={mapRef} className="w-full pb-4">
             <div style={{ position: "relative", overflow: "hidden" }}>
               <a
                 href="https://yandex.ru/maps/213/moscow/?utm_medium=mapframe&utm_source=maps"
@@ -74,15 +98,20 @@ const Footer = () => {
               >
                 Полярная улица, 21 — Яндекс Карты
               </a>
-              <iframe
-                src="https://yandex.ru/map-widget/v1/?ll=37.634596%2C55.879413&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg1Njc5NTg3MhI70KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINCf0L7Qu9GP0YDQvdCw0Y8g0YPQu9C40YbQsCwgMjEiCg3ViRZCFYeEX0I%2C&z=21"
-                width="560"
-                height="400"
-                frameBorder="1"
-                allowFullScreen
-                className="w-full h-70 md:h-100"
-                style={{ position: "relative" }}
-              ></iframe>
+              {shouldLoadMap ? (
+                <iframe
+                  loading="lazy"
+                  src={YANDEX_MAP_SRC}
+                  width="560"
+                  height="400"
+                  frameBorder="1"
+                  allowFullScreen
+                  className="w-full h-70 md:h-100"
+                  style={{ position: "relative" }}
+                />
+              ) : (
+                <div className="w-full h-70 md:h-100 bg-gray/40" />
+              )}
             </div>
           </div>
           <div className="w-full flex flex-col items-center gap-4 text-center mt-8 border-t border-gray/20 pt-8 pb-4">
