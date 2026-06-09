@@ -90,9 +90,30 @@ export const useProductsFromCategories = (): CategoriesWithDataResult => {
   return [filteredItems, isEnrichmentFetching, isLoading, hasCategoryParam];
 };
 
-export const useCategoriesWithData = (): CategoriesDataResult => {
+export const useCategoriesWithData = (
+  withData: boolean = true,
+): CategoriesDataResult => {
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data?.result;
+
+  //Отправляем упрощенные данные
+  if (!withData) {
+    const normalizedItems = useMemo<CatalogItemType[]>(() => {
+      return (categories ?? []).map((cat) => ({
+        id: String(cat.id),
+        name: cat.name,
+        price: 0,
+        image: "",
+        count: 0,
+        categoryId: Number(cat.id),
+      }));
+    }, [categories]);
+    return {
+      filteredCategories: normalizedItems,
+      isEnrichmentFetching: false,
+      isLoading: false,
+    };
+  }
 
   const previewQueries = useQueries({
     queries: (categories ?? []).map((cat) => ({
@@ -147,8 +168,12 @@ export const useCategoriesWithData = (): CategoriesDataResult => {
       return {
         id: cat.id,
         name: cat.name,
-        price: Number.isFinite(resolvedPrice) ? resolvedPrice : 0,
-        image: resolvedImage,
+        price: resolvedPrice
+          ? Number.isFinite(resolvedPrice)
+            ? resolvedPrice
+            : 0
+          : 0,
+        image: resolvedImage && "",
         count: q?.data?.count ?? 0,
         categoryId: Number(enriched?.category ?? cat.id),
       };

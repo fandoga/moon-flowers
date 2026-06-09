@@ -29,7 +29,7 @@ const CatalogPageInner = () => {
     filteredCategories: categories,
     isEnrichmentFetching,
     isLoading,
-  } = useCategoriesWithData();
+  } = useCategoriesWithData(false);
 
   const [isTouchDevice, setIsTouchDevice] = useState<boolean | undefined>(
     undefined,

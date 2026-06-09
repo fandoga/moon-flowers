@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   getMpProducts,
   getMpProductById,
+  getPicturesBatchByIds,
   getPicturesById,
-  getPicturesListById,
   getPricesById,
 } from "../api/api";
 import {
@@ -54,30 +54,26 @@ export const usePrices = () => {
 export const useEnrichedMpProducts = (items: MpProduct[]) => {
   const { data: allPrices } = usePrices();
 
-  const productIds = useMemo(
-    () =>
-      items
-        .map((product) => Number(product.id))
-        .filter((id) => Number.isFinite(id) && id > 0),
-    [items],
-  );
+  const productIds = useMemo(() => {
+    const ids = items
+      .map((product) => Number(product.id))
+      .filter((id) => Number.isFinite(id) && id > 0);
+    return Array.from(new Set(ids));
+  }, [items]);
 
-  const picturesQueries = useQueries({
-    queries: productIds.map((productId) => ({
-      queryKey: ["mp-product-pictures", productId],
-      queryFn: () => getPicturesListById(productId),
-      staleTime: 60_000,
-    })),
+  const picturesBatchQuery = useQuery({
+    queryKey: ["mp-product-pictures-batch", productIds],
+    queryFn: () => getPicturesBatchByIds(productIds),
+    enabled: productIds.length > 0,
+    staleTime: 60_000,
   });
 
   const enrichedItems = useMemo(() => {
+    const picturesBatch = picturesBatchQuery.data ?? {};
     const picturesByProductId = new Map<number, string[]>();
-    for (const query of picturesQueries) {
-      const pictures = query.data;
+    for (const productId of productIds) {
+      const pictures = picturesBatch[productId];
       if (!pictures?.length) continue;
-
-      const productId = Number(pictures[0]?.entity_id);
-      if (!Number.isFinite(productId) || productId <= 0) continue;
 
       const sorted = [...pictures].sort((a, b) => {
         const am = a?.is_main ? 1 : 0;
@@ -134,10 +130,10 @@ export const useEnrichedMpProducts = (items: MpProduct[]) => {
         price: resolvedPrice,
       } as MpProduct;
     });
-  }, [items, picturesQueries, allPrices]);
+  }, [items, productIds, picturesBatchQuery.data, allPrices]);
 
   return {
     enrichedItems,
-    isEnrichmentFetching: picturesQueries.some((query) => query.isFetching),
+    isEnrichmentFetching: picturesBatchQuery.isFetching,
   };
 };

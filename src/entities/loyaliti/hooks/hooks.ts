@@ -12,10 +12,16 @@ import {
   LoyalityTransactionsResponse,
 } from "../types/types";
 
-export const useLoyalityCards = (phone_number?: string) => {
+export const useLoyalityCards = (
+  phone_number?: string,
+  options?: { enabled?: boolean },
+) => {
   return useQuery<LoyalityCardsResponse>({
     queryKey: ["loyality-cards", phone_number],
     queryFn: () => getLoyalityCards(phone_number),
+    enabled: options?.enabled ?? true,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 };
 

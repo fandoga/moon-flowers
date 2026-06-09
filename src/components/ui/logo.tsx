@@ -3,10 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  useAddLoyalityTransactionAccrual,
-  useLoyalityCardData,
-} from "@/entities/loyaliti";
-import {
   readLogoPoints,
   writeLogoPoints,
 } from "@/entities/loyaliti/lib/pointsStorage";
@@ -37,8 +33,6 @@ const Logo: React.FC<LogoProps> = ({
       window.matchMedia("(hover: none), (pointer: coarse)").matches) ||
       false,
   );
-  const { currentCard } = useLoyalityCardData();
-  const updateBalance = useAddLoyalityTransactionAccrual();
   const { isMaxed } = useBonusCounter();
 
   const [burst, setBurst] = useState(false);
@@ -64,7 +58,7 @@ const Logo: React.FC<LogoProps> = ({
     }, TICK_MS);
 
     return () => clearInterval(timer);
-  }, [isHover, isTouchDevice, updateBalance, currentCard]);
+  }, [isHover, isTouchDevice]);
 
   const isActive = burst || isHover || alwaysEnabled;
 

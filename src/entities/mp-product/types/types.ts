@@ -81,6 +81,12 @@ export interface Pictures {
   created_at: 0;
 }
 
+export interface BatchPicturesResponse {
+  result: Record<number, Pictures[]>;
+  count?: number;
+  processing_time_ms?: number;
+}
+
 export interface Prices {
   result: {
     id: 0;

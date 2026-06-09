@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   CreateLoyalityCardResponse,
   LoyalityCard,
@@ -46,6 +47,10 @@ type BackendCardLookup =
   | { status: "missing" }
   | { status: "error"; error: unknown };
 
+type UseLoyalityCardDataOptions = {
+  loadCardsList?: boolean;
+};
+
 const fetchBackendCard = async (
   cardNumber: number,
 ): Promise<BackendCardLookup> => {
@@ -90,7 +95,9 @@ const fetchBackendCard = async (
  * Хук для работы с картой лояльности
  * Включает всю логику: загрузка карт, проверка существующей, создание новой, сохранение в localStorage
  */
-export const useLoyalityCardData = () => {
+export const useLoyalityCardData = (
+  options: UseLoyalityCardDataOptions = {},
+) => {
   const [currentCard, setCurrentCard] = useState<LoyalityCard | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [points, setPoints] = useState<number>();
@@ -99,9 +106,30 @@ export const useLoyalityCardData = () => {
 
   const MAX_POINTS = 500;
 
-  const { data, isLoading } = useLoyalityCards();
+  const { data, isLoading } = useLoyalityCards(undefined, {
+    enabled: options.loadCardsList ?? false,
+  });
   const createCardMutation = useCreateLoyalityCard();
   const createBalanceMutation = useAddLoyalityTransactionAccrual();
+
+  const recentlyPersistedAt = currentCard
+    ? recentlyPersistedCards.get(currentCard.card_number)
+    : undefined;
+  const shouldValidateCurrentCard = Boolean(
+    isInitialized &&
+      currentCard &&
+      !pendingCardId &&
+      (!recentlyPersistedAt ||
+        Date.now() - recentlyPersistedAt >= RECENT_CARD_PERSIST_TTL_MS),
+  );
+
+  const backendCardQuery = useQuery({
+    queryKey: ["loyality-card", currentCard?.card_number],
+    queryFn: () => fetchBackendCard(currentCard!.card_number),
+    enabled: shouldValidateCurrentCard,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
 
   // Загружаем локальные бонусы при инициализации
   useEffect(() => {
@@ -140,49 +168,28 @@ export const useLoyalityCardData = () => {
 
   // Если сохраненная карта больше не существует на бэке, удаляем ее локально
   useEffect(() => {
-    if (!isInitialized || !currentCard || pendingCardId) return;
+    if (!currentCard || !backendCardQuery.data) return;
 
-    const recentlyPersistedAt = recentlyPersistedCards.get(
-      currentCard.card_number,
-    );
-    if (
-      recentlyPersistedAt &&
-      Date.now() - recentlyPersistedAt < RECENT_CARD_PERSIST_TTL_MS
-    ) {
+    const result = backendCardQuery.data;
+
+    if (result.status === "found") {
+      if (JSON.stringify(result.card) !== JSON.stringify(currentCard)) {
+        setCurrentCard(result.card);
+      }
       return;
     }
 
-    let cancelled = false;
+    if (result.status === "missing") {
+      const storedCard = readStoredLoyalityCard();
+      if (storedCard?.card_number !== currentCard.card_number) return;
 
-    void fetchBackendCard(currentCard.card_number).then((result) => {
-      if (cancelled) return;
+      setCurrentCard(null);
+      writeStoredLoyalityCard(null);
+      return;
+    }
 
-      if (result.status === "found") {
-        if (JSON.stringify(result.card) !== JSON.stringify(currentCard)) {
-          setCurrentCard(result.card);
-        }
-        return;
-      }
-
-      if (result.status === "missing") {
-        const storedCard = readStoredLoyalityCard();
-        if (storedCard?.card_number !== currentCard.card_number) return;
-
-        setCurrentCard(null);
-        writeStoredLoyalityCard(null);
-        return;
-      }
-
-      console.error(
-        "[loyalityCard] Failed to validate stored card:",
-        result.error,
-      );
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentCard, isInitialized, pendingCardId]);
+    console.error("[loyalityCard] Failed to validate stored card:", result.error);
+  }, [backendCardQuery.data, currentCard]);
 
   // Обновляем данные когда приходят карты с сервера
   useEffect(() => {
@@ -404,7 +411,8 @@ export const useLoyalityCardData = () => {
     currentCard,
     points,
     escrow,
-    isLoading: isLoading || createCardMutation.isPending,
+    isLoading:
+      isLoading || backendCardQuery.isFetching || createCardMutation.isPending,
     isInitialized,
     error: createCardMutation.error,
     findExistingCard,

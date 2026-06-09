@@ -9,7 +9,7 @@ interface CategoriesProps {
 
 const Categories: React.FC<CategoriesProps> = ({ setter }) => {
   const [isGrabbing, setIsGrabbing] = useState(false);
-  const { filteredCategories: categories } = useCategoriesWithData();
+  const { filteredCategories: categories } = useCategoriesWithData(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragStartXRef = useRef(0);

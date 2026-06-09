@@ -3,6 +3,7 @@ import {
   MpProductsQueryParams,
   MpProductsResponse,
   MpProduct,
+  BatchPicturesResponse,
   Pictures,
   Prices,
   ProductsWithVideosQueryParams,
@@ -125,6 +126,26 @@ export const getPicturesListById = async (
   } catch (error) {
     console.error("Failed to load product:", error);
     return [];
+  }
+};
+
+export const getPicturesBatchByIds = async (
+  productIds: number[],
+): Promise<Record<number, Pictures[]>> => {
+  if (productIds.length === 0) return {};
+
+  try {
+    const response = await tableCrmApi.post<BatchPicturesResponse>(
+      "/pictures/batch/",
+      {
+        entity: "nomenclature",
+        entity_ids: productIds,
+      },
+    );
+    return response.data.result ?? {};
+  } catch (error) {
+    console.error("Failed to load product pictures batch:", error);
+    return {};
   }
 };
 
